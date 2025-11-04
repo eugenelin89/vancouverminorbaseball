@@ -41,8 +41,9 @@ a:focus {
 }
 
 .site-header {
-    background: var(--color-navy);
-    color: var(--color-white);
+    background: var(--color-light-blue);
+    color: var(--color-navy);
+    box-shadow: 0 10px 30px rgba(10, 31, 68, 0.12);
 }
 
 .header-top {
@@ -79,7 +80,7 @@ a:focus {
 .branding p {
     margin: 0;
     font-style: italic;
-    color: var(--color-light-blue);
+    color: var(--color-blue);
 }
 
 .social-links {
@@ -129,16 +130,16 @@ a:focus {
 }
 
 .main-nav {
-    background: var(--color-blue);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--color-light-blue);
+    border-top: 1px solid rgba(10, 31, 68, 0.08);
+    border-bottom: 1px solid rgba(10, 31, 68, 0.08);
 }
 
 .nav-toggle {
     display: none;
     background: transparent;
-    border: 2px solid var(--color-white);
-    color: var(--color-white);
+    border: 2px solid var(--color-navy);
+    color: var(--color-navy);
     padding: 0.5rem 1rem;
     border-radius: 4px;
     font-size: 1rem;
@@ -160,7 +161,7 @@ a:focus {
     display: inline-block;
     padding: 0.85rem 0;
     font-weight: 600;
-    color: var(--color-white);
+    color: var(--color-navy);
     text-transform: uppercase;
     font-size: 0.95rem;
     letter-spacing: 0.03em;
@@ -173,7 +174,7 @@ a:focus {
 .submenu-toggle {
     background: none;
     border: none;
-    color: var(--color-white);
+    color: var(--color-navy);
     width: 1.25rem;
     height: 1.25rem;
     padding: 0;
@@ -190,10 +191,15 @@ a:focus {
     display: block;
     width: 0.5rem;
     height: 0.5rem;
-    border-right: 2px solid var(--color-white);
-    border-bottom: 2px solid var(--color-white);
+    border-right: 2px solid var(--color-navy);
+    border-bottom: 2px solid var(--color-navy);
     transform: rotate(45deg);
     transition: transform 0.2s ease;
+}
+
+.menu.level-0 > .menu-item > a:hover,
+.menu.level-0 > .menu-item > a:focus {
+    color: var(--color-blue);
 }
 
 .menu.level-1,
