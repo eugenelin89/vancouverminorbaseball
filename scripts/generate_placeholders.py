@@ -44,9 +44,9 @@ def create_image(path: Path, size: tuple[int, int], lines: list[str], fill: str,
 def main():
     IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
-    hero_lines = ["Homepage Background", "frontpage_background_img.jpg", "Replace with feature photo"]
+    hero_lines = ["Hero Banner", "hero-banner.jpg", "Replace with feature photo"]
     create_image(
-        IMAGE_DIR / "frontpage_background_img.jpg",
+        IMAGE_DIR / "hero-banner.jpg",
         (1600, 600),
         hero_lines,
         PALETTE[0],
@@ -54,9 +54,9 @@ def main():
     )
 
     create_image(
-        IMAGE_DIR / "vmba_logo.png",
+        IMAGE_DIR / "logo.png",
         (400, 400),
-        ["Team Logo", "vmba_logo.png"],
+        ["Team Logo", "logo.png"],
         PALETTE[2],
         "#0a1f44",
     )

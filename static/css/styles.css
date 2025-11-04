@@ -414,7 +414,7 @@ a:focus {
 .page-hero {
     position: relative;
     min-height: 260px;
-    background: url("../images/frontpage_background_img.jpg") center/cover no-repeat;
+    background: url("../images/hero-banner.jpg") center/cover no-repeat;
     color: var(--color-white);
     margin-bottom: 2rem;
 }
