@@ -11,17 +11,14 @@
             <span class="image-label">vmb_hero-banner.jpg</span>
         </div>
         <div class="hero-overlay"></div>
-        <div class="hero-content container">
+        <div class="hero-content container home-hero">
             <h1>{{ hero.title }}</h1>
-            <p class="tagline">Home of the VMB Expos</p>
-            <a class="cta-button" href="/registration/">Register Today</a>
+            <div class="hero-message">
+                {% for paragraph in hero.paragraphs %}
+                    <p>{{ paragraph }}</p>
+                {% endfor %}
+            </div>
         </div>
-    </section>
-
-    <section class="intro container">
-        {% for paragraph in hero.paragraphs %}
-            <p>{{ paragraph }}</p>
-        {% endfor %}
     </section>
 
     <section class="achievements" id="achievements">
