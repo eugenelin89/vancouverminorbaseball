@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+{% include "home/includes/site_header.html" %}
+
+<main>
+    <section class="hero">
+        <div class="hero-media">
+            <img src="{% static 'images/hero-banner.jpg' %}" alt="Replace hero-banner.jpg with a feature photo">
+            <span class="image-label">hero-banner.jpg</span>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content container">
+            <h1>{{ hero.title }}</h1>
+            <p class="tagline">Home of the VMBA Expos</p>
+            <a class="cta-button" href="/registration/">Register Today</a>
+        </div>
+    </section>
+
+    <section class="intro container">
+        {% for paragraph in hero.paragraphs %}
+            <p{% if forloop.last %} class="cta"{% endif %}>{{ paragraph }}</p>
+        {% endfor %}
+    </section>
+
+    <section class="achievements" id="achievements">
+        <div class="container">
+            <h2>Recent Highlights</h2>
+            <div class="achievement-grid">
+                {% for achievement in achievements %}
+                    <article class="achievement-card">
+                        <div class="image-frame">
+                            <img src="{% static 'images/'|add:achievement.slug|add:'.png' %}" alt="Replace {{ achievement.slug }}.png – {{ achievement.image_alt }}">
+                            <span class="image-label">{{ achievement.slug }}.png</span>
+                        </div>
+                        <div class="card-body">
+                            {% for line in achievement.lines %}
+                                <p>{{ line }}</p>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <p>{{ footer_text }}</p>
+        <p class="powered">
+            Powered by <a href="https://www.teamsnap.com/" target="_blank" rel="noopener">TeamSnap&reg;</a> | Want your own Club and League Website? <a href="https://www.teamsnap.com/leagues-and-clubs" target="_blank" rel="noopener">Learn More</a>
+        </p>
+    </div>
+</footer>
+
+<script>
+    (function () {
+        const navToggle = document.querySelector('.nav-toggle');
+        const menuWrapper = document.getElementById('primary-menu');
+
+        if (navToggle && menuWrapper) {
+            navToggle.addEventListener('click', () => {
+                const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+                navToggle.setAttribute('aria-expanded', String(!expanded));
+                menuWrapper.classList.toggle('is-open');
+            });
+        }
+
+        document.querySelectorAll('.submenu-toggle').forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                toggle.setAttribute('aria-expanded', String(!expanded));
+                toggle.parentElement.classList.toggle('submenu-open');
+            });
+        });
+    }());
+</script>
+{% endblock %}

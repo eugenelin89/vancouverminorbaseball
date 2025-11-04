@@ -1,0 +1,30 @@
+{% load static %}
+<header class="site-header">
+    <div class="container header-top">
+        <a class="logo" href="/">
+            <img src="{% static 'images/logo.png' %}" alt="Vancouver Minor Baseball logo placeholder">
+            <span class="image-label">logo.png</span>
+        </a>
+        <div class="branding">
+            <h2>Vancouver Minor Baseball</h2>
+            <p>Home of the VMBA Expos</p>
+            <div class="social-links">
+                {% for link in social_links %}
+                    <a href="{{ link.url }}" class="social social-{{ link.icon }}" target="_blank" rel="noopener">
+                        <span class="sr-only">{{ link.name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <nav class="main-nav">
+        <div class="container">
+            <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-menu">
+                <span class="nav-toggle-label">Menu</span>
+            </button>
+            <div id="primary-menu" class="menu-wrapper">
+                {% include "home/includes/nav.html" with items=navigation level=0 %}
+            </div>
+        </div>
+    </nav>
+</header>

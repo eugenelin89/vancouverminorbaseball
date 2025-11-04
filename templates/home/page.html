@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+{% include "home/includes/site_header.html" %}
+
+<main>
+    <section class="page-hero">
+        <div class="hero-overlay"></div>
+        <div class="hero-content container">
+            <h1>{{ page_title }}</h1>
+            <p class="tagline">This section is ready for your custom content.</p>
+        </div>
+    </section>
+
+    <section class="page-content container">
+        <div class="placeholder-card">
+            <h2>Placeholder Page</h2>
+            <p>
+                The original site links here, so we've created this page to keep the navigation fully functional.
+                Replace this content with your real copy, media, and layout when you're ready.
+            </p>
+            <ul>
+                <li>File path: <code>{{ request.path }}</code></li>
+                <li>Suggested hero image filename: <code>{{ page_asset_stub }}.jpg</code></li>
+                <li>Update template: <code>templates/home/page.html</code></li>
+            </ul>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <p>{{ footer_text }}</p>
+        <p class="powered">
+            Powered by <a href="https://www.teamsnap.com/" target="_blank" rel="noopener">TeamSnap&reg;</a> | Want your own Club and League Website? <a href="https://www.teamsnap.com/leagues-and-clubs" target="_blank" rel="noopener">Learn More</a>
+        </p>
+    </div>
+</footer>
+
+<script>
+    (function () {
+        const navToggle = document.querySelector('.nav-toggle');
+        const menuWrapper = document.getElementById('primary-menu');
+
+        if (navToggle && menuWrapper) {
+            navToggle.addEventListener('click', () => {
+                const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+                navToggle.setAttribute('aria-expanded', String(!expanded));
+                menuWrapper.classList.toggle('is-open');
+            });
+        }
+
+        document.querySelectorAll('.submenu-toggle').forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                toggle.setAttribute('aria-expanded', String(!expanded));
+                toggle.parentElement.classList.toggle('submenu-open');
+            });
+        });
+    }());
+</script>
+{% endblock %}

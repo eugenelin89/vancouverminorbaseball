@@ -1,0 +1,288 @@
+{
+  "hero_title": "Welcome to Vancouver Community Baseball",
+  "hero_paragraphs": [
+    "Since 1995, the VMBA Mounties have offered organized baseball for girls, boys and young adults aged 13 to 26 living in Vancouver. From recreational house leagues to elite traveling teams, we treat all our programs and players with equal importance! We emphasize player participation and skill improvement at all levels.",
+    "The VMBA Mounties coaches are all NCCP certified and focus on skill development at all levels.\u00a0We are proud of our history and inclusive approach to developing and teaching baseball skills, including offering all-female teams, while creating a community focused approach which is centred around the enjoyment of baseball.",
+    "Come join our family ... and LET'S PLAY BALL!"
+  ],
+  "nav_items": [
+    {
+      "label": "Home",
+      "url": "https://vancouvercommunitybaseball.com/",
+      "children": []
+    },
+    {
+      "label": "Registration",
+      "url": "https://vancouvercommunitybaseball.com/registration/",
+      "children": [
+        {
+          "label": "Funding",
+          "url": "https://vancouvercommunitybaseball.com/funding/",
+          "children": []
+        }
+      ]
+    },
+    {
+      "label": "Player Development",
+      "url": "https://vancouvercommunitybaseball.com/player-development/",
+      "children": []
+    },
+    {
+      "label": "Sponsors",
+      "url": "https://vancouvercommunitybaseball.com/sponsors/",
+      "children": []
+    },
+    {
+      "label": "Divisions",
+      "url": "#",
+      "children": [
+        {
+          "label": "13U",
+          "url": "https://vancouvercommunitybaseball.com/13u/",
+          "children": [
+            {
+              "label": "About 13U",
+              "url": "https://vancouvercommunitybaseball.com/13u/",
+              "children": []
+            },
+            {
+              "label": "13U A",
+              "url": "https://vancouvercommunitybaseball.com/13u/13u-a/",
+              "children": []
+            },
+            {
+              "label": "13U AA",
+              "url": "https://vancouvercommunitybaseball.com/13u/13u-aa/",
+              "children": []
+            },
+            {
+              "label": "13U AAA",
+              "url": "https://vancouvercommunitybaseball.com/13u/13u-aaa/",
+              "children": []
+            }
+          ]
+        },
+        {
+          "label": "15U",
+          "url": "https://vancouvercommunitybaseball.com/15u/",
+          "children": [
+            {
+              "label": "About 15U",
+              "url": "https://vancouvercommunitybaseball.com/15u/",
+              "children": []
+            },
+            {
+              "label": "15U A",
+              "url": "https://vancouvercommunitybaseball.com/15u/15u-a/",
+              "children": []
+            },
+            {
+              "label": "15U AA",
+              "url": "https://vancouvercommunitybaseball.com/15u/15u-aa/",
+              "children": [
+                {
+                  "label": "15U AA Blue \u2018Expos\u2019",
+                  "url": "https://vancouvercommunitybaseball.com/15u-aa-blue-expos/",
+                  "children": []
+                },
+                {
+                  "label": "15U AA Red \u2018Mounties\u2019",
+                  "url": "https://vancouvercommunitybaseball.com/15u-aa-red-mounties/",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "label": "15U AAA",
+              "url": "https://vancouvercommunitybaseball.com/15u/15u-aaa/",
+              "children": []
+            }
+          ]
+        },
+        {
+          "label": "18U",
+          "url": "https://vancouvercommunitybaseball.com/18u/",
+          "children": [
+            {
+              "label": "About 18U",
+              "url": "https://vancouvercommunitybaseball.com/18u/",
+              "children": []
+            },
+            {
+              "label": "18U AA",
+              "url": "https://vancouvercommunitybaseball.com/18u/18u-aa/",
+              "children": []
+            },
+            {
+              "label": "18U AAA",
+              "url": "https://vancouvercommunitybaseball.com/18u/18u-aaa/",
+              "children": []
+            }
+          ]
+        },
+        {
+          "label": "26U",
+          "url": "https://vancouvercommunitybaseball.com/26u/",
+          "children": [
+            {
+              "label": "About 26U",
+              "url": "https://vancouvercommunitybaseball.com/26u/",
+              "children": []
+            },
+            {
+              "label": "26U \u2018Expos\u2019",
+              "url": "https://vancouvercommunitybaseball.com/26u-expos/",
+              "children": []
+            },
+            {
+              "label": "26U \u2018Mounties\u2019",
+              "url": "https://vancouvercommunitybaseball.com/26u-mounties/",
+              "children": []
+            }
+          ]
+        },
+        {
+          "label": "All-Girls Baseball",
+          "url": "https://vancouvercommunitybaseball.com/girls-baseball/",
+          "children": []
+        }
+      ]
+    },
+    {
+      "label": "Fields",
+      "url": "https://vancouvercommunitybaseball.com/fields/",
+      "children": [
+        {
+          "label": "Field Locations & Schedules",
+          "url": "https://vancouvercommunitybaseball.com/fields/",
+          "children": []
+        },
+        {
+          "label": "Field Preparation",
+          "url": "https://vancouvercommunitybaseball.com/field-prep/",
+          "children": []
+        }
+      ]
+    },
+    {
+      "label": "TeamSnap",
+      "url": "https://vancouvercommunitybaseball.com/teamsnap/",
+      "children": [
+        {
+          "label": "How to Access TeamSnap",
+          "url": "https://vancouvercommunitybaseball.com/teamsnap/",
+          "children": []
+        },
+        {
+          "label": "Parents & Players",
+          "url": "https://vancouvercommunitybaseball.com/parent/",
+          "children": []
+        },
+        {
+          "label": "Team Managers",
+          "url": "https://vancouvercommunitybaseball.com/team-manager/",
+          "children": []
+        },
+        {
+          "label": "Coaches",
+          "url": "https://vancouvercommunitybaseball.com/coaches/",
+          "children": []
+        }
+      ]
+    },
+    {
+      "label": "People",
+      "url": "#",
+      "children": [
+        {
+          "label": "Coach info",
+          "url": "https://vancouvercommunitybaseball.com/coach-info/",
+          "children": []
+        },
+        {
+          "label": "Umpires",
+          "url": "https://vancouvercommunitybaseball.com/umpires/",
+          "children": []
+        },
+        {
+          "label": "Volunteering",
+          "url": "https://vancouvercommunitybaseball.com/volunteering/",
+          "children": []
+        },
+        {
+          "label": "Contact Us",
+          "url": "https://vancouvercommunitybaseball.com/contact-us/",
+          "children": []
+        }
+      ]
+    }
+  ],
+  "achievements": [
+    {
+      "title": "15U AA Provincial Champions 2025\nVMBA Expos 15U AA Blue",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/08/Prov-Team-8354-2048x1571.jpg",
+      "image_alt": "Prov-Team-8354"
+    },
+    {
+      "title": "13U AAA GSL Summer Slam Premier Sports Tournament Champions 2025 - Everett, Washington, USA",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/07/SummerSlam.png",
+      "image_alt": "SummerSlam"
+    },
+    {
+      "title": "Rumble in the Ridge Steve Murray Invitational Tournament Champions 15U A",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/07/Rumble-in-the-Ridge-Resize.jpg",
+      "image_alt": "Rumble in the Ridge-Resize"
+    },
+    {
+      "title": "Abercromby and Summer Fun Tournament hosted by Burnaby Baseball Association Champions 13U A",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/07/15A9986-13UA_JULY_13_2025-003.jpg",
+      "image_alt": "_15A9986-13UA_JULY_13_2025 (003)"
+    },
+    {
+      "title": "Steven Dodd Memorial Tournament Champions 2025\nVMBA Expos 15U AA Blue",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/07/Resize_PXL_20250701_002711715.jpg",
+      "image_alt": "Resize_PXL_20250701_002711715"
+    },
+    {
+      "title": "VMBA 13U A Tier One - Western Lower Mainland Champions 2025 - VMBA Expos",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/06/VMBA-13U-A-Tier-One-Western-Lower-Mainland-Champions2.jpg",
+      "image_alt": "VMBA 13U A Tier One - Western Lower Mainland Champions2"
+    },
+    {
+      "title": "Ross Tournament Champions 2025\nVMBA Expos 15U AA Blue",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/08/15U-AA-Team-Blue-Ross-Tournament-Champions-2025-e1754637283675.jpg",
+      "image_alt": "15U-AA-Team-Blue-Ross-Tournament-Champions-2025-e1754637283675"
+    },
+    {
+      "title": "Steven Dodd Memorial Tournament 2025 2nd Place Finish 13U A Notable",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/07/Resize_15A9636-13UA_-JUNE_30_20252-1-1024x768.jpg",
+      "image_alt": "Resize_15A9636-13UA_-JUNE_30_2025~2"
+    },
+    {
+      "title": "VMBA 13U A Tier Two - Western Lower Mainland Champions 2025 - VMBA Red Sox",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/06/VMBA-13U-A-Tier-Two-Western-Lower-Mainland-Champions-1024x768.jpg",
+      "image_alt": "VMBA 13U A Tier Two - Western Lower Mainland Champions"
+    },
+    {
+      "title": "13U A D'backs - Ross Tournament Champions 2025",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/05/13UA-Diamondbacks-Ross-Tournament-Champions-2025-1024x683.jpg",
+      "image_alt": "13UA Diamondbacks Ross Tournament Champions 2025"
+    },
+    {
+      "title": "13U AA - Jevon Clarke Memorial Tournament Second Place Finish",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/05/13U-AA-Jevon-Clark-1024x768.jpg",
+      "image_alt": "13U AA Jevon Clark"
+    },
+    {
+      "title": "15U A Notable - Battle At The Barn Ladner 2025 Third Place Finish",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/05/15U-A-Notable-Third-Place-Finish-Battle-At-The-Barn-Ladner-2025-1024x768.jpg",
+      "image_alt": "15U A Notable - Third Place Finish Battle At The Barn Ladner 2025"
+    },
+    {
+      "title": "2025 Spring 15U A Champions Red Sox",
+      "image": "https://www.vancouvercommunitybaseball.com/wp-content/uploads/sites/607/2025/06/2025-Spring-15U-A-Champions-Red-Sox-1024x741.jpg",
+      "image_alt": "2025 Spring 15U A Champions Red Sox"
+    }
+  ],
+  "footer_text": "\u00a9 2025 Vancouver Community Baseball"
+}
