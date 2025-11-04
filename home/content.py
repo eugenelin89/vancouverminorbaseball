@@ -118,7 +118,7 @@ SOCIAL_LINKS = [
 ACHIEVEMENTS = [
     {
         "slug": "achievement-01",
-        "title": "15U AA Provincial Champions 2025\nVMB Expos 15U AA Blue",
+        "title": "15U AA Provincial Champions 2025\nVCB Expos 15U AA Blue",
         "image_alt": "Prov-Team-8354",
     },
     {
@@ -127,44 +127,14 @@ ACHIEVEMENTS = [
         "image_alt": "SummerSlam",
     },
     {
-        "slug": "achievement-03",
-        "title": "Rumble in the Ridge Steve Murray Invitational Tournament Champions 15U A",
-        "image_alt": "Rumble in the Ridge-Resize",
-    },
-    {
-        "slug": "achievement-04",
-        "title": "Abercromby and Summer Fun Tournament hosted by Burnaby Baseball Association Champions 13U A",
-        "image_alt": "_15A9986-13UA_JULY_13_2025 (003)",
-    },
-    {
         "slug": "achievement-05",
-        "title": "Steven Dodd Memorial Tournament Champions 2025\nVMB Expos 15U AA Blue",
+        "title": "Steven Dodd Memorial Tournament Champions 2025\nVCB Expos 15U AA Blue",
         "image_alt": "Resize_PXL_20250701_002711715",
     },
     {
-        "slug": "achievement-06",
-        "title": "VMB 13U A Tier One - Western Lower Mainland Champions 2025 - VMB Expos",
-        "image_alt": "VMB 13U A Tier One - Western Lower Mainland Champions2",
-    },
-    {
         "slug": "achievement-07",
-        "title": "Ross Tournament Champions 2025\nVMB Expos 15U AA Blue",
+        "title": "Ross Tournament Champions 2025\nVCB Expos 15U AA Blue",
         "image_alt": "15U-AA-Team-Blue-Ross-Tournament-Champions-2025-e1754637283675",
-    },
-    {
-        "slug": "achievement-08",
-        "title": "Steven Dodd Memorial Tournament 2025 2nd Place Finish 13U A Notable",
-        "image_alt": "Resize_15A9636-13UA_-JUNE_30_2025~2",
-    },
-    {
-        "slug": "achievement-09",
-        "title": "VMB 13U A Tier Two - Western Lower Mainland Champions 2025 - VMB Red Sox",
-        "image_alt": "VMB 13U A Tier Two - Western Lower Mainland Champions",
-    },
-    {
-        "slug": "achievement-10",
-        "title": "13U A D'backs - Ross Tournament Champions 2025",
-        "image_alt": "13UA Diamondbacks Ross Tournament Champions 2025",
     },
     {
         "slug": "achievement-11",
@@ -175,11 +145,6 @@ ACHIEVEMENTS = [
         "slug": "achievement-12",
         "title": "15U A Notable - Battle At The Barn Ladner 2025 Third Place Finish",
         "image_alt": "15U A Notable - Third Place Finish Battle At The Barn Ladner 2025",
-    },
-    {
-        "slug": "achievement-13",
-        "title": "2025 Spring 15U A Champions Red Sox",
-        "image_alt": "2025 Spring 15U A Champions Red Sox",
     },
 ]
 
