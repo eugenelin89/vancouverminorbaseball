@@ -90,31 +90,28 @@ a:focus {
 }
 
 .social {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--color-gold);
+    background: var(--color-white);
     color: var(--color-navy);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    text-transform: uppercase;
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(10, 31, 68, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.social::after {
-    font-size: 1rem;
+.social:hover,
+.social:focus {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(10, 31, 68, 0.2);
 }
 
-.social-facebook::after {
-    content: "f";
-}
-
-.social-instagram::after {
-    content: "ig";
-    font-size: 0.75rem;
+.social-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
 }
 
 .sr-only {
@@ -417,7 +414,7 @@ a:focus {
 .page-hero {
     position: relative;
     min-height: 260px;
-    background: url("../images/hero-banner.jpg") center/cover no-repeat;
+    background: url("../images/frontpage_background_img.jpg") center/cover no-repeat;
     color: var(--color-white);
     margin-bottom: 2rem;
 }

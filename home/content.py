@@ -3,9 +3,7 @@
 HERO = {
     "title": "Welcome to Vancouver Minor Baseball",
     "paragraphs": [
-        "Since 1995, the VMBA Expos have offered organized baseball for girls, boys and young adults aged 13 to 26 living in Vancouver. From recreational house leagues to elite traveling teams, we treat all our programs and players with equal importance! We emphasize player participation and skill improvement at all levels.",
-        "The VMBA Expos coaches are all NCCP certified and focus on skill development at all levels. We are proud of our history and inclusive approach to developing and teaching baseball skills, including offering all-female teams, while creating a community focused approach which is centred around the enjoyment of baseball.",
-        "Come join our family ... and LET'S PLAY BALL!",
+        "Vancouver Minor Baseball has proudly been affiliated with BC Minor Baseball Association since 1999. We provide a positive and structured environment for youth and young adults to learn, develop, and compete in the game of baseball.",
     ],
 }
 
@@ -103,8 +101,18 @@ NAVIGATION = [
 ]
 
 SOCIAL_LINKS = [
-    {"name": "Facebook", "url": "https://www.facebook.com/vmbaexposbaseball", "icon": "facebook"},
-    {"name": "Instagram", "url": "https://www.instagram.com/vmbaexposbaseball/", "icon": "instagram"},
+    {
+        "name": "Facebook",
+        "url": "https://www.facebook.com/vmbaexposbaseball",
+        "icon": "facebook",
+        "icon_path": "icons/facebook.svg",
+    },
+    {
+        "name": "Instagram",
+        "url": "https://www.instagram.com/vmbaexposbaseball/",
+        "icon": "instagram",
+        "icon_path": "icons/instagram.svg",
+    },
 ]
 
 ACHIEVEMENTS = [

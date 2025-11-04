@@ -10,7 +10,8 @@
             <p>Home of the VMBA Expos</p>
             <div class="social-links">
                 {% for link in social_links %}
-                    <a href="{{ link.url }}" class="social social-{{ link.icon }}" target="_blank" rel="noopener">
+                    <a href="{{ link.url }}" class="social" target="_blank" rel="noopener">
+                        <img src="{% static link.icon_path %}" alt="{{ link.name }} icon" class="social-icon">
                         <span class="sr-only">{{ link.name }}</span>
                     </a>
                 {% endfor %}
