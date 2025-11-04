@@ -238,26 +238,29 @@ a:focus {
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    min-height: 360px;
     color: var(--color-white);
     margin-bottom: 2rem;
 }
 
 .hero-media {
     position: relative;
+    min-height: clamp(320px, 55vh, 540px);
     overflow: hidden;
 }
 
 .hero-media img {
     width: 100%;
     height: 100%;
+    display: block;
     object-fit: cover;
+    object-position: center top;
 }
 
 .hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, rgba(10, 31, 68, 0.85), rgba(27, 79, 145, 0.55));
+    background: linear-gradient(120deg, rgba(10, 31, 68, 0.35), rgba(27, 79, 145, 0.15));
+    pointer-events: none;
 }
 
 .hero-content {
