@@ -8,6 +8,7 @@ from .content import (
     FOOTER_TEXT,
     HERO,
     NAVIGATION,
+    PROGRAMS_PAGE,
     SOCIAL_LINKS,
 )
 
@@ -52,6 +53,16 @@ class HomePageView(TemplateView):
             {**achievement, "lines": achievement["title"].split("\n")}
             for achievement in ACHIEVEMENTS
         ]
+        return context
+
+
+class ProgramsPageView(TemplateView):
+    template_name = "home/programs.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(base_context())
+        context["programs"] = PROGRAMS_PAGE
         return context
 
 

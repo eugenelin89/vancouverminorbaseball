@@ -7,6 +7,23 @@ HERO = {
     ],
 }
 
+PROGRAMS_PAGE = {
+    "title": "Programs",
+    "hero_image": "images/programs-hero.jpg",
+    "hero_image_label": "programs-hero.jpg",
+    "intro": "We offer divisions for players aged 11 through 25:",
+    "divisions": [
+        "Pee Wee (11–12 years old)",
+        "Bantam (13–14 years old)",
+        "Midget (15–17 years old)",
+        "Junior Men's (18–25 years old)",
+    ],
+    "closing": (
+        "Players participate within their appropriate age category. Movement to an older division may be permitted "
+        "only when a player demonstrates the skill, maturity, and readiness required to succeed at the next level."
+    ),
+}
+
 NAVIGATION = [
     {"label": "Home", "url": "/", "children": []},
     {
@@ -19,8 +36,8 @@ NAVIGATION = [
     {"label": "Player Development", "url": "/player-development/", "children": []},
     {"label": "Sponsors", "url": "/sponsors/", "children": []},
     {
-        "label": "Divisions",
-        "url": "#",
+        "label": "Programs",
+        "url": "/programs/",
         "children": [
             {
                 "label": "13U",

@@ -78,6 +78,15 @@ def main():
     )
 
     create_image(
+        IMAGE_DIR / "programs-hero.jpg",
+        (1600, 600),
+        ["Programs Hero", "programs-hero.jpg"],
+        PALETTE[1],
+        "#ffffff",
+        overwrite=overwrite,
+    )
+
+    create_image(
         IMAGE_DIR / "vmb_logo.png",
         (400, 400),
         ["Team Logo", "vmb_logo.png"],

@@ -288,6 +288,12 @@ a:focus {
     gap: 1.5rem;
 }
 
+.programs-hero {
+    justify-content: flex-start;
+    padding-top: clamp(2rem, 7vh, 4.5rem);
+    gap: 1.75rem;
+}
+
 .hero-message {
     align-self: flex-start;
     max-width: min(640px, 90%);
@@ -302,6 +308,16 @@ a:focus {
     line-height: 1.55;
 }
 
+.hero-message ul {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    list-style: disc;
+}
+
+.hero-message li {
+    margin-bottom: 0.35rem;
+}
+
 .hero-message p:last-child {
     margin-bottom: 0;
 }
@@ -309,6 +325,47 @@ a:focus {
 .hero-content h1 {
     font-size: clamp(2rem, 4vw, 3rem);
     margin: 0;
+}
+
+.programs-overview {
+    max-width: var(--max-width);
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+}
+
+.programs-card {
+    background: var(--color-white);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 25px 50px rgba(10, 31, 68, 0.1);
+}
+
+.programs-card h2 {
+    margin-top: 0;
+    color: var(--color-navy);
+    font-size: 2rem;
+}
+
+.programs-card ul {
+    margin: 1rem 0;
+    padding-left: 1.25rem;
+    list-style: disc;
+}
+
+.programs-card li {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--color-navy);
+}
+
+.programs-card p {
+    margin: 0 0 1rem;
+}
+
+.programs-card .programs-note {
+    font-weight: 600;
+    color: var(--color-blue);
+    margin-bottom: 0;
 }
 
 .achievements {
