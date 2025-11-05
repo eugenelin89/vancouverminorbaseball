@@ -5,16 +5,20 @@
 {% include "home/includes/site_header.html" %}
 
 <main>
-    <section class="hero programs-hero">
+    <section class="hero">
         <div class="hero-media">
             <img src="{% static programs.hero_image %}" alt="Replace {{ programs.hero_image_label }} with a programs feature photo">
             <span class="image-label">{{ programs.hero_image_label }}</span>
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content container programs-hero">
+            <h1>Programs Offered</h1>
         </div>
     </section>
 
     <section class="programs-overview container">
         <div class="programs-card">
-            <h2>Programs Offered</h2>
+            <h2>Program Details</h2>
             <p>{{ programs.intro }}</p>
             <ul>
                 {% for division in programs.divisions %}
