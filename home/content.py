@@ -73,54 +73,7 @@ NAVIGATION = [
     {
         "label": "Programs",
         "url": "/programs/",
-        "children": [
-            {
-                "label": "13U",
-                "url": "/13u/",
-                "children": [
-                    {"label": "About 13U", "url": "/13u/", "children": []},
-                    {"label": "13U A", "url": "/13u/13u-a/", "children": []},
-                    {"label": "13U AA", "url": "/13u/13u-aa/", "children": []},
-                    {"label": "13U AAA", "url": "/13u/13u-aaa/", "children": []},
-                ],
-            },
-            {
-                "label": "15U",
-                "url": "/15u/",
-                "children": [
-                    {"label": "About 15U", "url": "/15u/", "children": []},
-                    {"label": "15U A", "url": "/15u/15u-a/", "children": []},
-                    {
-                        "label": "15U AA",
-                        "url": "/15u/15u-aa/",
-                        "children": [
-                            {"label": "15U AA Blue 'Expos'", "url": "/15u-aa-blue-expos/", "children": []},
-                            {"label": "15U AA Red 'Expos'", "url": "/15u-aa-red-expos/", "children": []},
-                        ],
-                    },
-                    {"label": "15U AAA", "url": "/15u/15u-aaa/", "children": []},
-                ],
-            },
-            {
-                "label": "18U",
-                "url": "/18u/",
-                "children": [
-                    {"label": "About 18U", "url": "/18u/", "children": []},
-                    {"label": "18U AA", "url": "/18u/18u-aa/", "children": []},
-                    {"label": "18U AAA", "url": "/18u/18u-aaa/", "children": []},
-                ],
-            },
-            {
-                "label": "26U",
-                "url": "/26u/",
-                "children": [
-                    {"label": "About 26U", "url": "/26u/", "children": []},
-                    {"label": "26U 'Expos'", "url": "/26u-expos/", "children": []},
-                    {"label": "26U 'Expos Red'", "url": "/26u-expos-red/", "children": []},
-                ],
-            },
-            {"label": "All-Girls Baseball", "url": "/girls-baseball/", "children": []},
-        ],
+        "children": [],
     },
 ]
 
