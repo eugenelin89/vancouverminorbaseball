@@ -12,6 +12,9 @@
         </div>
         <div class="hero-overlay"></div>
         <div class="hero-content container home-hero">
+            {% if hero.eyebrow %}
+                <span class="hero-eyebrow">{{ hero.eyebrow }}</span>
+            {% endif %}
             <h1>{{ hero.title }}</h1>
             <div class="hero-message">
                 {% for paragraph in hero.paragraphs %}

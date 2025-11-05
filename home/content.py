@@ -2,6 +2,7 @@
 
 HERO = {
     "title": "Welcome to Vancouver Minor Baseball",
+    "eyebrow": "Home of the VMB Expos",
     "paragraphs": [
         "Vancouver Minor Baseball has proudly been affiliated with BC Minor Baseball Association since 1999. We provide a positive and structured environment for youth and young adults to learn, develop, and compete in the game of baseball.",
     ],
@@ -9,6 +10,7 @@ HERO = {
 
 PROGRAMS_PAGE = {
     "title": "Programs",
+    "tagline": "From Pee Wee to Junior Men's",
     "hero_image": "images/programs-hero.jpg",
     "hero_image_label": "programs-hero.jpg",
     "intro": "We offer divisions for players aged 11 through 25:",
