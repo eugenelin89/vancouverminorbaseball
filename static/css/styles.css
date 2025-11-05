@@ -333,6 +333,12 @@ a:focus {
     padding: 0 1.5rem;
 }
 
+.season-structure {
+    max-width: var(--max-width);
+    margin: 0 auto 4rem;
+    padding: 0 1.5rem;
+}
+
 .programs-card {
     background: var(--color-white);
     border-radius: 20px;
