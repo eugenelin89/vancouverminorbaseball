@@ -445,6 +445,34 @@ main {
     color: var(--color-blue);
 }
 
+.contact-callout {
+    max-width: var(--max-width);
+    margin: 0 auto 4rem;
+    padding: 0 1.5rem;
+}
+
+.contact-card {
+    background: linear-gradient(135deg, rgba(220, 233, 255, 0.88), rgba(255, 255, 255, 0.95));
+    border-radius: 24px;
+    padding: 2.5rem 2.25rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(16, 42, 67, 0.08);
+    color: var(--color-text-muted);
+    line-height: 1.7;
+    text-align: center;
+}
+
+.contact-card h2 {
+    margin: 0 0 1rem;
+    color: var(--color-navy);
+    font-size: 2rem;
+}
+
+.contact-card a {
+    color: var(--color-blue);
+    font-weight: 700;
+}
+
 .programs-card {
     background: var(--color-white);
     border-radius: 24px;
@@ -738,6 +766,14 @@ main {
     }
 
     .info-card {
+        padding: 2.25rem 1.75rem;
+    }
+
+    .contact-callout {
+        padding: 0 1rem;
+    }
+
+    .contact-card {
         padding: 2.25rem 1.75rem;
     }
 
