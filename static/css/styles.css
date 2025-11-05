@@ -368,6 +368,29 @@ a:focus {
     margin-bottom: 0;
 }
 
+.philosophy {
+    padding: 2.5rem 0;
+}
+
+.philosophy .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.philosophy h2 {
+    margin: 0 0 1rem;
+    font-size: 2rem;
+    color: var(--color-navy);
+}
+
+.philosophy p {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--color-navy);
+}
+
 .achievements {
     padding: 3rem 0 4rem;
 }
