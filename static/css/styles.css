@@ -288,12 +288,6 @@ a:focus {
     gap: 1.5rem;
 }
 
-.programs-hero {
-    justify-content: flex-start;
-    padding-top: clamp(2rem, 7vh, 4.5rem);
-    gap: 1.75rem;
-}
-
 .hero-message {
     align-self: flex-start;
     max-width: min(640px, 90%);
