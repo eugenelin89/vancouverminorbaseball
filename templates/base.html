@@ -5,9 +5,37 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Vancouver Minor Baseball – Home of the VMB Expos</title>
+    <meta
+        name="description"
+        content="Community-first baseball programming in Vancouver, BC. Vancouver Minor Baseball offers 13U–26U divisions, elite coaching, and an inclusive pathway for every athlete."
+    >
+    <meta property="og:title" content="Vancouver Minor Baseball – Home of the VMB Expos">
+    <meta
+        property="og:description"
+        content="Discover upcoming programs, registration dates, and success stories from Vancouver Minor Baseball."
+    >
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{% static 'images/vmb_hero-banner.jpg' %}">
+    <meta name="theme-color" content="#102a43">
+    <link rel="canonical" href="https://www.vancouverminorbaseball.com/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     {% block content %}{% endblock %}
+    {% block analytics %}
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);} // Google Analytics placeholder
+            gtag('js', new Date());
+        </script>
+    {% endblock %}
 </body>
 </html>

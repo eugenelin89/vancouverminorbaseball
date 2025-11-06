@@ -1,0 +1,59 @@
+{% load static %}
+<footer class="site-footer">
+    <div class="container footer-grid">
+        <div class="footer-brand">
+            <h2 class="footer-title">Vancouver Minor Baseball</h2>
+            <p class="footer-subtitle">Home of the VMB Expos</p>
+            <p class="footer-description">
+                Providing inclusive, development-focused baseball for Vancouver athletes for more than 25 years.
+            </p>
+            <div class="footer-social">
+                {% for link in social_links %}
+                    <a href="{{ link.url }}" class="social" target="_blank" rel="noopener">
+                        <img src="{% static link.icon_path %}" alt="{{ link.name }} icon" class="social-icon">
+                        <span class="sr-only">{{ link.name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="footer-contact">
+            <h3>Contact</h3>
+            <ul>
+                <li><a href="mailto:{{ footer_contact.email }}">{{ footer_contact.email }}</a></li>
+                <li><a href="tel:{{ footer_contact.phone_link }}">{{ footer_contact.phone }}</a></li>
+                <li><a href="{{ footer_contact.map_url }}" target="_blank" rel="noopener">{{ footer_contact.address }}</a></li>
+                <li>{{ footer_contact.mailing }}</li>
+            </ul>
+            <div class="footer-hours">
+                <h4>Office Hours</h4>
+                <ul>
+                    {% for hours in footer_contact.office_hours %}
+                        <li>{{ hours }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="footer-links">
+            <h3>Quick Links</h3>
+            <ul>
+                {% for item in navigation %}
+                    <li><a href="{{ item.url }}">{{ item.label }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="footer-resources">
+            <h3>Resources</h3>
+            <ul>
+                {% for resource in footer_links %}
+                    <li><a href="{{ resource.url }}">{{ resource.label }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <div class="container footer-bottom-inner">
+            <p>{{ footer_text }}</p>
+            <p>Website performance monitored with Google Analytics.</p>
+        </div>
+    </div>
+</footer>

@@ -1,7 +1,12 @@
 <ul class="menu level-{{ level }}">
     {% for item in items %}
-        <li class="menu-item{% if item.children %} has-children{% endif %}">
-            <a href="{{ item.url }}"{% if item.children %} aria-haspopup="true" aria-expanded="false"{% endif %}>{{ item.label }}</a>
+        <li class="menu-item{% if item.children %} has-children{% endif %}{% if item.is_cta %} menu-item--cta{% endif %}">
+            <a
+                class="menu-link{% if item.is_cta %} menu-link--cta{% endif %}"
+                href="{{ item.url }}"{% if item.children %} aria-haspopup="true" aria-expanded="false"{% endif %}
+            >
+                {{ item.label }}
+            </a>
             {% if item.children %}
                 {% include "home/includes/nav.html" with items=item.children level=level|add:"1" %}
             {% endif %}
