@@ -21,28 +21,28 @@ HERO = {
 
 DIVISION_SUMMARIES = [
     {
-        "name": "13U AA / AAA",
-        "age_range": "Ages 11–13",
+        "name": "13U A / AA / AAA",
+        "age_range": "Ages 12–13",
         "description": (
             "Fundamental skill building with an emphasis on positional play, base running, and "
-            "game awareness. Practices are twice a week with weekend league play across the Lower Mainland."
+            "game awareness. Practices are twice a week plus league play across the Lower Mainland."
         ),
-        "coaches": "Head Coach: Jamie Liu · Assistant Coach: Morgan Patel",
+        "coaches": "TBA",
         "training_focus": [
-            "Arm care and pitching development clinics",
-            "Hitting labs with video feedback",
-            "Leadership days with 18U mentors",
+            "Arm care and pitching development",
+            "Hitting mechanics and situational drills",
+            "Weekly training with professional development staff",
         ],
         "cta": {"label": "13U Division Guide", "url": "/programs/"},
     },
     {
-        "name": "15U AA / AAA",
-        "age_range": "Ages 13–15",
+        "name": "15U A / AA / AAA",
+        "age_range": "Ages 14–15",
         "description": (
             "Competitive play with travel tournaments, strength training support, and a focus on "
-            "advanced game strategy. Practices three times per week plus strength & conditioning blocks."
+            "advanced game strategy. Practices two to three times per week depending on level of play."
         ),
-        "coaches": "Head Coach: Renee Marshall · Pitching Coach: Carlos Méndez",
+        "coaches": "15U AAA Coach: Ryan Crago",
         "training_focus": [
             "Advanced pitching and catching sessions",
             "Situational hitting and mental performance",
@@ -51,8 +51,8 @@ DIVISION_SUMMARIES = [
         "cta": {"label": "15U Division Guide", "url": "/programs/"},
     },
     {
-        "name": "18U Midget",
-        "age_range": "Ages 15–18",
+        "name": "18U AA / AAA",
+        "age_range": "Ages 16–18",
         "description": (
             "High-performance environment preparing athletes for post-secondary opportunities "
             "and elite competition. Includes strength coaches, video analysis, and college prep nights."
@@ -67,7 +67,7 @@ DIVISION_SUMMARIES = [
     },
     {
         "name": "26U Junior Men's",
-        "age_range": "Ages 18–26",
+        "age_range": "Ages 19–26",
         "description": (
             "A competitive-yet-community focused program for athletes continuing their baseball "
             "journey. Flexible training blocks support work and school schedules, with league play across B.C."
