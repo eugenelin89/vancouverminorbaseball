@@ -1,10 +1,50 @@
 """Static content data for the Vancouver Minor site."""
 
 HERO = {
-    "title": "Welcome to Vancouver Minor Baseball",
+    "title": "Baseball for Every Season in Vancouver",
     "eyebrow": "Home of the VMB Expos",
     "paragraphs": [
-        "Vancouver Minor Baseball has proudly been affiliated with BC Minor Baseball Association since 1999. We provide a positive and structured environment for youth and young adults to learn, develop, and compete in the game of baseball.",
+        "Vancouver Minor Baseball has proudly been affiliated with BC Minor Baseball Association since 1999.",
+        "We provide an inclusive pathway where athletes learn the game, grow as leaders, and compete at the highest community levels in British Columbia.",
+    ],
+    "highlights": [
+        "Player development programs for ages 11–25",
+        "Certified coaching staff, trainers, and mentors",
+        "Community-first culture rooted in sportsmanship",
+    ],
+    "cta": {"label": "Register for 2026", "url": "/registration/"},
+    "secondary_cta": {"label": "Explore Programs", "url": "/programs/"},
+    "hero_image": "images/hero-banner.jpg",
+    "hero_image_alt": "VMB Expos players celebrating a game-winning slide at home plate.",
+}
+
+ABOUT = {
+    "eyebrow": "About Vancouver Minor Baseball",
+    "title": "Rooted in Community Since 1999",
+    "mission": (
+        "Vancouver Minor Baseball Association is a volunteer-driven organization committed to making baseball accessible, safe, and inspiring for every athlete across Vancouver."
+    ),
+    "history": (
+        "From a handful of neighbourhood teams to a city-wide club, VMB has helped thousands of players discover their love of the game. We invest in professional coaching, leadership training, and year-round development to keep athletes engaged."
+    ),
+    "pillars": [
+        {
+            "title": "Player Development",
+            "description": "Progressive training plans, strength and conditioning support, and dedicated pitching and catching instruction for every division.",
+        },
+        {
+            "title": "Belonging & Inclusion",
+            "description": "Financial assistance programs, equipment libraries, and mentorship pairings ensure every athlete can take the field with confidence.",
+        },
+        {
+            "title": "Community Impact",
+            "description": "Players volunteer at local schools, support neighbourhood cleanups, and represent Vancouver at BC Minor and Baseball Canada events.",
+        },
+    ],
+    "stats": [
+        {"label": "Members in 2025", "value": "320+"},
+        {"label": "Certified Coaches", "value": "45"},
+        {"label": "Championships Since 2018", "value": "11"},
     ],
 }
 
@@ -65,16 +105,12 @@ REGISTRATION_PAGE = {
 
 NAVIGATION = [
     {"label": "Home", "url": "/", "children": []},
-    {
-        "label": "Registration",
-        "url": "/registration/",
-        "children": [],
-    },
-    {
-        "label": "Programs",
-        "url": "/programs/",
-        "children": [],
-    },
+    {"label": "About", "url": "/#about", "children": []},
+    {"label": "Divisions", "url": "/#divisions", "children": []},
+    {"label": "Schedule", "url": "/#schedule", "children": []},
+    {"label": "Why Join", "url": "/#why-join", "children": []},
+    {"label": "Contact", "url": "/#contact", "children": []},
+    {"label": "Registration", "url": "/registration/", "children": [], "is_cta": True},
 ]
 
 SOCIAL_LINKS = [
@@ -91,6 +127,137 @@ SOCIAL_LINKS = [
         "icon_path": "icons/instagram.svg",
     },
 ]
+
+VALUE_PROPS = [
+    {
+        "title": "Experienced Coaches",
+        "body": "NCCP-certified coaches build fundamentals through weekly skills labs, video review, and progress check-ins with families.",
+    },
+    {
+        "title": "Player Pathways",
+        "body": "Opportunities range from recreational leagues to tournament travel teams with exposure to college scouts and high-performance partners.",
+    },
+    {
+        "title": "Whole Athlete Support",
+        "body": "Mental performance workshops, athletic therapy partnerships, and leadership programs develop confident, resilient teammates.",
+    },
+]
+
+DIVISION_SUMMARIES = [
+    {
+        "name": "13U Pee Wee",
+        "ages": "Ages 11–13",
+        "summary": "Entry to full-sized baseball diamonds with a focus on fundamentals, confidence, and game awareness.",
+        "training": "Two practices and one weekend game each week from April through August.",
+        "coach": "Lead Coach: Jamie Chen",
+    },
+    {
+        "name": "15U Bantam",
+        "ages": "Ages 13–15",
+        "summary": "Athletes refine positional play, speed training, and strategy against top BC Minor competition.",
+        "training": "Three field sessions plus strength and conditioning support at our partner facility.",
+        "coach": "Lead Coach: Marco Ortiz",
+    },
+    {
+        "name": "18U Midget",
+        "ages": "Ages 15–18",
+        "summary": "High-performance reps with showcase tournaments, college prep advising, and leadership mentoring.",
+        "training": "Four combined practices or games weekly including travel tournaments across the Pacific Northwest.",
+        "coach": "Lead Coach: Serena Watanabe",
+    },
+    {
+        "name": "26U Junior Men's",
+        "ages": "Ages 19–26",
+        "summary": "Competitive men’s baseball blending university athletes and alumni returning to the diamond.",
+        "training": "Spring training camp, regular season double-headers, and fall development scrimmages.",
+        "coach": "Player-Coach: Devon Mitchell",
+    },
+]
+
+KEY_DATES = [
+    {
+        "date": "December 1, 2025",
+        "title": "2026 Registration Opens",
+        "description": "Secure your roster spot early and receive winter training invites.",
+    },
+    {
+        "date": "January 12, 2026",
+        "title": "Winter Workouts Begin",
+        "description": "Indoor skill sessions at Vancouver College Fieldhouse for all divisions.",
+    },
+    {
+        "date": "March 7–8, 2026",
+        "title": "Preseason Evaluation Weekend",
+        "description": "On-field assessments and team placements at Hillcrest Park."
+    },
+]
+
+TESTIMONIALS = [
+    {
+        "quote": "My daughter’s confidence skyrocketed thanks to the mentorship she received at VMB. Coaches celebrate every win and teach through every challenge.",
+        "attribution": "Parent of a 13U player",
+    },
+    {
+        "quote": "The Junior Men's program kept me connected to the game while studying at UBC. Practices are competitive, fun, and super organized.",
+        "attribution": "Evan, 26U infielder",
+    },
+    {
+        "quote": "We love the community feel—families show up, volunteers are amazing, and the kids leave the park smiling every time.",
+        "attribution": "Sharon, team manager",
+    },
+]
+
+GALLERY = [
+    {
+        "image": "images/achievement-01.png",
+        "alt": "15U AA VMB Expos holding the provincial championship banner.",
+        "caption": "15U AA Provincial Champions",
+    },
+    {
+        "image": "images/achievement-02.png",
+        "alt": "13U Expos celebrating a tournament win in Everett, Washington.",
+        "caption": "13U Summer Slam Winners",
+    },
+    {
+        "image": "images/achievement-07.png",
+        "alt": "VMB 15U Blue team gathered on the mound with trophies.",
+        "caption": "Ross Tournament Champions",
+    },
+    {
+        "image": "images/achievement-11.png",
+        "alt": "13U Expos posing with silver medals at Jevon Clarke Memorial Tournament.",
+        "caption": "Jevon Clarke Finalists",
+    },
+]
+
+FAQ_ITEMS = [
+    {
+        "question": "What equipment do players need?",
+        "answer": "Players require a glove, cleats, and batting helmet. VMB supplies team bats, catcher's gear, and uniforms. Our equipment library can assist with anything else needed.",
+    },
+    {
+        "question": "How much does a season cost?",
+        "answer": "2026 fees range from $395–$875 depending on the division. Financial assistance is available through KidSport, Jumpstart, and VMB subsidies—contact us for details.",
+    },
+    {
+        "question": "Where do teams practice and play?",
+        "answer": "Home diamonds include Hillcrest Park, Trout Lake, and Vancouver College. Travel teams compete across the Lower Mainland and Pacific Northwest tournaments.",
+    },
+    {
+        "question": "Who can I contact about volunteering?",
+        "answer": "Email volunteers@vancouverminor.com to learn about coaching, scorekeeping, and event support opportunities. We provide training for every role.",
+    },
+]
+
+CONTACT_INFO = {
+    "email": "info@vancouverminor.com",
+    "phone": "604-555-0199",
+    "phone_href": "+16045550199",
+    "address": "Hillcrest Park Diamond – 4501 Clancy Loranger Way, Vancouver, BC",
+    "map_url": "https://maps.google.com/?q=Hillcrest+Park+Baseball+Diamond+Vancouver",
+    "office_hours": "Mon–Fri 9:00 a.m.–4:00 p.m.",
+    "mailing_list_url": "https://vancouverminor.com/subscribe",
+}
 
 ACHIEVEMENTS = [
     {
@@ -125,4 +292,4 @@ ACHIEVEMENTS = [
     },
 ]
 
-FOOTER_TEXT = "© 2025 Vancouver Minor Baseball"
+FOOTER_TEXT = "© 2025 Vancouver Minor Baseball Association. All rights reserved."

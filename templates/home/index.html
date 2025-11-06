@@ -5,9 +5,9 @@
 {% include "home/includes/site_header.html" %}
 
 <main>
-    <section class="hero">
+    <section class="hero" id="top">
         <div class="hero-media">
-            <img src="{% static 'images/vmb_hero-banner.jpg' %}" alt="Replace vmb_hero-banner.jpg with a feature photo">
+            <img src="{% static hero.hero_image %}" alt="{{ hero.hero_image_alt }}">
         </div>
         <div class="hero-overlay"></div>
         <div class="hero-content container home-hero">
@@ -20,16 +20,89 @@
                     <p>{{ paragraph }}</p>
                 {% endfor %}
             </div>
+            {% if hero.highlights %}
+                <ul class="hero-highlights">
+                    {% for highlight in hero.highlights %}
+                        <li>{{ highlight }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <div class="hero-actions">
+                {% if hero.cta %}
+                    <a class="button button--primary" href="{{ hero.cta.url }}">{{ hero.cta.label }}</a>
+                {% endif %}
+                {% if hero.secondary_cta %}
+                    <a class="button button--ghost" href="{{ hero.secondary_cta.url }}">{{ hero.secondary_cta.label }}</a>
+                {% endif %}
+            </div>
         </div>
     </section>
 
-    <section class="philosophy">
+    <section class="about" id="about">
+        <div class="container about-grid">
+            <div class="about-intro">
+                <div class="section-heading">
+                    <span class="section-eyebrow">{{ about.eyebrow }}</span>
+                    <h2>{{ about.title }}</h2>
+                </div>
+                <p>{{ about.mission }}</p>
+                <p>{{ about.history }}</p>
+            </div>
+            <div class="about-pillars">
+                {% for pillar in about.pillars %}
+                    <article class="pillar-card">
+                        <h3>{{ pillar.title }}</h3>
+                        <p>{{ pillar.description }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+            <div class="about-stats" role="list">
+                {% for stat in about.stats %}
+                    <div class="stat-card" role="listitem">
+                        <span class="stat-value">{{ stat.value }}</span>
+                        <span class="stat-label">{{ stat.label }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="value-props" id="why-join">
         <div class="container">
-            <h2>Our Philosophy</h2>
-            <p>
-                At VMB, our priority is to foster a fun, inclusive, and development-focused baseball experience.
-                Our coaches emphasize teaching core skills, teamwork, and sportsmanship, helping athletes develop both on and off the field.
-            </p>
+            <div class="section-heading">
+                <span class="section-eyebrow">Why Join VMB?</span>
+                <h2>More Than Just Ballgames</h2>
+            </div>
+            <div class="value-grid">
+                {% for item in value_props %}
+                    <article class="value-card">
+                        <h3>{{ item.title }}</h3>
+                        <p>{{ item.body }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="divisions" id="divisions">
+        <div class="container">
+            <div class="section-heading">
+                <span class="section-eyebrow">Divisions</span>
+                <h2>Find the Right Team</h2>
+                <p>Each division offers age-appropriate coaching, schedules, and player supports designed to meet athletes where they are.</p>
+            </div>
+            <div class="division-grid">
+                {% for division in divisions %}
+                    <article class="division-card">
+                        <h3>{{ division.name }}</h3>
+                        <p class="division-ages">{{ division.ages }}</p>
+                        <p>{{ division.summary }}</p>
+                        <p class="division-training">{{ division.training }}</p>
+                        <p class="division-coach">{{ division.coach }}</p>
+                        <a class="button button--ghost division-cta" href="/registration/">Register Interest</a>
+                    </article>
+                {% endfor %}
+            </div>
         </div>
     </section>
 
@@ -52,10 +125,143 @@
             </div>
         </div>
     </section>
+
+    <section class="schedule" id="schedule">
+        <div class="container schedule-grid">
+            <div class="section-heading">
+                <span class="section-eyebrow">Key Dates</span>
+                <h2>Upcoming Events</h2>
+                <p>Stay up to date with registration milestones, evaluations, and community events for the 2026 season.</p>
+            </div>
+            <ol class="schedule-list">
+                {% for item in key_dates %}
+                    <li>
+                        <div class="schedule-date">{{ item.date }}</div>
+                        <div class="schedule-content">
+                            <h3>{{ item.title }}</h3>
+                            <p>{{ item.description }}</p>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+    </section>
+
+    <section class="testimonials" aria-labelledby="testimonials-title">
+        <div class="container">
+            <div class="section-heading">
+                <span class="section-eyebrow">Voices from the Diamond</span>
+                <h2 id="testimonials-title">Families Love the VMB Experience</h2>
+            </div>
+            <div class="testimonial-grid">
+                {% for testimonial in testimonials %}
+                    <figure class="testimonial-card">
+                        <blockquote>“{{ testimonial.quote }}”</blockquote>
+                        <figcaption>— {{ testimonial.attribution }}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="gallery" aria-labelledby="gallery-title">
+        <div class="container">
+            <div class="section-heading">
+                <span class="section-eyebrow">Photo Gallery</span>
+                <h2 id="gallery-title">Moments that Define Our Club</h2>
+            </div>
+            <div class="gallery-grid">
+                {% for item in gallery %}
+                    <figure class="gallery-card">
+                        <img src="{% static item.image %}" alt="{{ item.alt }}">
+                        <figcaption>{{ item.caption }}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="faq" aria-labelledby="faq-title">
+        <div class="container">
+            <div class="section-heading">
+                <span class="section-eyebrow">FAQ</span>
+                <h2 id="faq-title">Answers for New Families</h2>
+            </div>
+            <div class="faq-grid">
+                {% for item in faqs %}
+                    <article class="faq-item">
+                        <h3>{{ item.question }}</h3>
+                        <p>{{ item.answer }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-banner" aria-labelledby="cta-banner-title">
+        <div class="container cta-banner-content">
+            <div>
+                <h2 id="cta-banner-title">Ready to step up to the plate?</h2>
+                <p>Secure your spot for the 2026 season and receive invites to winter development sessions.</p>
+            </div>
+            <a class="button button--primary" href="/registration/">Register Today</a>
+        </div>
+    </section>
+
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+        <div class="container contact-grid">
+            <div>
+                <div class="section-heading">
+                    <span class="section-eyebrow">Get in Touch</span>
+                    <h2 id="contact-title">We’re here to help</h2>
+                </div>
+                <p>Email us at <a href="mailto:{{ contact.email }}">{{ contact.email }}</a> or call <a href="tel:{{ contact.phone_href }}">{{ contact.phone }}</a>.</p>
+                <p>Visit us at <a href="{{ contact.map_url }}" target="_blank" rel="noopener">{{ contact.address }}</a>.</p>
+                <p>Office hours: {{ contact.office_hours }}</p>
+            </div>
+            <div class="contact-card">
+                <h3>Stay in the Loop</h3>
+                <p>Join the mailing list to receive schedule announcements, volunteer opportunities, and community highlights.</p>
+                <a class="button button--ghost" href="{{ contact.mailing_list_url }}">Join the Mailing List</a>
+            </div>
+        </div>
+    </section>
 </main>
 
 <footer class="site-footer">
-    <div class="container">
+    <div class="container footer-grid">
+        <div>
+            <a class="footer-logo" href="/">
+                <img src="{% static 'images/vmb_logo.png' %}" alt="Vancouver Minor Baseball logo">
+            </a>
+            <p class="footer-text">Community baseball serving Vancouver families since 1999.</p>
+        </div>
+        <div>
+            <h3 class="footer-heading">Quick Links</h3>
+            <ul class="footer-links">
+                {% for item in navigation %}
+                    <li><a href="{{ item.url }}">{{ item.label }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div>
+            <h3 class="footer-heading">Contact</h3>
+            <ul class="footer-contact">
+                <li><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></li>
+                <li><a href="tel:{{ contact.phone_href }}">{{ contact.phone }}</a></li>
+                <li><a href="{{ contact.map_url }}" target="_blank" rel="noopener">{{ contact.address }}</a></li>
+            </ul>
+            <div class="footer-social">
+                {% for link in social_links %}
+                    <a href="{{ link.url }}" class="social" target="_blank" rel="noopener">
+                        <img src="{% static link.icon_path %}" alt="{{ link.name }} icon" class="social-icon">
+                        <span class="sr-only">{{ link.name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
         <p>{{ footer_text }}</p>
     </div>
 </footer>

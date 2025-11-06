@@ -4,13 +4,21 @@ from django.http import Http404
 from django.views.generic import TemplateView
 
 from .content import (
+    ABOUT,
     ACHIEVEMENTS,
+    CONTACT_INFO,
+    DIVISION_SUMMARIES,
+    FAQ_ITEMS,
     FOOTER_TEXT,
+    GALLERY,
     HERO,
+    KEY_DATES,
     NAVIGATION,
     PROGRAMS_PAGE,
     REGISTRATION_PAGE,
     SOCIAL_LINKS,
+    TESTIMONIALS,
+    VALUE_PROPS,
 )
 
 
@@ -22,6 +30,9 @@ def build_page_registry():
         for item in items:
             url = item.get("url", "")
             label = item.get("label", "Page")
+            if not url or url == "#" or "#" in url or url.startswith("http"):
+                continue
+
             if url and url != "#":
                 slug = url.strip("/")
                 if slug not in pages:
@@ -37,6 +48,7 @@ def base_context():
         "navigation": NAVIGATION,
         "footer_text": FOOTER_TEXT,
         "social_links": SOCIAL_LINKS,
+        "contact": CONTACT_INFO,
     }
 
 
@@ -50,6 +62,13 @@ class HomePageView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(base_context())
         context["hero"] = HERO
+        context["about"] = ABOUT
+        context["value_props"] = VALUE_PROPS
+        context["divisions"] = DIVISION_SUMMARIES
+        context["key_dates"] = KEY_DATES
+        context["testimonials"] = TESTIMONIALS
+        context["gallery"] = GALLERY
+        context["faqs"] = FAQ_ITEMS
         context["achievements"] = [
             {**achievement, "lines": achievement["title"].split("\n")}
             for achievement in ACHIEVEMENTS
