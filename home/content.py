@@ -1,11 +1,119 @@
 """Static content data for the Vancouver Minor site."""
 
 HERO = {
-    "title": "Welcome to Vancouver Minor Baseball",
+    "title": "Baseball for Every Vancouver Athlete",
     "eyebrow": "Home of the VMB Expos",
     "paragraphs": [
-        "Vancouver Minor Baseball has proudly been affiliated with BC Minor Baseball Association since 1999. We provide a positive and structured environment for youth and young adults to learn, develop, and compete in the game of baseball.",
+        "Since 1999, Vancouver Minor Baseball has welcomed players and families into an inclusive, competitive, and community-first experience.",
+        "Certified coaches, transparent communication, and elite development pathways help every athlete take the next step—on and off the diamond.",
     ],
+    "cta_primary": {"label": "Register for 2026", "url": "/registration/"},
+    "cta_secondary": {"label": "Explore Our Divisions", "url": "/#divisions"},
+    "hero_support": "Tryouts begin March 1 · Opening Day April 18",
+}
+
+VALUE_PROPOSITIONS = [
+    {
+        "title": "Player-First Coaching",
+        "description": "NCCP-certified coaches deliver skill progressions, video review, and individualized development plans at every level.",
+        "icon": "🎯",
+    },
+    {
+        "title": "Inclusive Community",
+        "description": "Financial assistance, equipment loaner programs, and mentorship initiatives ensure every athlete feels welcome.",
+        "icon": "🤝",
+    },
+    {
+        "title": "Competitive Pathways",
+        "description": "Tiered teams (A, AA, AAA) compete across BC and the Pacific Northwest, with exposure to collegiate recruiters and scouts.",
+        "icon": "🏆",
+    },
+]
+
+DIVISION_SUMMARIES = [
+    {
+        "name": "13U Pee Wee",
+        "ages": "Ages 11–13",
+        "training_focus": "Fundamentals, position rotations, and confidence building with weekly skill labs.",
+        "practice_days": "Practices Tue/Thu · Games Sat",
+        "coach": "Head Coach: Jamie Singh",
+    },
+    {
+        "name": "15U Bantam",
+        "ages": "Ages 14–15",
+        "training_focus": "Advanced defensive systems, pitching development, and sport performance workshops.",
+        "practice_days": "Practices Mon/Wed · Games Fri",
+        "coach": "Head Coach: Carla Mendes",
+    },
+    {
+        "name": "18U Midget",
+        "ages": "Ages 16–18",
+        "training_focus": "Showcase tournaments, collegiate preparation, leadership, and sport science support.",
+        "practice_days": "Practices Tue/Thu/Sun",
+        "coach": "Head Coach: Andre Delgado",
+    },
+    {
+        "name": "26U Junior Men's",
+        "ages": "Ages 19–26",
+        "training_focus": "High-performance competition, strength & conditioning, and mentorship for younger teams.",
+        "practice_days": "Practices Wed/Fri · Games Sun",
+        "coach": "Head Coach: Priya Patel",
+    },
+]
+
+TESTIMONIALS = [
+    {
+        "quote": "Our son found a second family with the Expos. His pitching velocity jumped 6 mph and his confidence soared.",
+        "attribution": "— Allison W., 15U parent",
+    },
+    {
+        "quote": "The coaching staff goes beyond drills—they teach accountability, leadership, and how to compete the right way.",
+        "attribution": "— Coach Marcus, 18U assistant",
+    },
+    {
+        "quote": "Joining Vancouver Minor Baseball helped me earn a college roster spot. The exposure and support are unmatched.",
+        "attribution": "— Riley N., 26U alum",
+    },
+]
+
+GALLERY = [
+    {
+        "image": "images/achievement-09.png",
+        "alt": "VMB players celebrate a walk-off win at dusk",
+        "caption": "Walk-off celebrations at Nanaimo Park",
+    },
+    {
+        "image": "images/achievement-10.png",
+        "alt": "13U Expos player stretching for an out at first base",
+        "caption": "13U Expos flashing the leather",
+    },
+    {
+        "image": "images/achievement-08.png",
+        "alt": "26U Expos lineup during national anthem",
+        "caption": "Junior Men's squad ready for first pitch",
+    },
+]
+
+KEY_DATES = [
+    {"label": "Winter Skills Clinics", "date": "Saturdays · January 10 – February 21"},
+    {"label": "Open Tryouts", "date": "March 1–3 · Nanaimo Park"},
+    {"label": "Season Kickoff", "date": "April 18 · Opening Night"},
+    {"label": "Community Day & BBQ", "date": "June 7 · John Hendry Park"},
+]
+
+CONTACT_INFO = {
+    "email": "registrar@vmbaseball.ca",
+    "phone": "604-555-0199",
+    "address": "Nanaimo Park Diamond, 2390 E 46th Ave, Vancouver, BC",
+    "map_url": "https://maps.app.goo.gl/5xHj9hNxKD9VMBPark",
+    "office_hours": "Mon–Fri · 9am – 4pm",
+}
+
+LEAD_CAPTURE = {
+    "title": "Get season updates",
+    "description": "Join the mailing list for registration reminders, tryout details, and community events.",
+    "placeholder": "Email address",
+    "button": "Notify Me",
 }
 
 PROGRAMS_PAGE = {
@@ -65,15 +173,25 @@ REGISTRATION_PAGE = {
 
 NAVIGATION = [
     {"label": "Home", "url": "/", "children": []},
+    {"label": "About", "url": "/#about", "children": []},
+    {"label": "Divisions", "url": "/#divisions", "children": []},
+    {"label": "Schedule", "url": "/#schedule", "children": []},
+    {"label": "Gallery", "url": "/#gallery", "children": []},
     {
         "label": "Registration",
         "url": "/registration/",
         "children": [],
     },
     {
-        "label": "Programs",
-        "url": "/programs/",
+        "label": "Contact",
+        "url": "/#contact",
         "children": [],
+    },
+    {
+        "label": "Register",
+        "url": "/registration/",
+        "children": [],
+        "is_cta": True,
     },
 ]
 

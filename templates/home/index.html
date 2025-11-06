@@ -5,9 +5,9 @@
 {% include "home/includes/site_header.html" %}
 
 <main>
-    <section class="hero">
+    <section class="hero" id="hero">
         <div class="hero-media">
-            <img src="{% static 'images/vmb_hero-banner.jpg' %}" alt="Replace vmb_hero-banner.jpg with a feature photo">
+            <img src="{% static 'images/hero-banner.jpg' %}" alt="Vancouver Minor Baseball player slides across home plate">
         </div>
         <div class="hero-overlay"></div>
         <div class="hero-content container home-hero">
@@ -20,27 +20,138 @@
                     <p>{{ paragraph }}</p>
                 {% endfor %}
             </div>
+            {% if hero.hero_support %}
+                <p class="hero-support">{{ hero.hero_support }}</p>
+            {% endif %}
+            <div class="cta-group" role="group" aria-label="Primary calls to action">
+                {% if hero.cta_primary %}
+                    <a class="button button--primary" href="{{ hero.cta_primary.url }}">{{ hero.cta_primary.label }}</a>
+                {% endif %}
+                {% if hero.cta_secondary %}
+                    <a class="button button--ghost" href="{{ hero.cta_secondary.url }}">{{ hero.cta_secondary.label }}</a>
+                {% endif %}
+            </div>
         </div>
     </section>
 
-    <section class="philosophy">
-        <div class="container">
-            <h2>Our Philosophy</h2>
-            <p>
-                At VMB, our priority is to foster a fun, inclusive, and development-focused baseball experience.
-                Our coaches emphasize teaching core skills, teamwork, and sportsmanship, helping athletes develop both on and off the field.
-            </p>
+    <section class="section section--card about" id="about">
+        <div class="container about-grid">
+            <div>
+                <h2>Community-rooted baseball in Vancouver</h2>
+                <p>
+                    Vancouver Minor Baseball is a not-for-profit association powered by volunteers, alumni, and partners who
+                    believe baseball should be accessible, inspiring, and fun for every athlete. We focus on culture first,
+                    pairing elite instruction with inclusive programming.
+                </p>
+                <p>
+                    From Nanaimo Park to showcase tournaments across North America, our teams compete with pride while giving
+                    back through mentorship clinics, community service, and grassroots fundraising.
+                </p>
+            </div>
+            <aside class="about-card" aria-label="Association milestones">
+                <h3>Fast facts</h3>
+                <ul>
+                    <li><strong>1999</strong> &mdash; Founded and joined BC Minor Baseball</li>
+                    <li><strong>350+</strong> active players across four divisions</li>
+                    <li><strong>15</strong> certified coaches &amp; skills specialists</li>
+                    <li><strong>12</strong> provincial &amp; tournament titles since 2020</li>
+                </ul>
+            </aside>
         </div>
     </section>
 
-    <section class="achievements" id="achievements">
+    <section class="section value-props" id="why-join">
         <div class="container">
-            <h2>Recent Highlights</h2>
+            <div class="section-heading">
+                <h2>Why families choose VMB</h2>
+                <p>Balanced development, inclusive support, and competitive opportunities from 13U to Junior Men's.</p>
+            </div>
+            <div class="value-grid">
+                {% for prop in value_props %}
+                    <article class="value-card">
+                        <span class="value-card__icon" aria-hidden="true">{{ prop.icon }}</span>
+                        <h3>{{ prop.title }}</h3>
+                        <p>{{ prop.description }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="section divisions" id="divisions">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Divisions at a glance</h2>
+                <p>Age-based teams with tiered competition (A, AA, AAA) and clear pathways between each level.</p>
+            </div>
+            <div class="divisions-grid">
+                {% for division in divisions %}
+                    <article class="division-card">
+                        <h3>{{ division.name }}</h3>
+                        <p class="division-card__ages">{{ division.ages }}</p>
+                        <p class="division-card__focus">{{ division.training_focus }}</p>
+                        <ul class="division-card__details">
+                            <li><span>Schedule:</span> {{ division.practice_days }}</li>
+                            <li><span>Coaching:</span> {{ division.coach }}</li>
+                        </ul>
+                        <a class="division-card__cta" href="/programs/">View program details</a>
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="section schedule" id="schedule">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Key 2026 season dates</h2>
+                <p>Plan ahead for clinics, tryouts, opening day, and community celebrations.</p>
+            </div>
+            <ul class="schedule-list">
+                {% for item in key_dates %}
+                    <li class="schedule-item">
+                        <span class="schedule-item__date">{{ item.date }}</span>
+                        <span class="schedule-item__label">{{ item.label }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="schedule-cta">
+                <a class="button button--primary" href="/registration/">See registration timeline</a>
+                <a class="button button--ghost" href="/programs/">Download division overview</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section testimonials" id="stories">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Stories from the diamond</h2>
+                <p>Parents, coaches, and alumni share what makes Vancouver Minor Baseball different.</p>
+            </div>
+            <div class="testimonial-grid">
+                {% for testimonial in testimonials %}
+                    <figure class="testimonial-card">
+                        <blockquote>
+                            <p>{{ testimonial.quote }}</p>
+                        </blockquote>
+                        <figcaption>{{ testimonial.attribution }}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="section highlights" id="achievements">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Recent highlights</h2>
+                <p>Championship moments and milestone performances from the VMB Expos.</p>
+            </div>
             <div class="achievement-grid">
                 {% for achievement in achievements %}
                     <article class="achievement-card">
                         <div class="image-frame">
-                            <img src="{% static 'images/'|add:achievement.slug|add:'.png' %}" alt="Replace {{ achievement.slug }}.png – {{ achievement.image_alt }}">
+                            <img loading="lazy" src="{% static 'images/'|add:achievement.slug|add:'.png' %}" alt="{{ achievement.image_alt }}">
                         </div>
                         <div class="card-body">
                             {% for line in achievement.lines %}
@@ -52,11 +163,100 @@
             </div>
         </div>
     </section>
+
+    <section class="section gallery" id="gallery">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Inside the VMB experience</h2>
+                <p>Action shots, celebrations, and community moments from recent seasons.</p>
+            </div>
+            <div class="gallery-grid">
+                {% for item in gallery %}
+                    <figure class="gallery-card">
+                        <img loading="lazy" src="{% static item.image %}" alt="{{ item.alt }}">
+                        <figcaption>{{ item.caption }}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="section lead-capture" aria-labelledby="lead-capture-title">
+        <div class="container lead-card">
+            <div>
+                <h2 id="lead-capture-title">{{ lead_capture.title }}</h2>
+                <p>{{ lead_capture.description }}</p>
+            </div>
+            <form class="lead-form" method="post" action="https://formsubmit.co/{{ contact_info.email }}" target="_blank">
+                <label class="sr-only" for="lead-email">{{ lead_capture.placeholder }}</label>
+                <input id="lead-email" type="email" name="email" placeholder="{{ lead_capture.placeholder }}" required>
+                <button type="submit" class="button button--primary">{{ lead_capture.button }}</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="section contact" id="contact">
+        <div class="container contact-grid">
+            <div class="contact-info">
+                <h2>Let's connect</h2>
+                <p>Questions about registration, volunteering, or sponsorships? Our team is here to help.</p>
+                <ul class="contact-list">
+                    <li><span>Email:</span> <a href="mailto:{{ contact_info.email }}">{{ contact_info.email }}</a></li>
+                    <li><span>Phone:</span> <a href="tel:+16045550199">{{ contact_info.phone }}</a></li>
+                    <li><span>Field Office:</span> {{ contact_info.address }}</li>
+                    <li><span>Office Hours:</span> {{ contact_info.office_hours }}</li>
+                </ul>
+                <a class="button button--ghost" href="{{ contact_info.map_url }}" target="_blank" rel="noopener">View map &amp; directions</a>
+            </div>
+            <div class="contact-card">
+                <h3>Coach or sponsor inquiry?</h3>
+                <p>Share a few details and our team will follow up within one business day.</p>
+                <form class="contact-form" method="post" action="https://formsubmit.co/{{ contact_info.email }}" target="_blank">
+                    <label class="sr-only" for="contact-name">Name</label>
+                    <input id="contact-name" type="text" name="name" placeholder="Name" required>
+                    <label class="sr-only" for="contact-email">Email</label>
+                    <input id="contact-email" type="email" name="email" placeholder="Email" required>
+                    <label class="sr-only" for="contact-message">How can we help?</label>
+                    <textarea id="contact-message" name="message" rows="4" placeholder="How can we help?" required></textarea>
+                    <button type="submit" class="button button--primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </section>
 </main>
 
 <footer class="site-footer">
-    <div class="container">
-        <p>{{ footer_text }}</p>
+    <div class="container footer-grid">
+        <div>
+            <h2 class="footer-title">Vancouver Minor Baseball</h2>
+            <p class="footer-text">Building confident athletes and community leaders through the game we love.</p>
+            <p class="footer-copy">{{ footer_text }}</p>
+        </div>
+        <div>
+            <h3 class="footer-heading">Explore</h3>
+            <ul class="footer-links">
+                <li><a href="/#about">About</a></li>
+                <li><a href="/#divisions">Divisions</a></li>
+                <li><a href="/programs/">Programs</a></li>
+                <li><a href="/registration/">Registration</a></li>
+            </ul>
+        </div>
+        <div>
+            <h3 class="footer-heading">Connect</h3>
+            <ul class="footer-links">
+                <li><a href="mailto:{{ contact_info.email }}">Email the registrar</a></li>
+                <li><a href="tel:+16045550199">Call {{ contact_info.phone }}</a></li>
+                <li><a href="{{ contact_info.map_url }}" target="_blank" rel="noopener">Nanaimo Park directions</a></li>
+            </ul>
+            <div class="footer-social">
+                {% for link in social_links %}
+                    <a href="{{ link.url }}" class="social" target="_blank" rel="noopener">
+                        <img src="{% static link.icon_path %}" alt="{{ link.name }} icon" class="social-icon">
+                        <span class="sr-only">{{ link.name }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </footer>
 
