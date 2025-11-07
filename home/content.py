@@ -27,7 +27,7 @@ DIVISION_SUMMARIES = [
             "Fundamental skill building with an emphasis on positional play, base running, and "
             "game awareness. Practices are twice a week plus league play across the Lower Mainland."
         ),
-        "coaches": "TBA",
+        "coaches": "",
         "training_focus": [
             "Arm care and pitching development",
             "Hitting mechanics and situational drills",
@@ -42,7 +42,7 @@ DIVISION_SUMMARIES = [
             "Competitive play with travel tournaments, strength training support, and a focus on "
             "advanced game strategy. Practices two to three times per week depending on level of play."
         ),
-        "coaches": "15U AAA Coach: Ryan Crago",
+        "coaches": "",
         "training_focus": [
             "Advanced pitching and catching sessions",
             "Situational hitting and mental performance",
@@ -51,13 +51,13 @@ DIVISION_SUMMARIES = [
         "cta": {"label": "15U Division Guide", "url": "/programs/"},
     },
     {
-        "name": "18U AA / AAA",
+        "name": "18U AA / AAA / CP",
         "age_range": "Ages 16–18",
         "description": (
             "High-performance environment preparing athletes for post-secondary opportunities "
-            "and elite competition. Includes strength coaches, video analysis, and college prep nights."
+            "and elite competition. Includes strength coaches, and college prep info sessions."
         ),
-        "coaches": "Head Coach: Samira Ko · Player Development: Chris Allen",
+        "coaches": "",
         "training_focus": [
             "Recruitment seminars with alumni",
             "Velocity and agility performance testing",
@@ -66,13 +66,13 @@ DIVISION_SUMMARIES = [
         "cta": {"label": "18U Division Guide", "url": "/programs/"},
     },
     {
-        "name": "26U Junior Men's",
+        "name": "26U Jr Men's",
         "age_range": "Ages 19–26",
         "description": (
             "A competitive-yet-community focused program for athletes continuing their baseball "
             "journey. Flexible training blocks support work and school schedules, with league play across B.C."
         ),
-        "coaches": "Head Coach: Daniel Wright · Team Manager: Priya Bains",
+        "coaches": "",
         "training_focus": [
             "High-intensity training pods",
             "Community mentorship with younger divisions",
@@ -161,24 +161,24 @@ GALLERY_ITEMS = [
 
 SCHEDULE_EVENTS = [
     {
-        "date": "Nov 12",
-        "title": "Winter Training Orientation",
-        "description": "Families meet the coaching staff, tour Nanaimo Park facilities, and pick up training plans.",
+        "date": "November",
+        "title": "Winter Training",
+        "description": "Players train in hitting, pitching, catching, infielding, and strength & conditioning sessions.",
     },
     {
         "date": "Dec 01",
         "title": "2026 Season Registration Opens",
-        "description": "Secure your roster spot early. Early bird pricing is available through December 31.",
+        "description": "Secure your roster spot early.",
     },
     {
-        "date": "Jan 10",
-        "title": "Tryout Prep Clinics Begin",
-        "description": "Optional small-group sessions for hitters, pitchers, and catchers across every division.",
+        "date": "Jan 4",
+        "title": "AA / AAA Tryout Begins",
+        "description": "For players interested in playing at a competitive level, please pay attention to your division's tryout dates.",
     },
     {
-        "date": "Feb 22",
-        "title": "Official Tryouts Weekend",
-        "description": "Division-specific evaluations followed by team announcements and parent info sessions.",
+        "date": "March",
+        "title": "Season Kickoff",
+        "description": "Teams are finalized and practices begin.",
     },
 ]
 
