@@ -4,10 +4,10 @@
 {% block content %}
 {% include "home/includes/site_header.html" %}
 
-<main>
-    <section class="hero">
+<main id="main-content">
+    <section class="hero" id="top">
         <div class="hero-media">
-            <img src="{% static 'images/vmb_hero-banner.jpg' %}" alt="Replace vmb_hero-banner.jpg with a feature photo">
+            <img src="{% static 'images/vmb_hero-banner.jpg' %}" alt="Vancouver Minor Baseball players celebrating a big win under the lights.">
         </div>
         <div class="hero-overlay"></div>
         <div class="hero-content container home-hero">
@@ -20,27 +20,106 @@
                     <p>{{ paragraph }}</p>
                 {% endfor %}
             </div>
+            {% if hero.support_points %}
+                <ul class="hero-highlights">
+                    {% for point in hero.support_points %}
+                        <li>{{ point }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <div class="hero-actions">
+                <a class="button button--primary" href="{{ hero.cta_primary.url }}">{{ hero.cta_primary.label }}</a>
+                <a class="button button--ghost-inverse" href="{{ hero.cta_secondary.url }}">{{ hero.cta_secondary.label }}</a>
+            </div>
         </div>
     </section>
 
-    <section class="philosophy">
-        <div class="container">
-            <h2>Our Philosophy</h2>
-            <p>
-                At VMB, our priority is to foster a fun, inclusive, and development-focused baseball experience.
-                Our coaches emphasize teaching core skills, teamwork, and sportsmanship, helping athletes develop both on and off the field.
-            </p>
+    <section class="about" id="about">
+        <div class="container about-grid">
+            <div class="about-copy">
+                <h2>Why Vancouver Minor Baseball?</h2>
+                <p>
+                    Our mission is to deliver a complete baseball experience that develops confident athletes and outstanding community members.
+                    We combine high-performance coaching with mentorship, academic support, and volunteer opportunities for every player.
+                </p>
+                <p>
+                    Families choose VMB for its welcoming environment, transparent communication, and championship pedigree.
+                    From first-time players to university prospects, everyone receives a tailored plan that helps them thrive.
+                </p>
+            </div>
+            <div class="value-grid">
+                {% for value in value_props %}
+                    <article class="value-card">
+                        <h3>{{ value.title }}</h3>
+                        <p>{{ value.description }}</p>
+                    </article>
+                {% endfor %}
+            </div>
         </div>
     </section>
 
-    <section class="achievements" id="achievements">
+    <section class="divisions" id="divisions">
         <div class="container">
-            <h2>Recent Highlights</h2>
+            <div class="section-heading">
+                <h2>Find Your Division</h2>
+                <p>Every athlete is placed in the environment that matches their age, goals, and experience.</p>
+            </div>
+            <div class="division-grid">
+                {% for division in divisions %}
+                    <article class="division-card">
+                        <header class="division-header">
+                            <h3>{{ division.name }}</h3>
+                            <span class="division-age">{{ division.age_range }}</span>
+                        </header>
+                        <p>{{ division.description }}</p>
+                        <p class="division-coaches">{{ division.coaches }}</p>
+                        <ul class="division-focus">
+                            {% for focus in division.training_focus %}
+                                <li>{{ focus }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% if division.cta %}
+                            <a class="button button--ghost" href="{{ division.cta.url }}">{{ division.cta.label }}</a>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="schedule" id="schedule">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Key Dates for the 2026 Season</h2>
+                <p>Mark your calendar so you never miss an important milestone on the road to opening day.</p>
+            </div>
+            <div class="schedule-grid">
+                {% for event in schedule_events %}
+                    <article class="schedule-card">
+                        <span class="schedule-date">{{ event.date }}</span>
+                        <h3>{{ event.title }}</h3>
+                        <p>{{ event.description }}</p>
+                    </article>
+                {% endfor %}
+            </div>
+            <div class="schedule-cta">
+                <a class="button button--primary" href="/registration/">Secure Your Spot</a>
+                <a class="button button--text" href="/programs/">View Full Program Overview</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="achievements" id="news">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Recent Highlights</h2>
+                <p>News from our diamonds, including tournament finishes, community events, and alumni spotlights.</p>
+            </div>
             <div class="achievement-grid">
                 {% for achievement in achievements %}
                     <article class="achievement-card">
                         <div class="image-frame">
-                            <img src="{% static 'images/'|add:achievement.slug|add:'.png' %}" alt="Replace {{ achievement.slug }}.png – {{ achievement.image_alt }}">
+                            <img src="{% static 'images/'|add:achievement.slug|add:'.png' %}" alt="{{ achievement.image_alt }}" loading="lazy">
                         </div>
                         <div class="card-body">
                             {% for line in achievement.lines %}
@@ -52,13 +131,119 @@
             </div>
         </div>
     </section>
+
+    <section class="testimonials" id="testimonials">
+        <div class="container">
+            <div class="section-heading">
+                <h2>What Families &amp; Players Are Saying</h2>
+                <p>Hear how VMB supports growth on and off the field.</p>
+            </div>
+            <div class="testimonial-grid">
+                {% for testimonial in testimonials %}
+                    <figure class="testimonial-card">
+                        <blockquote>
+                            <p>{{ testimonial.quote }}</p>
+                        </blockquote>
+                        <figcaption>
+                            <span class="testimonial-name">{{ testimonial.name }}</span>
+                            <span class="testimonial-role">{{ testimonial.role }}</span>
+                        </figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="gallery" id="gallery">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Inside the VMB Community</h2>
+                <p>A glimpse at the energy, teamwork, and pride across our programs.</p>
+            </div>
+            <div class="gallery-grid">
+                {% for item in gallery_items %}
+                    <figure class="gallery-card">
+                        <img src="{% static item.image %}" alt="{{ item.alt }}" loading="lazy">
+                        <figcaption>{{ item.caption }}</figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="lead-capture" id="updates">
+        <div class="container lead-capture-card">
+            <div class="lead-copy">
+                <h2>{{ lead_capture.title }}</h2>
+                <p>{{ lead_capture.intro }}</p>
+                <p class="lead-privacy">{{ lead_capture.privacy_note }}</p>
+            </div>
+            <form class="lead-form" method="post" action="https://formsubmit.co/vmb-updates">
+                <label class="sr-only" for="lead-email">Email address</label>
+                <input id="lead-email" type="email" name="email" placeholder="you@example.com" required>
+                <button type="submit" class="button button--primary">Notify Me</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="faq" id="faq">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Frequently Asked Questions</h2>
+                <p>Answers to the most common questions from new families.</p>
+            </div>
+            <div class="faq-accordion">
+                {% for faq in faqs %}
+                    <details class="faq-item">
+                        <summary>{{ faq.question }}</summary>
+                        <p>{{ faq.answer }}</p>
+                    </details>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="contact" id="contact">
+        <div class="container contact-grid">
+            <div class="contact-card contact-card--primary">
+                <h2>Contact &amp; Visit</h2>
+                <p>Email us at <a href="mailto:{{ contact_info.email }}">{{ contact_info.email }}</a> </p>
+                <p class="contact-address">
+                    <strong>Clubhouse:</strong>
+                    <a href="{{ contact_info.map_url }}" target="_blank" rel="noopener">{{ contact_info.address }}</a>
+                </p>
+               
+                <ul class="contact-hours">
+                    {% for hours in contact_info.office_hours %}
+                        <li>{{ hours }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="contact-card contact-card--secondary">
+                <h3>Ready to get started?</h3>
+                <p>Registration opens December 1. Secure your spot now or ask about volunteer and sponsorship opportunities.</p>
+                <div class="contact-actions">
+                    <a class="button button--primary" href="/registration/">Register Today</a>
+                    <a class="button button--ghost-inverse" href="mailto:partnerships@vancouverminorbaseball.com">Partner With Us</a>
+                </div>
+                <p class="contact-social-cta">Follow VMB on social for live game updates and behind-the-scenes stories.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-banner">
+        <div class="container cta-banner-card">
+            <h2>Join the VMB Expos Family</h2>
+            <p>Elite coaching, inclusive culture, and a pathway from 13U to Junior Men's baseball.</p>
+            <div class="cta-banner-actions">
+                <a class="button button--primary" href="/registration/">Start Registration</a>
+                <a class="button button--text" href="/programs/">Download Program Details</a>
+            </div>
+        </div>
+    </section>
 </main>
 
-<footer class="site-footer">
-    <div class="container">
-        <p>{{ footer_text }}</p>
-    </div>
-</footer>
+{% include "home/includes/footer.html" %}
 
 {% include "home/includes/nav_script.html" %}
 {% endblock %}

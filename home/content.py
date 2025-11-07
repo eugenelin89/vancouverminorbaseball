@@ -4,8 +4,221 @@ HERO = {
     "title": "Welcome to Vancouver Minor Baseball",
     "eyebrow": "Home of the VMB Expos",
     "paragraphs": [
-        "Vancouver Minor Baseball has proudly been affiliated with BC Minor Baseball Association since 1999. We provide a positive and structured environment for youth and young adults to learn, develop, and compete in the game of baseball.",
+        (
+            "Since 1999, Vancouver Minor Baseball has helped athletes in Vancouver grow their "
+            "skills, confidence, and love of the game through high-quality coaching and a "
+            "supportive community."
+        ),
     ],
+    "support_points": [
+        "Certified, NCCP-trained coaching staff",
+        "Player development pathways from 13U through Junior Men's",
+        "Inclusive, community-first culture for every level of experience",
+    ],
+    "cta_primary": {"label": "Register for 2026", "url": "/registration/"},
+    "cta_secondary": {"label": "Explore Our Divisions", "url": "/#divisions"},
+}
+
+DIVISION_SUMMARIES = [
+    {
+        "name": "13U A / AA / AAA",
+        "age_range": "Ages 12–13",
+        "description": (
+            "Fundamental skill building with an emphasis on positional play, base running, and "
+            "game awareness. Practices are twice a week plus league play across the Lower Mainland."
+        ),
+        "coaches": "",
+        "training_focus": [
+            "Arm care and pitching development",
+            "Hitting mechanics and situational drills",
+            "Weekly training with professional development staff",
+        ],
+        "cta": {"label": "13U Division Guide", "url": "/programs/"},
+    },
+    {
+        "name": "15U A / AA / AAA",
+        "age_range": "Ages 14–15",
+        "description": (
+            "Competitive play with travel tournaments, strength training support, and a focus on "
+            "advanced game strategy. Practices two to three times per week depending on level of play."
+        ),
+        "coaches": "",
+        "training_focus": [
+            "Advanced pitching and catching sessions",
+            "Situational hitting and mental performance",
+            "Athlete wellness and nutrition workshops",
+        ],
+        "cta": {"label": "15U Division Guide", "url": "/programs/"},
+    },
+    {
+        "name": "18U AA / AAA / CP",
+        "age_range": "Ages 16–18",
+        "description": (
+            "High-performance environment preparing athletes for post-secondary opportunities "
+            "and elite competition. Includes strength coaches, and college prep info sessions."
+        ),
+        "coaches": "",
+        "training_focus": [
+            "Recruitment seminars with alumni",
+            "Velocity and agility performance testing",
+            "Team service projects and mentorship",
+        ],
+        "cta": {"label": "18U Division Guide", "url": "/programs/"},
+    },
+    {
+        "name": "26U Jr Men's",
+        "age_range": "Ages 19–26",
+        "description": (
+            "A competitive-yet-community focused program for athletes continuing their baseball "
+            "journey. Flexible training blocks support work and school schedules, with league play across B.C."
+        ),
+        "coaches": "",
+        "training_focus": [
+            "High-intensity training pods",
+            "Community mentorship with younger divisions",
+            "Professional development workshops",
+        ],
+        "cta": {"label": "26U Division Guide", "url": "/programs/"},
+    },
+]
+
+VALUE_PROPS = [
+    {
+        "title": "Player-Centered Coaching",
+        "description": (
+            "All coaches are NCCP certified and follow individualized development plans to help "
+            "each athlete progress confidently through every season."
+        ),
+        "icon": "coaching",
+    },
+    {
+        "title": "Community & Inclusion",
+        "description": (
+            "We proudly welcome athletes from every background and provide financial assistance "
+            "options, equipment lending, and mentorship for new families."
+        ),
+        "icon": "community",
+    },
+    {
+        "title": "Proven Success",
+        "description": (
+            "Provincial championships, national tournament appearances, and alumni competing at "
+            "college and university programs showcase our track record."
+        ),
+        "icon": "success",
+    },
+]
+
+TESTIMONIALS = [
+    {
+        "quote": (
+            "Our son rediscovered his love for baseball at VMB. The coaching staff focuses on "
+            "confidence just as much as mechanics, and it shows every time he steps on the field."
+        ),
+        "name": "Michelle T.",
+        "role": "15U Parent",
+    },
+    {
+        "quote": (
+            "Playing for the Expos gave me the structure I needed to chase a college roster spot. "
+            "The training plan and alumni network made a huge difference."
+        ),
+        "name": "Adrian C.",
+        "role": "13UAAA Alumni",
+    },
+    {
+        "quote": (
+            "Vancouver Minor Baseball is more than games—it is a community hub. Volunteering with "
+            "the 13U program and mentoring younger players has been incredibly rewarding."
+        ),
+        "name": "Priya B.",
+        "role": "13U Coach",
+    },
+]
+
+GALLERY_ITEMS = [
+    {
+        "image": "images/achievement-01.png",
+        "alt": "15U Expos celebrating a provincial championship with the trophy raised.",
+        "caption": "15U AA Provincial Champions",
+    },
+    {
+        "image": "images/achievement-07.png",
+        "alt": "Players huddled before first pitch at Ross Tournament.",
+        "caption": "Ross Tournament Title Run",
+    },
+    {
+        "image": "images/achievement-11.png",
+        "alt": "13U Expos lined up along the baseline during the Jevon Clarke Memorial Tournament.",
+        "caption": "13U Jevon Clarke Finalists",
+    },
+    {
+        "image": "images/achievement-03.png",
+        "alt": "VMB athletes working through a hitting drill in the batting cage.",
+        "caption": "Development Nights at Nanaimo Park",
+    },
+]
+
+SCHEDULE_EVENTS = [
+    {
+        "date": "November",
+        "title": "Winter Training",
+        "description": "Players train in hitting, pitching, catching, infielding, and strength & conditioning sessions.",
+    },
+    {
+        "date": "Dec 01",
+        "title": "2026 Season Registration Opens",
+        "description": "Secure your roster spot early.",
+    },
+    {
+        "date": "Jan 4",
+        "title": "AA / AAA Tryout Begins",
+        "description": "For players interested in playing at a competitive level, please pay attention to your division's tryout dates.",
+    },
+    {
+        "date": "March",
+        "title": "Season Kickoff",
+        "description": "Teams are finalized and practices begin.",
+    },
+]
+
+FAQS = [
+    {
+        "question": "What equipment is required?",
+        "answer": (
+            "Players need a glove, batting helmet, cleats, and protective gear. VMB supplies team "
+            "bats, catching gear, and uniforms. Financial assistance is available for required items."
+        ),
+    },
+    {
+        "question": "How much does the season cost?",
+        "answer": (
+            "Fees vary by division and level of play and will be finalized when registration opens. Expect a range of "
+            "$480 (House) – $2120 (Elite Travel), which includes league fees, field permits, uniforms, and tournament entries."
+        ),
+    },
+    {
+        "question": "Can new players join without experience?",
+        "answer": (
+            "Absolutely. Each division offers player assessments to determine the best fit, and our "
+            "development coaches support newcomers through optional skill-building clinics."
+        ),
+    },
+]
+
+CONTACT_INFO = {
+    "email": "vmbapresident2023@gmail.com",
+    "phone": "",
+    "phone_link": "",
+    "office_hours": [],
+    "address": "Nanaimo Park, 2390 E 46th Ave, Vancouver, BC",
+    "map_url": "https://maps.app.goo.gl/5hzsQ5sCN7e4Yc4f6",
+}
+
+LEAD_CAPTURE = {
+    "title": "Stay in the Loop",
+    "intro": "Join our mailing list to receive registration reminders, camp announcements, and community news.",
+    "privacy_note": "We send a maximum of two emails per month and never share your information.",
 }
 
 PROGRAMS_PAGE = {
@@ -65,16 +278,13 @@ REGISTRATION_PAGE = {
 
 NAVIGATION = [
     {"label": "Home", "url": "/", "children": []},
-    {
-        "label": "Registration",
-        "url": "/registration/",
-        "children": [],
-    },
-    {
-        "label": "Programs",
-        "url": "/programs/",
-        "children": [],
-    },
+    {"label": "About", "url": "/#about", "children": []},
+    {"label": "Divisions", "url": "/#divisions", "children": []},
+    {"label": "Schedule", "url": "/#schedule", "children": []},
+    {"label": "News", "url": "/#news", "children": []},
+    {"label": "Programs", "url": "/programs/", "children": []},
+    {"label": "Registration", "url": "/registration/", "children": [], "is_cta": True},
+    {"label": "Contact", "url": "/#contact", "children": []},
 ]
 
 SOCIAL_LINKS = [
@@ -96,33 +306,39 @@ ACHIEVEMENTS = [
     {
         "slug": "achievement-01",
         "title": "15U AA Provincial Champions 2025\nVMB Expos 15U AA Blue",
-        "image_alt": "Prov-Team-8354",
+        "image_alt": "VMB 15U AA Blue team celebrating with the provincial championship banner.",
     },
     {
         "slug": "achievement-02",
         "title": "13U AAA GSL Summer Slam Premier Sports Tournament Champions 2025 - Everett, Washington, USA",
-        "image_alt": "SummerSlam",
+        "image_alt": "13U AAA Expos raising the Summer Slam Premier Sports Tournament trophy in Everett.",
     },
     {
         "slug": "achievement-05",
         "title": "Steven Dodd Memorial Tournament Champions 2025\nVMB Expos 15U AA Blue",
-        "image_alt": "Resize_PXL_20250701_002711715",
+        "image_alt": "VMB 15U AA Blue holding medals after winning the Steven Dodd Memorial Tournament.",
     },
     {
         "slug": "achievement-07",
         "title": "Ross Tournament Champions 2025\nVMB Expos 15U AA Blue",
-        "image_alt": "15U-AA-Team-Blue-Ross-Tournament-Champions-2025-e1754637283675",
+        "image_alt": "Ross Tournament champions photo featuring the VMB 15U AA Blue roster on the diamond.",
     },
     {
         "slug": "achievement-11",
         "title": "13U AA - Jevon Clarke Memorial Tournament Second Place Finish",
-        "image_alt": "13U AA Jevon Clark",
+        "image_alt": "13U AA Expos lined up for medals at the Jevon Clarke Memorial Tournament.",
     },
     {
         "slug": "achievement-12",
         "title": "15U A Notable - Battle At The Barn Ladner 2025 Third Place Finish",
-        "image_alt": "15U A Notable - Third Place Finish Battle At The Barn Ladner 2025",
+        "image_alt": "15U A Expos posing with third place plaques from the Battle At The Barn tournament.",
     },
 ]
 
-FOOTER_TEXT = "© 2025 Vancouver Minor Baseball"
+FOOTER_TEXT = "© 2025 Vancouver Minor Baseball Association. All rights reserved."
+
+FOOTER_LINKS = [
+    {"label": "Code of Conduct", "url": "https://www.bcminorbaseball.org/page/show/521627-code-of-conduct"},
+    {"label": "Volunteer With VMB", "url": "https://forms.gle/hbY5oPrf25Volunteer"},
+    {"label": "Sponsorship Opportunities", "url": "mailto:partnerships@vancouverminorbaseball.com"},
+]

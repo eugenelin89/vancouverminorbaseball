@@ -6,7 +6,11 @@
         </a>
         <div class="branding">
             <h2>Vancouver Minor Baseball</h2>
-            <p>Home of the VMB Expos</p>
+            <p class="branding-tagline">Building complete athletes in Vancouver since 1999.</p>
+            <ul class="branding-highlights">
+                <li>BC Minor Baseball Association member club</li>
+                <li>13U · 15U · 18U · 26U divisions</li>
+            </ul>
             <div class="social-links">
                 {% for link in social_links %}
                     <a href="{{ link.url }}" class="social" target="_blank" rel="noopener">
@@ -17,7 +21,7 @@
             </div>
         </div>
     </div>
-    <nav class="main-nav">
+    <nav class="main-nav" aria-label="Main navigation">
         <div class="container">
             <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-menu">
                 <span class="nav-toggle-label">Menu</span>

@@ -52,11 +52,12 @@
             <h2>Questions?</h2>
             <p>
                 Email us at
-                <a href="mailto:vmbapresident2023@gmail.com">vmbapresident2023@gmail.com</a>
-                and a member of the VMB executive will be happy to help.
+                <a href="mailto:{{ contact_info.email }}">{{ contact_info.email }}</a>
+                or call <a href="tel:{{ contact_info.phone_link }}">{{ contact_info.phone }}</a> and a member of the VMB executive will be happy to help.
             </p>
         </div>
     </section>
 </main>
+{% include "home/includes/footer.html" %}
 {% include "home/includes/nav_script.html" %}
 {% endblock %}

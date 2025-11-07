@@ -5,12 +5,21 @@ from django.views.generic import TemplateView
 
 from .content import (
     ACHIEVEMENTS,
+    CONTACT_INFO,
+    DIVISION_SUMMARIES,
+    FAQS,
+    FOOTER_LINKS,
     FOOTER_TEXT,
+    GALLERY_ITEMS,
     HERO,
+    LEAD_CAPTURE,
     NAVIGATION,
     PROGRAMS_PAGE,
     REGISTRATION_PAGE,
+    SCHEDULE_EVENTS,
     SOCIAL_LINKS,
+    TESTIMONIALS,
+    VALUE_PROPS,
 )
 
 
@@ -37,6 +46,8 @@ def base_context():
         "navigation": NAVIGATION,
         "footer_text": FOOTER_TEXT,
         "social_links": SOCIAL_LINKS,
+        "footer_contact": CONTACT_INFO,
+        "footer_links": FOOTER_LINKS,
     }
 
 
@@ -54,6 +65,14 @@ class HomePageView(TemplateView):
             {**achievement, "lines": achievement["title"].split("\n")}
             for achievement in ACHIEVEMENTS
         ]
+        context["value_props"] = VALUE_PROPS
+        context["divisions"] = DIVISION_SUMMARIES
+        context["testimonials"] = TESTIMONIALS
+        context["gallery_items"] = GALLERY_ITEMS
+        context["schedule_events"] = SCHEDULE_EVENTS
+        context["faqs"] = FAQS
+        context["lead_capture"] = LEAD_CAPTURE
+        context["contact_info"] = CONTACT_INFO
         return context
 
 
@@ -74,6 +93,7 @@ class RegistrationPageView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(base_context())
         context["registration"] = REGISTRATION_PAGE
+        context["contact_info"] = CONTACT_INFO
         return context
 
 
