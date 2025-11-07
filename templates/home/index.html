@@ -207,12 +207,12 @@
         <div class="container contact-grid">
             <div class="contact-card contact-card--primary">
                 <h2>Contact &amp; Visit</h2>
-                <p>Email us at <a href="mailto:{{ contact_info.email }}">{{ contact_info.email }}</a> or call <a href="tel:{{ contact_info.phone_link }}">{{ contact_info.phone }}</a>.</p>
+                <p>Email us at <a href="mailto:{{ contact_info.email }}">{{ contact_info.email }}</a> </p>
                 <p class="contact-address">
                     <strong>Clubhouse:</strong>
                     <a href="{{ contact_info.map_url }}" target="_blank" rel="noopener">{{ contact_info.address }}</a>
                 </p>
-                <p><strong>Mailing:</strong> {{ contact_info.mailing }}</p>
+               
                 <ul class="contact-hours">
                     {% for hours in contact_info.office_hours %}
                         <li>{{ hours }}</li>

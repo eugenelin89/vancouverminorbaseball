@@ -124,7 +124,7 @@ TESTIMONIALS = [
             "The training plan and alumni network made a huge difference."
         ),
         "name": "Adrian C.",
-        "role": "18U Alumni, Class of 2024",
+        "role": "13UAAA Alumni",
     },
     {
         "quote": (
@@ -132,7 +132,7 @@ TESTIMONIALS = [
             "the 13U program and mentoring younger players has been incredibly rewarding."
         ),
         "name": "Priya B.",
-        "role": "26U Player-Coach",
+        "role": "13U Coach",
     },
 ]
 
@@ -193,8 +193,8 @@ FAQS = [
     {
         "question": "How much does the season cost?",
         "answer": (
-            "Fees vary by division and will be finalized when registration opens. Expect a range of "
-            "$425–$975, which includes league fees, field permits, uniforms, and tournament entries."
+            "Fees vary by division and level of play and will be finalized when registration opens. Expect a range of "
+            "$480 (House) – $2120 (Elite Travel), which includes league fees, field permits, uniforms, and tournament entries."
         ),
     },
     {
@@ -208,12 +208,11 @@ FAQS = [
 
 CONTACT_INFO = {
     "email": "vmbapresident2023@gmail.com",
-    "phone": "604-555-0199",
-    "phone_link": "+16045550199",
-    "office_hours": ["Mon–Fri: 4:00–8:00 p.m.", "Sat: 9:00 a.m.–1:00 p.m."],
-    "address": "Nanaimo Park Clubhouse, 2390 E 46th Ave, Vancouver, BC",
+    "phone": "",
+    "phone_link": "",
+    "office_hours": [],
+    "address": "Nanaimo Park, 2390 E 46th Ave, Vancouver, BC",
     "map_url": "https://maps.app.goo.gl/5hzsQ5sCN7e4Yc4f6",
-    "mailing": "PO Box 78012, RPO Grandview, Vancouver, BC V5N 0A7",
 }
 
 LEAD_CAPTURE = {
