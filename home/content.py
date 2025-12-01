@@ -166,7 +166,7 @@ SCHEDULE_EVENTS = [
         "description": "Players train in hitting, pitching, catching, infielding, and strength & conditioning sessions.",
     },
     {
-        "date": "Dec 01",
+        "date": "Dec 02",
         "title": "2026 Season Registration Opens",
         "description": "Secure your roster spot early.",
     },
@@ -242,7 +242,7 @@ PROGRAMS_PAGE = {
 REGISTRATION_PAGE = {
     "title": "Registration",
     "eyebrow": "Join Vancouver Minor Baseball",
-    "tagline": "Registration for the 2026 season begins December 1.",
+    "tagline": "Registration for the 2026 season begins December 2.",
     "hero_image": "images/registration-hero.jpg",
     "hero_image_label": "registration-hero.jpg",
     "form_label": "Start Registration",
@@ -271,7 +271,7 @@ REGISTRATION_PAGE = {
             "title": "Next Steps",
             "body": (
                 "Our registration team is finalizing season logistics, fee schedules, and key dates. "
-                "Online registration will open on December 1 for the 2026 season—check back for the live form or join the mailing list to receive launch reminders."
+                "Online registration will open on December 2 for the 2026 season—check back for the live form or join the mailing list to receive launch reminders."
             ),
         },
     ],
