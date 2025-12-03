@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+{% include "home/includes/site_header.html" %}
+
+<main>
+    <section class="hero">
+        <div class="hero-media">
+            <img src="{% static page.hero_image %}" alt="{{ page.hero_image_label }}">
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content container home-hero registration-hero">
+            {% if page.eyebrow %}
+                <span class="hero-eyebrow">{{ page.eyebrow }}</span>
+            {% endif %}
+            <h1>{{ page.title }}</h1>
+            {% if page.tagline %}
+                <p class="hero-subtitle">{{ page.tagline }}</p>
+            {% endif %}
+            <div class="hero-actions">
+                {% if page.tryouts and page.tryouts.schedule %}
+                    <a class="button button--primary" href="#tryout-schedule">View Schedule</a>
+                {% endif %}
+                <a class="button button--ghost-inverse" href="/registration/">Registration Details</a>
+            </div>
+        </div>
+    </section>
+
+    {% if tryouts %}
+        <section class="tryout-section" id="tryout-schedule">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>{{ tryouts.title }}</h2>
+                    <p>{{ tryouts.subtitle }}</p>
+                </div>
+
+                <div class="tryout-grid">
+                    <article class="info-card info-card--accent">
+                        <h3>{{ tryouts.location.name }}</h3>
+                        <p class="tryout-address">{{ tryouts.location.address }}</p>
+                        {% if tryouts.disclaimer %}
+                            <p class="info-note">{{ tryouts.disclaimer }}</p>
+                        {% endif %}
+                    </article>
+
+                    {% if tryouts.what_to_bring %}
+                        <article class="info-card">
+                            <h3>What to Bring</h3>
+                            <ul>
+                                {% for item in tryouts.what_to_bring %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </article>
+                    {% endif %}
+
+                    {% if tryouts.notes %}
+                        <article class="info-card">
+                            <h3>Important Notes</h3>
+                            <ul>
+                                {% for note in tryouts.notes %}
+                                    <li>{{ note }}</li>
+                                {% endfor %}
+                            </ul>
+                        </article>
+                    {% endif %}
+                </div>
+
+                {% if tryouts.schedule %}
+                    <div class="tryout-table-wrap">
+                        <div class="tryout-table-heading">
+                            <h3>Assessment Sessions</h3>
+                            <p>Tentative sessions are noted; arrive early for check-in.</p>
+                        </div>
+                        <table class="tryout-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Day</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Time</th>
+                                    <th scope="col">Group</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for slot in tryouts.schedule %}
+                                    <tr{% if slot.tentative %} class="is-tentative"{% endif %}>
+                                        <td><span class="tryout-chip">{{ slot.day }}</span></td>
+                                        <td><span class="tryout-chip tryout-chip--subtle">{{ slot.date }}</span></td>
+                                        <td><span class="tryout-time">{{ slot.time }}</span></td>
+                                        <td>
+                                            <div class="tryout-group">
+                                                <span>{{ slot.group }}</span>
+                                                {% if slot.tentative %}
+                                                    <span class="tryout-badge">Tentative</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="contact-callout container">
+        <div class="contact-card">
+            <h2>Questions?</h2>
+            <p>
+                Email us at
+                <a href="mailto:{{ contact_info.email }}">{{ contact_info.email }}</a>
+                or call <a href="tel:{{ contact_info.phone_link }}">{{ contact_info.phone }}</a> and a member of the VMB executive will be happy to help.
+            </p>
+        </div>
+    </section>
+</main>
+{% include "home/includes/footer.html" %}
+{% include "home/includes/nav_script.html" %}
+{% endblock %}

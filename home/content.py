@@ -256,6 +256,50 @@ REGISTRATION_PAGE = {
             "url": "https://registration.teamsnap.com/form/46000",
         },
     ],
+    "tryouts": {
+        "title": "2026 Tryout Schedule",
+        "subtitle": "Assessments at UBC Rose Indoor Baseball Training Center",
+        "location": {
+            "name": "UBC Rose Indoor Baseball Training Center",
+            "address": "3085 Wesbrook Mall, Vancouver, BC V6T 2J3",
+        },
+        "disclaimer": "Times and dates are subject to change as capacity is finalized.",
+        "what_to_bring": [
+            "Baseball bat",
+            "Batting helmet",
+            "Glove",
+            "Water bottle (labeled)",
+            "Proper athletic attire and indoor runners",
+        ],
+        "notes": [
+            "Arrive 15 minutes early for check-in.",
+            "Players must pre-register online before their tryout date (no walk-ins).",
+            "Evaluations cover hitting, fielding, pitching, catching, base running, and game awareness.",
+            "Callbacks will be communicated directly after initial assessments.",
+        ],
+        "schedule": [
+            {"day": "Saturday", "date": "Jan 3", "time": "4:00-6:00 PM", "group": "15U AA / AAA"},
+            {"day": "Sunday", "date": "Jan 4", "time": "11:00 AM-1:00 PM", "group": "15U AA / AAA"},
+            {"day": "Saturday", "date": "Jan 10", "time": "5:30-7:30 PM", "group": "13U AA / AAA"},
+            {"day": "Saturday", "date": "Jan 10", "time": "7:30-10:00 PM", "group": "18U AAA (additional dates to follow)"},
+            {"day": "Sunday", "date": "Jan 11", "time": "8:30-10:30 AM", "group": "15U AA / AAA"},
+            {"day": "Sunday", "date": "Jan 11", "time": "10:30 AM-12:30 PM", "group": "15U AA / AAA"},
+            {"day": "Saturday", "date": "Jan 17", "time": "8:30-10:15 AM", "group": "13U AA / AAA"},
+            {"day": "Saturday", "date": "Jan 17", "time": "10:30 AM-12:15 PM", "group": "13U AA / AAA"},
+            {"day": "Saturday", "date": "Jan 17", "time": "5:30-7:30 PM", "group": "15U AA / AAA callbacks"},
+            {"day": "Saturday", "date": "Jan 17", "time": "7:30-9:30 PM", "group": "15U AA / AAA callbacks"},
+            {"day": "Sunday (tentative)", "date": "Jan 18", "time": "10:30 AM-12:00 PM", "group": "Tentative 15U AA / AAA callbacks", "tentative": True},
+            {"day": "Saturday", "date": "Feb 21", "time": "5:30-7:30 PM", "group": "13U A House"},
+            {"day": "Saturday", "date": "Feb 21", "time": "7:30-9:30 PM", "group": "18U House"},
+            {"day": "Saturday", "date": "Feb 28", "time": "5:30-7:30 PM", "group": "13U A House"},
+            {"day": "Saturday", "date": "Feb 28", "time": "7:30-9:30 PM", "group": "18U House"},
+            {"day": "Sunday (tentative)", "date": "Mar 1", "time": "8:30-10:30 AM", "group": "Possible third slot for 13U A or 18U", "tentative": True},
+            {"day": "Saturday", "date": "Mar 7", "time": "8:00-10:00 AM", "group": "15U A"},
+            {"day": "Saturday", "date": "Mar 7", "time": "10:00 AM-12:00 PM", "group": "15U A"},
+            {"day": "Sunday", "date": "Mar 8", "time": "8:00-10:00 AM", "group": "15U A"},
+            {"day": "Sunday", "date": "Mar 8", "time": "10:00 AM-12:00 PM", "group": "15U A"},
+        ],
+    },
     "intro": (
         "Geographical boundaries: Vancouver Minor Baseball welcomes athletes who reside within the City of Vancouver. "
         "Families outside of the city limits are invited to apply with VMB once a release from their home association has been granted."
@@ -287,6 +331,15 @@ REGISTRATION_PAGE = {
     "divisions": ["13U", "15U", "18U", "26U"],
 }
 
+TRYOUTS_PAGE = {
+    "title": "2026 Tryout Info",
+    "eyebrow": "Assessments & Callbacks",
+    "tagline": "UBC Rose Indoor Baseball Training Center",
+    "hero_image": "images/registration-hero.jpg",
+    "hero_image_label": "registration-hero.jpg",
+    "tryouts": REGISTRATION_PAGE["tryouts"],
+}
+
 NAVIGATION = [
     {"label": "Home", "url": "/", "children": []},
     {"label": "About", "url": "/#about", "children": []},
@@ -294,6 +347,7 @@ NAVIGATION = [
     {"label": "Schedule", "url": "/#schedule", "children": []},
     {"label": "News", "url": "/#news", "children": []},
     {"label": "Programs", "url": "/programs/", "children": []},
+    {"label": "2026 Tryout Info", "url": "/tryouts/", "children": []},
     {"label": "Registration", "url": "/registration/", "children": [], "is_cta": True},
     {"label": "Contact", "url": "/#contact", "children": []},
 ]

@@ -18,6 +18,7 @@ from .content import (
     REGISTRATION_PAGE,
     SCHEDULE_EVENTS,
     SOCIAL_LINKS,
+    TRYOUTS_PAGE,
     TESTIMONIALS,
     VALUE_PROPS,
 )
@@ -93,6 +94,18 @@ class RegistrationPageView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(base_context())
         context["registration"] = REGISTRATION_PAGE
+        context["contact_info"] = CONTACT_INFO
+        return context
+
+
+class TryoutsPageView(TemplateView):
+    template_name = "home/tryouts.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(base_context())
+        context["page"] = TRYOUTS_PAGE
+        context["tryouts"] = TRYOUTS_PAGE["tryouts"]
         context["contact_info"] = CONTACT_INFO
         return context
 

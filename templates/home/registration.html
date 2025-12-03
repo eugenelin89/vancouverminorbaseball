@@ -62,6 +62,78 @@
         </div>
     </section>
 
+    {% if registration.tryouts %}
+        <section class="tryout-section">
+            <div class="container">
+                <div class="section-heading">
+                    <h2>{{ registration.tryouts.title }}</h2>
+                    <p>{{ registration.tryouts.subtitle }}</p>
+                </div>
+
+                <div class="tryout-grid">
+                    <article class="info-card info-card--accent">
+                        <h3>{{ registration.tryouts.location.name }}</h3>
+                        <p class="tryout-address">{{ registration.tryouts.location.address }}</p>
+                        {% if registration.tryouts.disclaimer %}
+                            <p class="info-note">{{ registration.tryouts.disclaimer }}</p>
+                        {% endif %}
+                    </article>
+
+                    {% if registration.tryouts.what_to_bring %}
+                        <article class="info-card">
+                            <h3>What to Bring</h3>
+                            <ul>
+                                {% for item in registration.tryouts.what_to_bring %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </article>
+                    {% endif %}
+
+                    {% if registration.tryouts.notes %}
+                        <article class="info-card">
+                            <h3>Important Notes</h3>
+                            <ul>
+                                {% for note in registration.tryouts.notes %}
+                                    <li>{{ note }}</li>
+                                {% endfor %}
+                            </ul>
+                        </article>
+                    {% endif %}
+                </div>
+
+                {% if registration.tryouts.schedule %}
+                    <div class="tryout-table-wrap">
+                        <div class="tryout-table-heading">
+                            <h3>Assessment Sessions</h3>
+                            <p>Tentative sessions are noted; arrive early for check-in.</p>
+                        </div>
+                        <table class="tryout-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Day</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Time</th>
+                                    <th scope="col">Group</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for slot in registration.tryouts.schedule %}
+                                    <tr{% if slot.tentative %} class="is-tentative"{% endif %}>
+                                        <td>{{ slot.day }}</td>
+                                        <td>{{ slot.date }}</td>
+                                        <td>{{ slot.time }}</td>
+                                        <td>{{ slot.group }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+
     <section class="contact-callout container">
         <div class="contact-card">
             <h2>Questions?</h2>
