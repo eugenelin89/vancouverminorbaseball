@@ -246,7 +246,7 @@ REGISTRATION_PAGE = {
     "hero_image": "images/registration-hero.jpg",
     "hero_image_label": "registration-hero.jpg",
     "form_label": "Start Registration",
-    "form_url": "https://registration.teamsnap.com/form/46000",
+    "form_url": "https://registration.teamsnap.com/form/46184",
     "intro": (
         "Geographical boundaries: Vancouver Minor Baseball welcomes athletes who reside within the City of Vancouver. "
         "Families outside of the city limits are invited to apply with VMB once a release from their home association has been granted."
