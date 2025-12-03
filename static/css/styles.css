@@ -840,6 +840,8 @@ main {
     box-shadow: var(--shadow-md);
     border: 1px solid rgba(16, 42, 67, 0.08);
     overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .tryout-table-heading {
@@ -1705,6 +1707,7 @@ table.tryout-table {
     border: 1px solid rgba(16, 42, 67, 0.22);
     border-radius: 16px;
     overflow: hidden;
+    min-width: 640px;
 }
 
 table.tryout-table th,
