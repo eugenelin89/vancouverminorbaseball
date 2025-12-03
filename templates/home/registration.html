@@ -21,7 +21,15 @@
             <div class="hero-message hero-message--compact">
                 <p>{{ registration.intro }}</p>
             </div>
-            {% if registration.form_url %}
+            {% if registration.form_links %}
+                <div class="hero-actions">
+                    {% for link in registration.form_links %}
+                        <a class="button button--primary" href="{{ link.url }}" target="_blank" rel="noopener">
+                            {{ link.label }}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% elif registration.form_url %}
                 <div class="hero-actions">
                     <a class="button button--primary" href="{{ registration.form_url }}" target="_blank" rel="noopener">
                         {{ registration.form_label|default:"Start Registration" }}
