@@ -353,7 +353,26 @@ REGISTRATION_PAGE = {
             "Evaluations cover hitting, fielding, pitching, catching, base running, and game awareness.",
             "Callbacks will be communicated directly after initial assessments.",
         ],
+        "partner_tryout": {
+            "title": "18U Vancouver Players - North Fraser Nationals 18U College Prep",
+            "body": "In partnership with Burnaby Baseball Association, the North Fraser Nationals 18U College Prep team is hosting tryouts for Vancouver athletes.",
+            "registration_link": {
+                "label": "Register for North Fraser Nationals 18U CP",
+                "url": "https://go.teamsnap.com/forms/507915",
+            },
+            "details": [
+                "Players must be registered with Burnaby Baseball Association (BBA) for BCMBA insurance coverage.",
+                "A $25 tryout fee applies.",
+                "Please inform your home Association President or 18U Coordinator before attending.",
+                "If you are not selected for the CP roster and want to try 18U AAA, register separately with Vancouver Community Baseball.",
+                "BC Minor Baseball: players may only try out for one team at a time.",
+            ],
+        },
         "schedule": [
+            {"day": "Saturday", "date": "Dec 27", "time": "6:00-8:00 PM", "group": "18U College Prep (North Fraser Nationals) - Burnaby, Sohen Gill Lacrosse Box (Confederation Park)"},
+            {"day": "Saturday", "date": "Jan 3", "time": "10:00 AM-2:00 PM", "group": "18U College Prep (North Fraser Nationals) - Vancouver, location TBD"},
+            {"day": "Sunday", "date": "Jan 4", "time": "4:00-9:00 PM", "group": "18U College Prep (North Fraser Nationals) - Richmond Olympic Oval"},
+            {"day": "Saturday", "date": "Jan 10", "time": "10:00 AM-2:00 PM", "group": "18U College Prep (North Fraser Nationals) - Vancouver, tentative (location TBD)", "tentative": True},
             {"day": "Saturday", "date": "Jan 3", "time": "4:00-6:00 PM", "group": "15U AA / AAA"},
             {"day": "Sunday", "date": "Jan 4", "time": "11:00 AM-1:00 PM", "group": "15U AA / AAA"},
             {"day": "Saturday", "date": "Jan 10", "time": "5:30-7:30 PM", "group": "13U AA / AAA"},

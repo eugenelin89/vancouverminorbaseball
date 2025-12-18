@@ -100,6 +100,23 @@
                             </ul>
                         </article>
                     {% endif %}
+
+                    {% if registration.tryouts.partner_tryout %}
+                        <article class="info-card">
+                            <h3>{{ registration.tryouts.partner_tryout.title }}</h3>
+                            <p>{{ registration.tryouts.partner_tryout.body }}</p>
+                            {% if registration.tryouts.partner_tryout.details %}
+                                <ul>
+                                    {% for detail in registration.tryouts.partner_tryout.details %}
+                                        <li>{{ detail }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            {% if registration.tryouts.partner_tryout.registration_link %}
+                                <a class="button button--primary" href="{{ registration.tryouts.partner_tryout.registration_link.url }}" target="_blank" rel="noopener">Register</a>
+                            {% endif %}
+                        </article>
+                    {% endif %}
                 </div>
 
                 {% if registration.tryouts.schedule %}

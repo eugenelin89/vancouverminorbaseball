@@ -65,6 +65,23 @@
                             </ul>
                         </article>
                     {% endif %}
+
+                    {% if tryouts.partner_tryout %}
+                        <article class="info-card">
+                            <h3>{{ tryouts.partner_tryout.title }}</h3>
+                            <p>{{ tryouts.partner_tryout.body }}</p>
+                            {% if tryouts.partner_tryout.details %}
+                                <ul>
+                                    {% for detail in tryouts.partner_tryout.details %}
+                                        <li>{{ detail }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            {% if tryouts.partner_tryout.registration_link %}
+                                <a class="button button--primary" href="{{ tryouts.partner_tryout.registration_link.url }}" target="_blank" rel="noopener">Register</a>
+                            {% endif %}
+                        </article>
+                    {% endif %}
                 </div>
 
                 {% if tryouts.schedule %}
