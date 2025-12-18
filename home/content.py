@@ -40,7 +40,8 @@ DIVISION_SUMMARIES = [
         "age_range": "Ages 14–15",
         "description": (
             "Competitive play with travel tournaments, strength training support, and a focus on "
-            "advanced game strategy. Practices two to three times per week depending on level of play."
+            "advanced game strategy. Practices two to three times per week depending on level of play. "
+            "For 2026, 15U AAA players may use wood, bamboo, wood composite, or -3 BBCOR-certified aluminum/composite bats per Baseball Canada standards."
         ),
         "coaches": "",
         "training_focus": [
@@ -55,7 +56,8 @@ DIVISION_SUMMARIES = [
         "age_range": "Ages 16–18",
         "description": (
             "High-performance environment preparing athletes for post-secondary opportunities "
-            "and elite competition. Includes strength coaches, and college prep info sessions."
+            "and elite competition. Includes strength coaches, and college prep info sessions. "
+            "For 2026, 18U AAA players may use wood, bamboo, wood composite, or -3 BBCOR-certified aluminum/composite bats per Baseball Canada standards."
         ),
         "coaches": "",
         "training_focus": [
