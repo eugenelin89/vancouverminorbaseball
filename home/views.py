@@ -10,6 +10,7 @@ from .content import (
     FAQS,
     FOOTER_LINKS,
     FOOTER_TEXT,
+    EXPECTATIONS,
     GALLERY_ITEMS,
     HERO,
     LEAD_CAPTURE,
@@ -95,6 +96,16 @@ class RegistrationPageView(TemplateView):
         context.update(base_context())
         context["registration"] = REGISTRATION_PAGE
         context["contact_info"] = CONTACT_INFO
+        return context
+
+
+class ExpectationsPageView(TemplateView):
+    template_name = "home/expectations.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(base_context())
+        context["expectations"] = EXPECTATIONS
         return context
 
 

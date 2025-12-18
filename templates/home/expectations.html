@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+{% include "home/includes/site_header.html" %}
+
+<main>
+    <section class="hero hero--gradient">
+        <div class="hero-media hero-media--gradient"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content container page-hero-content">
+            <span class="hero-eyebrow">Expectations</span>
+            <h1>{{ expectations.title }}</h1>
+            <p class="hero-subtitle">{{ expectations.intro }}</p>
+        </div>
+    </section>
+
+    <section class="expectations">
+        <div class="container">
+            <div class="expectations-grid">
+                <article class="expectation-card">
+                    <span class="expectation-eyebrow">{{ expectations.parent.eyebrow }}</span>
+                    <h3>{{ expectations.parent.title }}</h3>
+                    <p>{{ expectations.parent.intro }}</p>
+                    <div class="expectation-note">
+                        <p>{{ expectations.parent.volunteer_note }}</p>
+                    </div>
+                    <div class="expectation-list">
+                        <h4>{{ expectations.parent.actions_title }}</h4>
+                        <ul>
+                            {% for item in expectations.parent.actions %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <p class="expectation-closing">{{ expectations.parent.closing }}</p>
+                </article>
+
+                <article class="expectation-card expectation-card--accent">
+                    <span class="expectation-eyebrow">{{ expectations.coach.eyebrow }}</span>
+                    <h3>Coach Expectations</h3>
+                    <p>{{ expectations.coach.intro }}</p>
+                    <div class="expectation-list">
+                        <h4>{{ expectations.coach.title }}</h4>
+                        <ul>
+                            {% for point in expectations.coach.why_points %}
+                                <li>
+                                    {{ point }}
+                                    {% if forloop.last %}
+                                        <ul class="expectation-sublist">
+                                            {% for subpoint in expectations.coach.why_subpoints %}
+                                                <li>{{ subpoint }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="expectation-list">
+                        <h4>{{ expectations.coach.expectations_title }}</h4>
+                        <ul>
+                            {% for item in expectations.coach.expectations %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="expectation-list">
+                        <h4>{{ expectations.coach.support_title }}</h4>
+                        <ul>
+                            {% for item in expectations.coach.support %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <p class="expectation-closing">{{ expectations.coach.closing }}</p>
+                    <p class="expectation-cta">{{ expectations.coach.cta }}</p>
+                </article>
+            </div>
+            <div class="expectations-closing">
+                <strong>{{ expectations.closing }}</strong>
+            </div>
+        </div>
+    </section>
+</main>
+
+{% include "home/includes/footer.html" %}
+{% include "home/includes/nav_script.html" %}
+{% endblock %}

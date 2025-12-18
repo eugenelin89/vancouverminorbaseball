@@ -754,6 +754,134 @@ main {
     margin-top: 2.5rem;
 }
 
+.expectations {
+    margin: var(--section-spacing) auto;
+}
+
+.expectations .container {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(220, 233, 255, 0.85));
+    border-radius: var(--radius-lg);
+    padding: clamp(2.75rem, 6vw, 4rem);
+    box-shadow: var(--shadow-md);
+}
+
+.expectations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.expectation-card {
+    background: var(--color-white);
+    border-radius: 22px;
+    padding: 2.25rem 2rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(16, 42, 67, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.expectation-card--accent {
+    background: linear-gradient(135deg, rgba(16, 42, 67, 0.95), rgba(47, 111, 235, 0.78));
+    color: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: var(--shadow-md);
+}
+
+.expectation-eyebrow {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--color-blue);
+}
+
+.expectation-card--accent .expectation-eyebrow {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.expectation-card h3 {
+    margin: 0;
+    font-size: 1.55rem;
+    color: var(--color-navy);
+}
+
+.expectation-card--accent h3,
+.expectation-card--accent h4,
+.expectation-card--accent p,
+.expectation-card--accent li {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.expectation-note {
+    background: rgba(47, 111, 235, 0.1);
+    border-left: 4px solid var(--color-blue);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    color: var(--color-text);
+}
+
+.expectation-card--accent .expectation-note {
+    background: rgba(255, 255, 255, 0.1);
+    border-left-color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.expectation-list h4 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-navy);
+}
+
+.expectation-list ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.45rem;
+    color: var(--color-text-muted);
+}
+
+.expectation-sublist {
+    margin: 0.35rem 0 0.35rem 1rem;
+    padding-left: 1.1rem;
+    color: inherit;
+    display: grid;
+    gap: 0.3rem;
+    list-style: circle;
+}
+
+.expectation-closing {
+    margin: 0.5rem 0 0;
+    font-weight: 700;
+    color: var(--color-navy);
+}
+
+.expectation-card--accent .expectation-closing {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.expectation-cta {
+    margin: 0;
+    font-weight: 700;
+    color: var(--color-gold);
+}
+
+.expectations-closing {
+    margin-top: 2rem;
+    text-align: center;
+    font-weight: 800;
+    color: var(--color-navy);
+    background: var(--color-ice);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(16, 42, 67, 0.08);
+    box-shadow: var(--shadow-sm);
+}
+
 .programs-grid {
     display: grid;
     gap: 2rem;

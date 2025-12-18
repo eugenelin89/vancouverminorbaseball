@@ -109,6 +109,80 @@ VALUE_PROPS = [
     },
 ]
 
+EXPECTATIONS = {
+    "title": "Parent Expectations & Coach Expectations",
+    "intro": (
+        "Vancouver Minor is successful because families and volunteers work together. When parents "
+        "stay involved and coaches step forward, players get the meaningful, fun, high-quality baseball season they deserve."
+    ),
+    "parent": {
+        "eyebrow": "Parent Expectations",
+        "title": "Stay involved beyond Little League",
+        "intro": (
+            "At Vancouver Minor, our programs start where most Little Leagues end — 13U and above. "
+            "At this age range, parent involvement often drops off, especially in house leagues. But we want to remind families:"
+        ),
+        "volunteer_note": (
+            "We are still a 100% volunteer-run association. Everything your child experiences — practices, games, scheduling, "
+            "equipment, fields, jerseys, umpires, communication — relies on volunteers who give their time so kids can play baseball."
+        ),
+        "actions_title": "To keep delivering a great baseball experience, we ask parents to:",
+        "actions": [
+            "Stay involved and supportive, even as players become more independent.",
+            "Help where you can — field setup, scorekeeping, team coordination, or simply offering an extra set of hands.",
+            "Respond promptly to coaches’ emails or group messages.",
+            "Encourage your athlete to show up on time, communicate absences, and respect teammates and coaches.",
+            "Remember that effort matters more than results. We emphasize development, sportsmanship, and fun.",
+        ],
+        "closing": "Your involvement directly lifts the quality of your athlete’s season.",
+    },
+    "coach": {
+        "eyebrow": "Parent Coaches",
+        "title": "Why parent coaches are essential",
+        "intro": (
+            "Vancouver Minor relies heavily on parent coaches. Whether you have extensive baseball experience or you’re totally new "
+            "to coaching, you can help — and we will support you."
+        ),
+        "why_points": [
+            "Without coaches, there are no teams.",
+            "The number of coaches determines how many teams we can field.",
+            "More coaches means smaller roster sizes, which means:",
+        ],
+        "why_subpoints": [
+            "More playing time",
+            "More reps at practice",
+            "Faster development",
+            "More fun and engagement",
+        ],
+        "expectations_title": "What we expect from coaches",
+        "expectations": [
+            "Create a positive, safe, and inclusive environment.",
+            "Communicate clearly with families.",
+            "Focus on development over winning.",
+            "Ensure fair playing opportunities.",
+            "Model respect for umpires, opponents, and teammates.",
+            "Promote effort, accountability, and sportsmanship.",
+        ],
+        "support_title": "What we provide to coaches",
+        "support": [
+            "Coaching resources and practice plans",
+            "On-field support from coordinators",
+            "Clinics and development opportunities",
+            "A community of other parent coaches",
+            "Access to equipment and field bookings",
+        ],
+        "closing": (
+            "If you’ve ever thought about coaching — even as an assistant — this is the best age to start. The kids benefit "
+            "enormously from every parent who steps forward."
+        ),
+        "cta": "If you’re interested in coaching or volunteering, please reach out — we’d love to have you on the field.",
+    },
+    "closing": (
+        "Together, we build the baseball experience. When parents stay involved and coaches step forward, players get the meaningful, "
+        "fun, high-quality baseball season they deserve."
+    ),
+}
+
 TESTIMONIALS = [
     {
         "quote": (
@@ -343,6 +417,7 @@ TRYOUTS_PAGE = {
 NAVIGATION = [
     {"label": "Home", "url": "/", "children": []},
     {"label": "About", "url": "/#about", "children": []},
+    {"label": "Expectations", "url": "/expectations/", "children": []},
     {"label": "Divisions", "url": "/#divisions", "children": []},
     {"label": "Schedule", "url": "/#schedule", "children": []},
     {"label": "News", "url": "/#news", "children": []},

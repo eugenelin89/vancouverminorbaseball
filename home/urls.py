@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    ExpectationsPageView,
     HomePageView,
     PAGE_REGISTRY,
     PlaceholderPageView,
@@ -13,11 +14,12 @@ urlpatterns = [
     path("", HomePageView.as_view(), name="home"),
     path("programs/", ProgramsPageView.as_view(), name="programs"),
     path("registration/", RegistrationPageView.as_view(), name="registration"),
+    path("expectations/", ExpectationsPageView.as_view(), name="expectations"),
     path("tryouts/", TryoutsPageView.as_view(), name="tryouts"),
 ]
 
 for slug in PAGE_REGISTRY:
-    if not slug or slug in {"programs", "registration", "tryouts"}:
+    if not slug or slug in {"programs", "registration", "tryouts", "expectations"}:
         continue
 
     route = f"{slug}/"
