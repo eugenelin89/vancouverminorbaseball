@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load draft_tags %}
+
+{% block title %}{{ draft.name }} | Live Draft Board{% endblock %}
+{% block body_class %}draft-shell{% endblock %}
+
+{% block extra_head %}
+<meta http-equiv="refresh" content="20">
+{% endblock %}
+
+{% block content %}
+<main id="main-content" class="draft-shell">
+    <section class="draft-shell__container">
+        {% include "drafts/_header.html" with title=draft.name subtitle="Public live board. Refreshes automatically every 20 seconds." draft=draft public_live=True %}
+
+        <section class="command-overview">
+            <article class="draft-summary-card draft-summary-card--accent">
+                <p class="draft-summary-card__label">Status</p>
+                <p class="draft-summary-card__value"><span class="status-badge status-badge--{{ draft.status }}">{{ draft.get_status_display }}</span></p>
+            </article>
+            <article class="draft-summary-card draft-summary-card--priority">
+                <p class="draft-summary-card__label">Drafted players</p>
+                <p class="draft-summary-card__value">{{ draft.drafted_player_count }}</p>
+            </article>
+            <article class="draft-summary-card">
+                <p class="draft-summary-card__label">Available players</p>
+                <p class="draft-summary-card__value">{{ draft.available_player_count }}</p>
+            </article>
+            <article class="draft-summary-card">
+                <p class="draft-summary-card__label">Teams</p>
+                <p class="draft-summary-card__value">{{ teams|length }}</p>
+            </article>
+        </section>
+
+        <section class="command-section command-section--primary">
+            <div class="command-section__label">Live Rosters</div>
+            <div class="command-layout command-layout--top">
+                <section class="command-column command-column--wide">
+                    <article class="draft-card command-panel command-panel--priority">
+                        <div class="section-heading">
+                            <div>
+                                <p class="section-heading__eyebrow">Drafted Teams</p>
+                                <h2>Current rosters</h2>
+                            </div>
+                        </div>
+                        <div class="team-grid">
+                            {% for team in teams %}
+                                <article class="team-card" {% if team.color %}style="--team-accent: {{ team.color }};"{% endif %}>
+                                    <header class="team-card__header">
+                                        <div>
+                                            <h3>{{ team.name }}</h3>
+                                            <p>{{ team.roster_count }} player{{ team.roster_count|pluralize }}</p>
+                                        </div>
+                                        <span class="team-card__marker"></span>
+                                    </header>
+                                    <div class="team-table-wrap">
+                                        <table class="team-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Player</th>
+                                                    {% if selected_extra_columns %}
+                                                        <th>Notes</th>
+                                                    {% endif %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for player in team.players.all %}
+                                                    <tr>
+                                                        <td class="team-table__index">{{ forloop.counter }}</td>
+                                                        <td>
+                                                            <strong>{{ player.full_name }}</strong>
+                                                        </td>
+                                                        {% if selected_extra_columns %}
+                                                            <td class="team-table__notes">
+                                                                {% for key in selected_extra_columns %}
+                                                                    {% if player.extra_data|get_item:key %}
+                                                                        <span>{{ key }}: {{ player.extra_data|get_item:key }}</span>{% if not forloop.last %} · {% endif %}
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            </td>
+                                                        {% endif %}
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr>
+                                                        <td colspan="{% if selected_extra_columns %}3{% else %}2{% endif %}" class="team-card__empty">No players drafted yet.</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </article>
+                </section>
+
+                <aside class="command-column">
+                    <article class="draft-card command-panel command-panel--sticky">
+                        <div class="section-heading">
+                            <div>
+                                <p class="section-heading__eyebrow">Draft History</p>
+                                <h2>Who was drafted where</h2>
+                            </div>
+                        </div>
+                        <div class="timeline-list">
+                            {% for action in draft_history %}
+                                <div class="timeline-item">
+                                    <div class="timeline-item__title">{{ action.player.full_name }}</div>
+                                    <div class="timeline-item__meta">
+                                        Drafted to {{ action.to_team }}
+                                    </div>
+                                    <div class="timeline-item__meta">
+                                        {% if action.pick_number %}Pick #{{ action.pick_number }} · {% endif %}
+                                        {{ action.created_at|date:"M j, g:i:s A" }}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="team-card__empty">No draft picks recorded yet.</p>
+                            {% endfor %}
+                        </div>
+                    </article>
+                </aside>
+            </div>
+        </section>
+
+        <section class="command-section">
+            <div class="command-section__label">Available Players</div>
+            <article class="draft-card command-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-heading__eyebrow">Remaining Pool</p>
+                        <h2>{{ available_players|length }} players still available</h2>
+                    </div>
+                </div>
+                <div class="draft-table-wrap">
+                    <table class="draft-table draft-table--dense">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                {% for key in selected_extra_columns %}
+                                    <th>{{ key }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in available_players %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ player.full_name }}</strong>
+                                    </td>
+                                    {% for key in selected_extra_columns %}
+                                        <td>{{ player.extra_data|get_item:key|default:"-" }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="{{ selected_extra_columns|length|add:1 }}" class="draft-table__empty">All players have been assigned.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+    </section>
+</main>
+{% endblock %}

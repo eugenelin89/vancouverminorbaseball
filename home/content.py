@@ -442,6 +442,7 @@ NAVIGATION = [
     {"label": "Divisions", "url": "/#divisions", "children": []},
     {"label": "Schedule", "url": "/#schedule", "children": []},
     {"label": "News", "url": "/#news", "children": []},
+    {"label": "Draft", "url": "/drafts/live/2026-vcb-13u/", "children": []},
     {"label": "Programs", "url": "/programs/", "children": []},
     {"label": "2026 Tryout Info", "url": "/tryouts/", "children": []},
     {"label": "Registration", "url": "/registration/", "children": [], "is_cta": True},

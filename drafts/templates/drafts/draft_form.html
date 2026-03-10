@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Create Draft | Vancouver Minor Baseball{% endblock %}
+{% block body_class %}draft-shell{% endblock %}
+
+{% block content %}
+<main id="main-content" class="draft-shell">
+    <section class="draft-shell__container">
+        {% include "drafts/_header.html" with title="Create Draft Event" subtitle="Set up the room, seed the teams, and prepare the import workflow." %}
+        <section class="draft-card draft-card--form">
+            <form method="post" class="draft-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                <div class="draft-form__grid">
+                    <div class="field-group">
+                        <label for="{{ form.name.id_for_label }}">Draft name</label>
+                        {{ form.name }}
+                        {{ form.name.errors }}
+                    </div>
+                    <div class="field-group">
+                        <label for="{{ form.year.id_for_label }}">Year</label>
+                        {{ form.year }}
+                        {{ form.year.errors }}
+                    </div>
+                    <div class="field-group">
+                        <label for="{{ form.division.id_for_label }}">Division</label>
+                        {{ form.division }}
+                        {{ form.division.errors }}
+                    </div>
+                    <div class="field-group field-group--full">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {{ form.description.errors }}
+                    </div>
+                    <div class="field-group field-group--full">
+                        <label for="{{ form.teams.id_for_label }}">Teams</label>
+                        {{ form.teams }}
+                        <p class="field-help">{{ form.fields.teams.help_text }}</p>
+                        {{ form.teams.errors }}
+                    </div>
+                </div>
+                <div class="draft-form__actions">
+                    <a class="button button--ghost" href="{% url 'drafts:list' %}">Cancel</a>
+                    <button class="button button--primary" type="submit">Create Draft</button>
+                </div>
+            </form>
+        </section>
+    </section>
+</main>
+{% endblock %}

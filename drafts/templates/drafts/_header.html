@@ -1,0 +1,27 @@
+<header class="draft-shell__top">
+    <div>
+        <p class="draft-shell__eyebrow">Draft Operations</p>
+        <h1>{{ title }}</h1>
+        {% if subtitle %}
+            <p class="draft-shell__subtitle">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+    <div class="draft-shell__actions">
+        {% if public_live %}
+            <a class="button button--ghost" href="/">Vancouver Minor Baseball</a>
+        {% else %}
+            <a class="button button--ghost" href="{% url 'drafts:list' %}">All Drafts</a>
+        {% endif %}
+        {% if draft and public_live %}
+            <a class="button button--ghost" href="/admin/login/?next={% url 'drafts:command-center' slug=draft.slug %}">Admin Login</a>
+        {% endif %}
+        {% if draft and not public_live %}
+            <a class="button button--ghost" href="{% url 'drafts:import' slug=draft.slug %}">Import Players</a>
+            <a class="button button--ghost" href="{% url 'drafts:trade' slug=draft.slug %}">Trade Desk</a>
+            <a class="button button--ghost" href="{% url 'drafts:public-live' slug=draft.slug %}">Public Live Board</a>
+            <a class="button button--primary" href="{% url 'drafts:export' slug=draft.slug %}">Export Rosters</a>
+        {% elif not public_live %}
+            <a class="button button--primary" href="{% url 'drafts:create' %}">Create Draft</a>
+        {% endif %}
+    </div>
+</header>

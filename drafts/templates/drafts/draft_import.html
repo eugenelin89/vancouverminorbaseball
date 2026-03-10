@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Import Players | {{ draft.name }}{% endblock %}
+{% block body_class %}draft-shell{% endblock %}
+
+{% block content %}
+<main id="main-content" class="draft-shell">
+    <section class="draft-shell__container">
+        {% include "drafts/_header.html" with title=draft.name subtitle="Flexible CSV import with preview, validation, and preserved source rows." draft=draft %}
+
+        <section class="draft-card draft-card--form">
+            <div class="section-heading">
+                <div>
+                    <p class="section-heading__eyebrow">CSV Import</p>
+                    <h2>Upload player pool</h2>
+                </div>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="draft-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% if preview %}
+                    <input type="hidden" name="preview_payload" value="{{ preview_payload|escape }}">
+                    <input type="hidden" name="confirm_import" value="1">
+                    <div class="import-summary">
+                        <div>
+                            <span>Rows processed</span>
+                            <strong>{{ preview_summary.rows_processed }}</strong>
+                        </div>
+                        <div>
+                            <span>Ready to import</span>
+                            <strong>{{ preview_summary.rows_importable }}</strong>
+                        </div>
+                        <div>
+                            <span>Rejected</span>
+                            <strong>{{ preview_summary.rows_rejected }}</strong>
+                        </div>
+                    </div>
+                    <div class="draft-table-wrap">
+                        <table class="draft-table">
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    <th>Player</th>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in preview.rows %}
+                                    <tr>
+                                        <td>{{ row.row_number }}</td>
+                                        <td>{{ row.cleaned_row.first_name }} {{ row.cleaned_row.last_name }}</td>
+                                        <td>
+                                            {% if row.imported %}
+                                                <span class="status-badge status-badge--open">Ready</span>
+                                            {% else %}
+                                                <span class="status-badge status-badge--closed">Rejected</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if row.errors %}
+                                                {{ row.errors|join:", " }}
+                                            {% else %}
+                                                {{ row.cleaned_row.extra_data|length }} extra field{{ row.cleaned_row.extra_data|length|pluralize }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="draft-form__actions">
+                        <a class="button button--ghost" href="{% url 'drafts:import' slug=draft.slug %}">Upload Another File</a>
+                        <button class="button button--primary" type="submit">Confirm Import</button>
+                    </div>
+                {% else %}
+                    <div class="field-group field-group--full">
+                        <label for="{{ form.csv_file.id_for_label }}">CSV file</label>
+                        {{ form.csv_file }}
+                        <p class="field-help">{{ form.fields.csv_file.help_text }}</p>
+                        {{ form.csv_file.errors }}
+                    </div>
+                    <div class="draft-form__actions">
+                        <a class="button button--ghost" href="{% url 'drafts:command-center' slug=draft.slug %}">Back to Room</a>
+                        <button class="button button--primary" type="submit">Preview Import</button>
+                    </div>
+                {% endif %}
+            </form>
+        </section>
+    </section>
+</main>
+{% endblock %}

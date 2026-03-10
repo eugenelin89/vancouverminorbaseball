@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Drafts | Vancouver Minor Baseball{% endblock %}
+{% block body_class %}draft-shell{% endblock %}
+
+{% block content %}
+<main id="main-content" class="draft-shell">
+    <section class="draft-shell__container">
+        {% include "drafts/_header.html" with title="Draft Command Center" subtitle="Reusable live-draft control rooms for every division and season." %}
+
+        <section class="draft-summary-grid">
+            <article class="draft-summary-card draft-summary-card--accent">
+                <p class="draft-summary-card__label">Active Draft Rooms</p>
+                <p class="draft-summary-card__value">{{ drafts|length }}</p>
+            </article>
+            <article class="draft-summary-card">
+                <p class="draft-summary-card__label">Open Rooms</p>
+                <p class="draft-summary-card__value">{{ open_draft_count }}</p>
+            </article>
+            <article class="draft-summary-card">
+                <p class="draft-summary-card__label">Workflow</p>
+                <p class="draft-summary-card__text">Create the room, import players, open the draft, then operate from the command center.</p>
+            </article>
+        </section>
+
+        <section class="draft-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-heading__eyebrow">Draft Rooms</p>
+                    <h2>All draft events</h2>
+                </div>
+                <a class="button button--primary" href="{% url 'drafts:create' %}">New Draft</a>
+            </div>
+            <div class="draft-table-wrap">
+                <table class="draft-table">
+                    <thead>
+                        <tr>
+                            <th>Draft</th>
+                            <th>Status</th>
+                            <th>Teams</th>
+                            <th>Players</th>
+                            <th>Updated</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for draft in drafts %}
+                            <tr>
+                                <td>
+                                    <strong>{{ draft.name }}</strong>
+                                    <div class="draft-table__meta">{{ draft.year }} · {{ draft.division }}</div>
+                                </td>
+                                <td><span class="status-badge status-badge--{{ draft.status }}">{{ draft.get_status_display }}</span></td>
+                                <td>{{ draft.teams.count }}</td>
+                                <td>{{ draft.total_player_count }}</td>
+                                <td>{{ draft.updated_at|date:"M j, Y g:i A" }}</td>
+                                <td class="draft-table__actions">
+                                    <a href="{% url 'drafts:command-center' slug=draft.slug %}">Open room</a>
+                                    <span class="draft-table__divider">·</span>
+                                    <a href="{% url 'drafts:public-live' slug=draft.slug %}">Public board</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="draft-table__empty">No draft events created yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</main>
+{% endblock %}

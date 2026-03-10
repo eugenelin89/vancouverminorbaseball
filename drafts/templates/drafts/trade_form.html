@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Trade Desk | {{ draft.name }}{% endblock %}
+{% block body_class %}draft-shell{% endblock %}
+
+{% block content %}
+<main id="main-content" class="draft-shell">
+    <section class="draft-shell__container">
+        {% include "drafts/_header.html" with title=draft.name subtitle="Trade desk for post-pick corrections and roster balancing." draft=draft %}
+        <section class="draft-card draft-card--form">
+            <form method="get" class="draft-form draft-form--compact">
+                <div class="draft-form__grid draft-form__grid--compact">
+                    <div class="field-group">
+                        <label for="team_one_selector">Team A</label>
+                        <select id="team_one_selector" name="team_one">
+                            {% for team in form.fields.team_one.queryset %}
+                                <option value="{{ team.id }}" {% if form.initial.team_one and form.initial.team_one.id == team.id %}selected{% endif %}>{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label for="team_two_selector">Team B</label>
+                        <select id="team_two_selector" name="team_two">
+                            {% for team in form.fields.team_two.queryset %}
+                                <option value="{{ team.id }}" {% if form.initial.team_two and form.initial.team_two.id == team.id %}selected{% endif %}>{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="draft-form__actions draft-form__actions--tight">
+                    <button class="button button--ghost" type="submit">Load Rosters</button>
+                </div>
+            </form>
+            <form method="post" class="draft-form">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                <div class="draft-form__grid">
+                    <div class="field-group">
+                        <label for="{{ form.team_one.id_for_label }}">Team A</label>
+                        {{ form.team_one }}
+                        {{ form.team_one.errors }}
+                    </div>
+                    <div class="field-group">
+                        <label for="{{ form.team_two.id_for_label }}">Team B</label>
+                        {{ form.team_two }}
+                        {{ form.team_two.errors }}
+                    </div>
+                    <div class="field-group field-group--full">
+                        <label>{{ form.team_one_players.label }}</label>
+                        <div class="checkbox-grid">{{ form.team_one_players }}</div>
+                        {{ form.team_one_players.errors }}
+                    </div>
+                    <div class="field-group field-group--full">
+                        <label>{{ form.team_two_players.label }}</label>
+                        <div class="checkbox-grid">{{ form.team_two_players }}</div>
+                        {{ form.team_two_players.errors }}
+                    </div>
+                </div>
+                <div class="draft-form__actions">
+                    <a class="button button--ghost" href="{% url 'drafts:command-center' slug=draft.slug %}">Back to Room</a>
+                    <button class="button button--primary" type="submit">Confirm Trade</button>
+                </div>
+            </form>
+        </section>
+    </section>
+</main>
+{% endblock %}

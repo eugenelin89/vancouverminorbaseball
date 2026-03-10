@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% load draft_tags %}
+
+{% block title %}{{ draft.name }} | Draft Command Center{% endblock %}
+{% block body_class %}draft-shell{% endblock %}
+
+{% block content %}
+<main id="main-content" class="draft-shell">
+    <section class="draft-shell__container">
+        {% include "drafts/_header.html" with title=draft.name subtitle="Live operations console for picks, roster moves, and audit visibility." draft=draft %}
+
+        {% if messages %}
+            <div class="message-stack">
+                {% for message in messages %}
+                    <div class="message message--{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <section class="command-overview">
+            <article class="draft-summary-card draft-summary-card--accent">
+                <p class="draft-summary-card__label">Status</p>
+                <p class="draft-summary-card__value"><span class="status-badge status-badge--{{ draft.status }}">{{ draft.get_status_display }}</span></p>
+            </article>
+            <article class="draft-summary-card draft-summary-card--priority">
+                <p class="draft-summary-card__label">Drafted players</p>
+                <p class="draft-summary-card__value">{{ draft.drafted_player_count }}</p>
+            </article>
+            <article class="draft-summary-card">
+                <p class="draft-summary-card__label">Available players</p>
+                <p class="draft-summary-card__value">{{ draft.available_player_count }}</p>
+            </article>
+            <article class="draft-summary-card">
+                <p class="draft-summary-card__label">Next pick</p>
+                <p class="draft-summary-card__value">#{{ draft.next_pick_number }}</p>
+            </article>
+        </section>
+
+        <section class="command-section command-section--primary">
+            <div class="command-section__label">Drafted Section</div>
+            <div class="command-layout command-layout--top">
+                <section class="command-column command-column--wide">
+                    <article class="draft-card command-panel command-panel--priority">
+                        <div class="section-heading">
+                            <div>
+                                <p class="section-heading__eyebrow">Team Boards</p>
+                                <h2>Live rosters</h2>
+                            </div>
+                        </div>
+                        <div class="team-grid">
+                            {% for team in teams %}
+                                <article class="team-card" {% if team.color %}style="--team-accent: {{ team.color }};"{% endif %}>
+                                    <header class="team-card__header">
+                                        <div>
+                                            <h3>{{ team.name }}</h3>
+                                            <p>{{ team.roster_count }} player{{ team.roster_count|pluralize }}</p>
+                                        </div>
+                                        <span class="team-card__marker"></span>
+                                    </header>
+                                    <div class="team-table-wrap">
+                                        <table class="team-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Player</th>
+                                                    {% if selected_extra_columns %}
+                                                        <th>Notes</th>
+                                                    {% endif %}
+                                                    {% if draft.is_open_for_moves %}
+                                                        <th>Actions</th>
+                                                    {% endif %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for player in team.players.all %}
+                                                    <tr>
+                                                        <td class="team-table__index">{{ forloop.counter }}</td>
+                                                        <td>
+                                                            <strong>{{ player.full_name }}</strong>
+                                                        </td>
+                                                        {% if selected_extra_columns %}
+                                                            <td class="team-table__notes">
+                                                                {% for key in selected_extra_columns %}
+                                                                    {% if player.extra_data|get_item:key %}
+                                                                        <span>{{ key }}: {{ player.extra_data|get_item:key }}</span>{% if not forloop.last %} · {% endif %}
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            </td>
+                                                        {% endif %}
+                                                        {% if draft.is_open_for_moves %}
+                                                            <td>
+                                                                <div class="roster-row__actions">
+                                                                    <form method="post" action="{% url 'drafts:move-player' slug=draft.slug %}" class="inline-action">
+                                                                        {% csrf_token %}
+                                                                        <input type="hidden" name="player_id" value="{{ player.id }}">
+                                                                        <select name="to_team_id" aria-label="Move {{ player.full_name }}">
+                                                                            {% for destination in teams %}
+                                                                                {% if destination.id != team.id %}
+                                                                                    <option value="{{ destination.id }}">{{ destination.name }}</option>
+                                                                                {% endif %}
+                                                                            {% endfor %}
+                                                                        </select>
+                                                                        <button class="button button--text" type="submit">Move</button>
+                                                                    </form>
+                                                                    <form method="post" action="{% url 'drafts:remove-player' slug=draft.slug %}">
+                                                                        {% csrf_token %}
+                                                                        <input type="hidden" name="player_id" value="{{ player.id }}">
+                                                                        <button class="button button--text" type="submit">Undo to Pool</button>
+                                                                    </form>
+                                                                </div>
+                                                            </td>
+                                                        {% endif %}
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr>
+                                                        <td colspan="{% if selected_extra_columns and draft.is_open_for_moves %}4{% elif selected_extra_columns or draft.is_open_for_moves %}3{% else %}2{% endif %}" class="team-card__empty">No players assigned yet.</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </article>
+                </section>
+
+                <aside class="command-column">
+                    <article class="draft-card command-panel command-panel--sticky">
+                        <div class="section-heading">
+                            <div>
+                                <p class="section-heading__eyebrow">Draft History</p>
+                                <h2>Who was drafted where</h2>
+                            </div>
+                        </div>
+                        <div class="timeline-list">
+                            {% for action in draft_history %}
+                                <div class="timeline-item">
+                                    <div class="timeline-item__title">{{ action.player.full_name }}</div>
+                                    <div class="timeline-item__meta">
+                                        Drafted to {{ action.to_team }}
+                                    </div>
+                                    <div class="timeline-item__meta">
+                                        {% if action.pick_number %}Pick #{{ action.pick_number }} · {% endif %}
+                                        {{ action.created_at|date:"M j, g:i:s A" }}
+                                        {% if action.actor %} · {{ action.actor.get_username }}{% endif %}
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="team-card__empty">No draft picks recorded yet.</p>
+                            {% endfor %}
+                        </div>
+                    </article>
+                </aside>
+            </div>
+        </section>
+
+        <section class="command-section">
+            <div class="command-section__label">Controls And Available Pool</div>
+            <section class="command-toolbar draft-card">
+                <form method="get" class="command-filters">
+                    <div class="field-group">
+                        <label for="search">Search pool</label>
+                        <input id="search" type="search" name="search" value="{{ search }}" placeholder="Name or evaluation metric">
+                    </div>
+                    <div class="field-group">
+                        <label for="sort">Sort by</label>
+                        <select id="sort" name="sort">
+                            <option value="name" {% if sort == "name" %}selected{% endif %}>Name</option>
+                            {% for key in available_extra_keys %}
+                                <option value="{{ key }}" {% if sort == key %}selected{% endif %}>{{ key }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field-group field-group--wide">
+                        <label>Visible extra columns</label>
+                        <div class="pill-checks">
+                            {% for key in available_extra_keys %}
+                                <label class="pill-check">
+                                    <input type="checkbox" name="columns" value="{{ key }}" {% if key in selected_extra_columns %}checked{% endif %}>
+                                    <span>{{ key }}</span>
+                                </label>
+                            {% empty %}
+                                <span class="field-help">No extra evaluation columns imported yet.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="command-toolbar__actions">
+                        <button class="button button--primary" type="submit">Update View</button>
+                    </div>
+                </form>
+
+                <div class="command-toolbar__status">
+                    <form method="post" action="{% url 'drafts:status-update' slug=draft.slug %}">
+                        {% csrf_token %}
+                        <label for="status">Draft status</label>
+                        <select name="status" id="status">
+                            {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if draft.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="button button--ghost" type="submit">Save Status</button>
+                    </form>
+
+                    {% if undo_action and undo_action.can_revert %}
+                        <form method="post" action="{% url 'drafts:undo-action' slug=draft.slug %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="action_id" value="{{ undo_action.id }}">
+                            <button class="button button--ghost" type="submit">Undo Last Action</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </section>
+
+            <div class="command-layout command-layout--bottom">
+                <section class="command-column command-column--full">
+                    <article class="draft-card command-panel">
+                        <div class="section-heading">
+                            <div>
+                                <p class="section-heading__eyebrow">Available Pool</p>
+                                <h2>{{ available_players|length }} undrafted players</h2>
+                            </div>
+                        </div>
+                        <div class="draft-table-wrap">
+                            <table class="draft-table draft-table--dense">
+                                <thead>
+                                    <tr>
+                                        <th>Player</th>
+                                        {% for key in selected_extra_columns %}
+                                            <th>{{ key }}</th>
+                                        {% endfor %}
+                                        <th>Assign</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player in available_players %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ player.full_name }}</strong>
+                                                <div class="draft-table__meta">{{ player.first_name }} {{ player.last_name }}</div>
+                                            </td>
+                                            {% for key in selected_extra_columns %}
+                                                <td>{{ player.extra_data|get_item:key|default:"-" }}</td>
+                                            {% endfor %}
+                                            <td>
+                                                {% if draft.is_open_for_moves %}
+                                                    <form method="post" action="{% url 'drafts:assign-player' slug=draft.slug %}" class="inline-action">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="player_id" value="{{ player.id }}">
+                                                        <select name="team_id" aria-label="Assign {{ player.full_name }}">
+                                                            {% for team in teams %}
+                                                                <option value="{{ team.id }}">{{ team.name }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <button class="button button--text" type="submit">Draft</button>
+                                                    </form>
+                                                {% else %}
+                                                    <span class="field-help">Open the draft to assign players.</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="{{ selected_extra_columns|length|add:2 }}" class="draft-table__empty">No available players match this view.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
+            </div>
+        </section>
+    </section>
+</main>
+{% endblock %}
