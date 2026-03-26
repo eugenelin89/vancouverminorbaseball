@@ -1,0 +1,86 @@
+{% extends "pdp/base.html" %}
+{% load pdp_tags %}
+
+{% block pdp_title %}Import Workbench{% endblock %}
+{% block pdp_subtitle %}Upload workbooks, preview sheets, map identity and metrics, preserve raw data, and onboard player accounts safely.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card pdp-card--form">
+        <h2>1. Upload workbook</h2>
+        <form method="post" enctype="multipart/form-data" class="pdp-form">
+            {% csrf_token %}
+            {{ upload_form.as_p }}
+            <button class="button button--primary" type="submit">Preview Workbook</button>
+        </form>
+    </article>
+    <article class="pdp-card">
+        <h2>Recent imports</h2>
+        <div class="pdp-list">
+            {% for import_record in recent_imports %}
+                <div class="pdp-list__item pdp-list__item--stack">
+                    <strong>{{ import_record.file_name }}</strong>
+                    <span>{{ import_record.get_status_display }}{% if import_record.season %} · {{ import_record.season }}{% endif %}</span>
+                </div>
+            {% empty %}
+                <p class="empty-state">No imports yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+{% if preview and mapping_form %}
+    <section class="pdp-grid pdp-grid--two">
+        <article class="pdp-card">
+            <h2>Workbook preview</h2>
+            <div class="pdp-list">
+                {% for sheet in preview.sheets %}
+                    <div class="pdp-list__item pdp-list__item--stack">
+                        <strong>{{ sheet.name }}</strong>
+                        <span>{{ sheet.row_count }} row{{ sheet.row_count|pluralize }}</span>
+                        <p>{{ sheet.headers|join:", " }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </article>
+        <article class="pdp-card pdp-card--form">
+            <h2>2. Map fields and import</h2>
+            <form method="post" class="pdp-form">
+                {% csrf_token %}
+                {{ mapping_form.as_p }}
+                <button class="button button--primary" type="submit" name="confirm_import" value="1">Run Import</button>
+            </form>
+        </article>
+    </section>
+{% endif %}
+
+{% if onboarding_report %}
+    <section class="pdp-grid pdp-grid--single">
+        <article class="pdp-card">
+            <h2>Account provisioning report</h2>
+            <div class="table-wrap">
+                <table class="pdp-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Username</th>
+                            <th>Created</th>
+                            <th>Password Reset</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in onboarding_report %}
+                            <tr>
+                                <td>{{ item.player_name }}</td>
+                                <td>{{ item.username }}</td>
+                                <td>{{ item.created|yesno:"Yes,No" }}</td>
+                                <td>{{ item.password_reset|yesno:"Yes,No" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
+{% endif %}
+{% endblock %}

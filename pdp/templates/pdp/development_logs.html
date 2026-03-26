@@ -1,0 +1,33 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}{{ player.full_name }} Development Timeline{% endblock %}
+{% block pdp_subtitle %}Practice notes, game feedback, reflections, and development checkpoints.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <h2>Timeline</h2>
+        <div class="pdp-list">
+            {% for log in logs %}
+                <div class="pdp-list__item pdp-list__item--stack">
+                    <strong>{{ log.title }}</strong>
+                    <span>{{ log.get_log_type_display }} · {{ log.occurred_at }}</span>
+                    <p>{{ log.note }}</p>
+                </div>
+            {% empty %}
+                <p class="empty-state">No development logs yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+    {% if can_manage_player %}
+        <article class="pdp-card pdp-card--form">
+            <h2>Add log</h2>
+            <form method="post" class="pdp-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="button button--primary" type="submit">Save Note</button>
+            </form>
+        </article>
+    {% endif %}
+</section>
+{% endblock %}

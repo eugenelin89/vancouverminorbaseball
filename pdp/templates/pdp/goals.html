@@ -1,0 +1,41 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}{{ player.full_name }} Goals{% endblock %}
+{% block pdp_subtitle %}Translate feedback into measurable, encouraging next steps.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <h2>Active goals</h2>
+        <div class="pdp-list">
+            {% for goal in active_goals %}
+                <div class="pdp-list__item pdp-list__item--stack">
+                    <strong>{{ goal.title }}</strong>
+                    <span>{{ goal.category|default:"General" }} · {{ goal.get_status_display }}</span>
+                    <p>{{ goal.description }}</p>
+                </div>
+            {% empty %}
+                <p class="empty-state">No active goals.</p>
+            {% endfor %}
+        </div>
+        {% if completed_goals %}
+            <h3>Completed</h3>
+            <div class="pdp-bullet-list">
+                {% for goal in completed_goals %}
+                    <div class="pdp-bullet-list__item">{{ goal.title }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </article>
+    {% if can_manage_player %}
+        <article class="pdp-card pdp-card--form">
+            <h2>Create goal</h2>
+            <form method="post" class="pdp-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="button button--primary" type="submit">Save Goal</button>
+            </form>
+        </article>
+    {% endif %}
+</section>
+{% endblock %}

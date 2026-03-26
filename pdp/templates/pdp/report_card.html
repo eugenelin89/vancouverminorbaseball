@@ -1,0 +1,31 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}{{ player.full_name }} Report Card{% endblock %}
+{% block pdp_subtitle %}Structured season-end feedback with strengths, growth opportunities, and offseason direction.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card pdp-card--form">
+        <form method="post" class="pdp-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            {{ formset.management_form }}
+            <div class="report-grid">
+                {% for item_form in formset %}
+                    <div class="report-item-card">
+                        {{ item_form.id }}
+                        {{ item_form.display_order }}
+                        {{ item_form.category }}
+                        {{ item_form.rating_value.label_tag }} {{ item_form.rating_value }}
+                        {{ item_form.rubric_rating.label_tag }} {{ item_form.rubric_rating }}
+                        {{ item_form.text_feedback.label_tag }} {{ item_form.text_feedback }}
+                    </div>
+                {% endfor %}
+            </div>
+            {% if can_manage_player %}
+                <button class="button button--primary" type="submit">Save Report Card</button>
+            {% endif %}
+        </form>
+    </article>
+</section>
+{% endblock %}

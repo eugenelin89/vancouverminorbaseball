@@ -1,0 +1,51 @@
+{% extends "pdp/base.html" %}
+{% load pdp_tags %}
+
+{% block pdp_title %}{{ player.full_name }} AI Insights{% endblock %}
+{% block pdp_subtitle %}Constructive, action-oriented summaries stored in the backend and ready for future provider upgrades.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Insights</p>
+                <h2>Player-facing recommendations</h2>
+            </div>
+            {% if can_manage_player %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button class="button button--primary" type="submit">Generate AI Insight</button>
+                </form>
+            {% endif %}
+        </div>
+        <div class="pdp-list">
+            {% for insight in insights %}
+                <div class="pdp-list__item pdp-list__item--stack">
+                    <strong>{{ insight.title }}</strong>
+                    <p>{{ insight.summary }}</p>
+                    {% for line in insight.recommended_actions|split_lines %}
+                        <span>{{ line }}</span>
+                    {% endfor %}
+                </div>
+            {% empty %}
+                <p class="empty-state">No insights yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+    <article class="pdp-card">
+        <h2>Analysis history</h2>
+        <div class="pdp-list">
+            {% for run in analysis_runs %}
+                <div class="pdp-list__item pdp-list__item--stack">
+                    <strong>{{ run.analysis_type }}</strong>
+                    <span>{{ run.provider }} · {{ run.get_status_display }}</span>
+                    <p>{{ run.summary|default:"No summary stored." }}</p>
+                </div>
+            {% empty %}
+                <p class="empty-state">No runs recorded.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

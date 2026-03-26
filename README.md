@@ -2,6 +2,13 @@
 
 This repository contains the primary public-facing site for Vancouver Minor Baseball. It highlights the club’s philosophy, programs, and achievements, and lives alongside other apps that occupy their own subdomains (for example `dev.vancouverminor.com`).
 
+The project now also includes:
+
+- `drafts`: staff-facing draft operations
+- `pdp`: a reusable Player Development Platform for evaluations, goals, snapshots, roadmaps, report cards, drills, and future AI integrations
+
+Detailed PDP documentation is in [docs/pdp.md](/Users/eugenelin/dev/vmba0/docs/pdp.md).
+
 The stack is intentionally lightweight:
 
 - **Django** powers templating and routing.

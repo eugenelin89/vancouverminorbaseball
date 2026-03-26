@@ -1,0 +1,132 @@
+{% extends "pdp/base.html" %}
+{% load pdp_tags %}
+
+{% block title %}{{ player.full_name }} | Player Development{% endblock %}
+{% block pdp_title %}{{ player.full_name }}{% endblock %}
+{% block pdp_subtitle %}A motivating growth view built around strengths, opportunities, and the next best action.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid">
+    <article class="pdp-card pdp-card--highlight">
+        <p class="card-label">Current season</p>
+        <h2>{{ season.name|default:"No active season" }}</h2>
+        <p>{{ player.primary_position|default:"Athlete profile" }}{% if player.level %} · {{ player.level }}{% endif %}</p>
+    </article>
+    <article class="pdp-card">
+        <p class="card-label">Active goals</p>
+        <h2>{{ active_goals|length }}</h2>
+        <p>Focused priorities with coach accountability.</p>
+    </article>
+    <article class="pdp-card">
+        <p class="card-label">Recent snapshots</p>
+        <h2>{{ snapshots|length }}</h2>
+        <p>Clear season checkpoints and progress summaries.</p>
+    </article>
+    <article class="pdp-card">
+        <p class="card-label">Assigned drills</p>
+        <h2>{{ drill_assignments|length }}</h2>
+        <p>Specific development work tied to improvement opportunities.</p>
+    </article>
+</section>
+
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Metric Trends</p>
+                <h2>Progress at a glance</h2>
+            </div>
+            <a class="button button--ghost" href="{% url 'pdp:evaluation-history' player_id=player.id %}">View History</a>
+        </div>
+        <div class="trend-grid">
+            {% for trend in trends %}
+                <article class="trend-card trend-card--{{ trend.change|trend_class }}">
+                    <p class="trend-card__label">{{ trend.display_name }}</p>
+                    <p class="trend-card__value">{{ trend.latest }}</p>
+                    <p class="trend-card__meta">Change {{ trend.change|format_delta }}</p>
+                    <p class="trend-card__meta">Best {{ trend.best|default:"-" }}</p>
+                </article>
+            {% empty %}
+                <p class="empty-state">Import evaluation data to populate trend cards.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Current Roadmap</p>
+                <h2>Development priorities</h2>
+            </div>
+            <a class="button button--ghost" href="{% url 'pdp:roadmap' player_id=player.id %}">Open Roadmap</a>
+        </div>
+        {% if roadmap %}
+            <p>{{ roadmap.summary }}</p>
+            <div class="pdp-bullet-list">
+                {% for item in roadmap.items.all %}
+                    <div class="pdp-bullet-list__item">
+                        <strong>{{ item.title }}</strong>
+                        <span>{{ item.description }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">Generate a roadmap to turn evaluations into an action plan.</p>
+        {% endif %}
+    </article>
+</section>
+
+<section class="pdp-grid pdp-grid--three">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Goals</p>
+                <h2>What to work on next</h2>
+            </div>
+            <a class="button button--text" href="{% url 'pdp:goals' player_id=player.id %}">Manage Goals</a>
+        </div>
+        {% for goal in active_goals %}
+            <div class="stack-item">
+                <strong>{{ goal.title }}</strong>
+                <p>{{ goal.description }}</p>
+            </div>
+        {% empty %}
+            <p class="empty-state">No goals yet.</p>
+        {% endfor %}
+    </article>
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Coach Notes</p>
+                <h2>Recent development logs</h2>
+            </div>
+            <a class="button button--text" href="{% url 'pdp:development-logs' player_id=player.id %}">View Timeline</a>
+        </div>
+        {% for log in recent_logs %}
+            <div class="stack-item">
+                <strong>{{ log.title }}</strong>
+                <p>{{ log.note|truncatechars:140 }}</p>
+            </div>
+        {% empty %}
+            <p class="empty-state">No visible logs yet.</p>
+        {% endfor %}
+    </article>
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">AI Insights</p>
+                <h2>Constructive recommendations</h2>
+            </div>
+            <a class="button button--text" href="{% url 'pdp:ai-insights' player_id=player.id %}">Open Insights</a>
+        </div>
+        {% for insight in insights %}
+            <div class="stack-item">
+                <strong>{{ insight.title }}</strong>
+                <p>{{ insight.summary }}</p>
+            </div>
+        {% empty %}
+            <p class="empty-state">No insights generated yet.</p>
+        {% endfor %}
+    </article>
+</section>
+{% endblock %}

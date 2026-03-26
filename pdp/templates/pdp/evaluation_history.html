@@ -1,0 +1,41 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}{{ player.full_name }} Evaluation History{% endblock %}
+{% block pdp_subtitle %}Season-over-season metric context, grouped by development area.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--two">
+    {% for category, metrics in metric_groups.items %}
+        <article class="pdp-card">
+            <div class="section-heading">
+                <div>
+                    <p class="section-heading__eyebrow">Category</p>
+                    <h2>{{ category }}</h2>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="pdp-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Event</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in metrics %}
+                            <tr>
+                                <td>{{ metric.display_name }}</td>
+                                <td>{{ metric.numeric_value|default:metric.text_value|default:metric.raw_value }}</td>
+                                <td>{{ metric.evaluation_event.name }} · {{ metric.evaluation_event.evaluated_on }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    {% empty %}
+        <article class="pdp-card"><p class="empty-state">No evaluation metrics imported yet.</p></article>
+    {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/pdp.css' %}">
+{% endblock %}
+
+{% block body_class %}pdp-shell{% endblock %}
+
+{% block content %}
+<main id="main-content" class="pdp-shell">
+    <section class="pdp-app">
+        <header class="pdp-hero">
+            <div>
+                <p class="pdp-kicker">Player Development Platform</p>
+                <h1>{% block pdp_title %}Premium athlete growth system{% endblock %}</h1>
+                <p class="pdp-subtitle">{% block pdp_subtitle %}Track progress, guide development, and keep the experience motivating for players and families.{% endblock %}</p>
+            </div>
+            <nav class="pdp-nav">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'pdp:home' %}">Home</a>
+                    <a href="{% url 'pdp:coach-dashboard' %}">Coach</a>
+                    <a href="{% url 'pdp:parent-dashboard' %}">Parent</a>
+                    <a href="{% url 'pdp:import-workbench' %}">Imports</a>
+                    <a href="{% url 'pdp:drill-library' %}">Drills</a>
+                    <a href="{% url 'pdp:password-change' %}">Password</a>
+                    <a href="{% url 'pdp:logout' %}">Log out</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        {% if messages %}
+            <div class="message-stack">
+                {% for message in messages %}
+                    <div class="message message--{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block pdp_content %}{% endblock %}
+    </section>
+</main>
+{% endblock %}

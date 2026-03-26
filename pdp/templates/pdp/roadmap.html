@@ -1,0 +1,49 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}{{ player.full_name }} Development Roadmap{% endblock %}
+{% block pdp_subtitle %}A structured improvement plan tied to goals, drills, and season priorities.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Current</p>
+                <h2>{{ roadmap.title|default:"No current roadmap" }}</h2>
+            </div>
+            {% if can_manage_player %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button class="button button--primary" type="submit">Refresh Roadmap</button>
+                </form>
+            {% endif %}
+        </div>
+        {% if roadmap %}
+            <p>{{ roadmap.summary }}</p>
+            <div class="pdp-bullet-list">
+                {% for item in roadmap.items.all %}
+                    <div class="pdp-bullet-list__item">
+                        <strong>{{ item.title }}</strong>
+                        <span>{{ item.description }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">Generate a roadmap to populate this section.</p>
+        {% endif %}
+    </article>
+    <article class="pdp-card">
+        <h2>Previous versions</h2>
+        <div class="pdp-list">
+            {% for item in previous_roadmaps %}
+                <div class="pdp-list__item pdp-list__item--stack">
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.summary }}</p>
+                </div>
+            {% empty %}
+                <p class="empty-state">No previous roadmaps.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

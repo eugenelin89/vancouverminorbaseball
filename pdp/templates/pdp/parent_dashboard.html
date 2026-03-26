@@ -1,0 +1,21 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Parent View{% endblock %}
+{% block pdp_subtitle %}A clear, encouraging overview of your child’s development journey.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid">
+    {% for child in children %}
+        <a class="pdp-card pdp-card--link" href="{% url 'pdp:player-dashboard' player_id=child.id %}">
+            <p class="card-label">Player</p>
+            <h2>{{ child.full_name }}</h2>
+            <p>{{ child.level|default:"Development profile" }}</p>
+        </a>
+    {% empty %}
+        <article class="pdp-card">
+            <h2>No linked players</h2>
+            <p>Connect parent access records to expose child dashboards here.</p>
+        </article>
+    {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Coach Command View{% endblock %}
+{% block pdp_subtitle %}See players needing follow-up, missing reports, and recent evaluation imports in one place.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid">
+    <article class="pdp-card">
+        <p class="card-label">Season</p>
+        <h2>{{ season.name|default:"No active season" }}</h2>
+        <p>{{ players|length }} accessible player{{ players|length|pluralize }}</p>
+    </article>
+    <article class="pdp-card">
+        <p class="card-label">Missing Report Cards</p>
+        <h2>{{ missing_reports|length }}</h2>
+        <p>Players who still need final season feedback.</p>
+    </article>
+    <article class="pdp-card">
+        <p class="card-label">Recent Imports</p>
+        <h2>{{ recent_imports|length }}</h2>
+        <p>Latest workbook imports tied to this season.</p>
+    </article>
+</section>
+
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Follow-Up</p>
+                <h2>Players needing attention</h2>
+            </div>
+        </div>
+        <div class="pdp-list">
+            {% for player in follow_up_players %}
+                <a class="pdp-list__item" href="{% url 'pdp:player-dashboard' player_id=player.id %}">
+                    <strong>{{ player.full_name }}</strong>
+                    <span>{{ player.goal_count }} goal{{ player.goal_count|pluralize }}</span>
+                </a>
+            {% empty %}
+                <p class="empty-state">No players available yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Roster</p>
+                <h2>Accessible players</h2>
+            </div>
+        </div>
+        <div class="pdp-list">
+            {% for player in players %}
+                <a class="pdp-list__item" href="{% url 'pdp:player-dashboard' player_id=player.id %}">
+                    <strong>{{ player.full_name }}</strong>
+                    <span>{{ player.level|default:"Player profile" }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

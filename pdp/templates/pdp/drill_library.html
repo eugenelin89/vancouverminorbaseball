@@ -1,0 +1,49 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Drill And Resource Library{% endblock %}
+{% block pdp_subtitle %}Searchable development resources that can be assigned directly to players, goals, and roadmap items.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <h2>Library</h2>
+        <form method="get" class="toolbar-inline">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+                <option value="">All</option>
+                {% for category in categories %}
+                    <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+                {% endfor %}
+            </select>
+            <button class="button button--ghost" type="submit">Filter</button>
+        </form>
+        <div class="pdp-list">
+            {% for drill in drills %}
+                <div class="pdp-list__item pdp-list__item--stack">
+                    <strong>{{ drill.title }}</strong>
+                    <span>{{ drill.category }} · {{ drill.get_difficulty_level_display }}</span>
+                    <p>{{ drill.description }}</p>
+                </div>
+            {% empty %}
+                <p class="empty-state">No drills available.</p>
+            {% endfor %}
+        </div>
+    </article>
+    <article class="pdp-card pdp-card--form">
+        <h2>Assign drill</h2>
+        <form method="post" class="pdp-form">
+            {% csrf_token %}
+            <p>
+                <label for="player_id">Player</label>
+                <select name="player_id" id="player_id">
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            {{ form.as_p }}
+            <button class="button button--primary" type="submit">Assign Drill</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Athlete Login{% endblock %}
+{% block pdp_subtitle %}Secure access for players, parents, coaches, and administrators.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card pdp-card--form">
+        <h2>Sign in</h2>
+        <form method="post" class="pdp-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="button button--primary" type="submit">Enter Platform</button>
+        </form>
+    </article>
+</section>
+{% endblock %}
