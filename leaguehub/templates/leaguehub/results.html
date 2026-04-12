@@ -1,0 +1,42 @@
+{% extends "leaguehub/base.html" %}
+
+{% block title %}{{ league_season.title }} | Results{% endblock %}
+{% block leaguehub_title %}{{ league_season.title }} Results{% endblock %}
+{% block leaguehub_subtitle %}All scorelines in one place, with verification state visible for every game.{% endblock %}
+
+{% block leaguehub_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">All Scores</p>
+                <h2>{{ league_season.league.name }}</h2>
+            </div>
+            <a class="button button--ghost" href="{% url 'leaguehub:dashboard' league_slug=league_season.league.slug season_slug=league_season.season.slug %}">Back To Dashboard</a>
+        </div>
+        <div class="leaguehub-stack">
+            {% for game in games %}
+                <a class="{{ game.card_class }}" href="{{ game.detail_url }}">
+                    <div class="leaguehub-game-card__meta">
+                        <span>{{ game.game_date }}</span>
+                        <span>{{ game.status_label }}</span>
+                        <span class="{{ game.verification_badge_class }}">{{ game.verification_label }}</span>
+                    </div>
+                    <div class="leaguehub-game-card__scoreboard">
+                        <div class="leaguehub-game-card__team-row">
+                            <span>{{ game.away_team.name }}</span>
+                            <strong>{{ game.away_score|default:"-" }}</strong>
+                        </div>
+                        <div class="leaguehub-game-card__team-row">
+                            <span>{{ game.home_team.name }}</span>
+                            <strong>{{ game.home_score|default:"-" }}</strong>
+                        </div>
+                    </div>
+                </a>
+            {% empty %}
+                <p class="empty-state">No games available.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

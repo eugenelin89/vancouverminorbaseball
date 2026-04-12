@@ -1,0 +1,130 @@
+{% extends "leaguehub/base.html" %}
+
+{% block title %}{{ team.name }} | {{ league_season.title }}{% endblock %}
+{% block leaguehub_title %}{{ team.name }}{% endblock %}
+{% block leaguehub_subtitle %}Team page with official standing, verified record, and every linked game for this league season.{% endblock %}
+
+{% block leaguehub_content %}
+<section class="leaguehub-scoreboard-hero">
+    <div class="leaguehub-scoreboard-hero__main">
+        <p class="leaguehub-kicker">Team Snapshot</p>
+        <h2>{{ league_season.league.name }}</h2>
+        <p class="leaguehub-muted">{{ league_season.title }}</p>
+    </div>
+    <div class="leaguehub-scoreboard-hero__meta">
+        <article class="draft-summary-card draft-summary-card--accent">
+            <p class="draft-summary-card__label">Team</p>
+            <p class="draft-summary-card__value">{{ team.name }}</p>
+        </article>
+        <article class="draft-summary-card draft-summary-card--priority">
+            <p class="draft-summary-card__label">Standing</p>
+            <p class="draft-summary-card__value">{% if team_standing %}#{{ team_standing.rank }}{% else %}-{% endif %}</p>
+        </article>
+        <article class="draft-summary-card">
+            <p class="draft-summary-card__label">Points</p>
+            <p class="draft-summary-card__value">{% if team_standing %}{{ team_standing.points }}{% else %}0{% endif %}</p>
+        </article>
+        <article class="draft-summary-card">
+            <p class="draft-summary-card__label">Verified Record</p>
+            <p class="draft-summary-card__value">{% if team_standing %}{{ team_standing.wins }}-{{ team_standing.losses }}-{{ team_standing.ties }}{% else %}0-0-0{% endif %}</p>
+        </article>
+    </div>
+</section>
+
+<section class="leaguehub-grid leaguehub-grid--two-column">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Official Standing</p>
+                <h2>Verified final games only</h2>
+            </div>
+            <a class="button button--ghost" href="{{ leaguehub_standings_url }}">Full Standings</a>
+        </div>
+        {% if team_standing %}
+            <div class="table-wrap">
+                <table class="pdp-table">
+                    <thead>
+                        <tr>
+                            <th>GP</th>
+                            <th>W</th>
+                            <th>L</th>
+                            <th>T</th>
+                            <th>Pts</th>
+                            <th>RF</th>
+                            <th>RA</th>
+                            <th>Diff</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ team_standing.games_played }}</td>
+                            <td>{{ team_standing.wins }}</td>
+                            <td>{{ team_standing.losses }}</td>
+                            <td>{{ team_standing.ties }}</td>
+                            <td>{{ team_standing.points }}</td>
+                            <td>{{ team_standing.runs_for }}</td>
+                            <td>{{ team_standing.runs_against }}</td>
+                            <td>{{ team_standing.run_differential }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty-state">No official standing data yet.</p>
+        {% endif %}
+    </article>
+
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Navigation</p>
+                <h2>Season links</h2>
+            </div>
+            <a class="button button--ghost" href="{{ leaguehub_dashboard_url }}">Season Dashboard</a>
+        </div>
+        <div class="leaguehub-stack">
+            <a class="leaguehub-game-card" href="{{ leaguehub_dashboard_url }}">
+                <div class="leaguehub-game-card__teams"><strong>Dashboard</strong></div>
+                <div class="leaguehub-game-card__scoreline">League summary, recent scores, and featured games</div>
+            </a>
+            <a class="leaguehub-game-card" href="{{ leaguehub_results_url }}">
+                <div class="leaguehub-game-card__teams"><strong>All Results</strong></div>
+                <div class="leaguehub-game-card__scoreline">Full schedule and score feed for the season</div>
+            </a>
+        </div>
+    </article>
+</section>
+
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Games</p>
+                <h2>{{ team.name }} schedule and results</h2>
+            </div>
+        </div>
+        <div class="leaguehub-stack">
+            {% for game in games %}
+                <a class="{{ game.card_class }}" href="{{ game.detail_url }}">
+                    <div class="leaguehub-game-card__meta">
+                        <span>{{ game.game_date }}</span>
+                        <span class="{{ game.verification_badge_class }}">{{ game.verification_label }}</span>
+                    </div>
+                    <div class="leaguehub-game-card__scoreboard">
+                        <div class="leaguehub-game-card__team-row">
+                            <span>{{ game.away_team.name }}</span>
+                            <strong>{{ game.away_score|default:"-" }}</strong>
+                        </div>
+                        <div class="leaguehub-game-card__team-row">
+                            <span>{{ game.home_team.name }}</span>
+                            <strong>{{ game.home_score|default:"-" }}</strong>
+                        </div>
+                    </div>
+                </a>
+            {% empty %}
+                <p class="empty-state">No games scheduled yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

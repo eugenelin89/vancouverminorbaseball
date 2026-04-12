@@ -1,0 +1,143 @@
+{% extends "leaguehub/base.html" %}
+
+{% block title %}League Hub Management{% endblock %}
+{% block leaguehub_title %}League Hub Management{% endblock %}
+{% block leaguehub_subtitle %}Create and manage seasons, leagues, teams, coaches, assignments, and games without leaving the app.{% endblock %}
+
+{% block leaguehub_content %}
+<section class="leaguehub-scoreboard-hero" id="operations">
+    <div class="leaguehub-scoreboard-hero__main">
+        <p class="leaguehub-kicker">Operations</p>
+        <h2>League setup dashboard</h2>
+        <p class="leaguehub-muted">This screen replaces the need to use Django admin for standard league operations setup.</p>
+    </div>
+    <div class="leaguehub-scoreboard-hero__meta">
+        <article class="draft-summary-card draft-summary-card--accent">
+            <p class="draft-summary-card__label">League Seasons</p>
+            <p class="draft-summary-card__value">{{ recent_seasons|length }}</p>
+        </article>
+        <article class="draft-summary-card draft-summary-card--priority">
+            <p class="draft-summary-card__label">Teams</p>
+            <p class="draft-summary-card__value">{{ recent_teams|length }}</p>
+        </article>
+        <article class="draft-summary-card">
+            <p class="draft-summary-card__label">Games</p>
+            <p class="draft-summary-card__value">{{ recent_games|length }}</p>
+        </article>
+    </div>
+</section>
+
+<section class="leaguehub-grid leaguehub-grid--management">
+    <article class="pdp-card pdp-card--form" id="season">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Step 1</p><h2>Create season</h2></div></div>
+        <form method="post" action="{% url 'leaguehub:manage-season-create' %}" class="pdp-form">
+            {% csrf_token %}
+            {{ season_form.as_p }}
+            <button class="button button--primary" type="submit">Create Season</button>
+        </form>
+    </article>
+
+    <article class="pdp-card pdp-card--form" id="league">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Step 2</p><h2>Create league</h2></div></div>
+        <form method="post" action="{% url 'leaguehub:manage-league-create' %}" class="pdp-form">
+            {% csrf_token %}
+            {{ league_form.as_p }}
+            <button class="button button--primary" type="submit">Create League</button>
+        </form>
+    </article>
+
+    <article class="pdp-card pdp-card--form" id="league-season">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Step 3</p><h2>Bind league to season</h2></div></div>
+        <form method="post" action="{% url 'leaguehub:manage-league-season-create' %}" class="pdp-form">
+            {% csrf_token %}
+            {{ league_season_form.as_p }}
+            <button class="button button--primary" type="submit">Create League Season</button>
+        </form>
+    </article>
+
+    <article class="pdp-card pdp-card--form" id="team">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Step 4</p><h2>Create team</h2></div></div>
+        <form method="post" action="{% url 'leaguehub:manage-team-create' %}" class="pdp-form">
+            {% csrf_token %}
+            {{ team_form.as_p }}
+            <button class="button button--primary" type="submit">Create Team</button>
+        </form>
+    </article>
+
+    <article class="pdp-card pdp-card--form" id="coach">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Step 5</p><h2>Create coach account</h2></div></div>
+        <form method="post" action="{% url 'leaguehub:manage-coach-create' %}" class="pdp-form">
+            {% csrf_token %}
+            {{ coach_user_form.as_p }}
+            <button class="button button--primary" type="submit">Create Coach</button>
+        </form>
+    </article>
+
+    <article class="pdp-card pdp-card--form" id="assignment">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Step 6</p><h2>Assign coach to team</h2></div></div>
+        <form method="post" action="{% url 'leaguehub:manage-assignment-create' %}" class="pdp-form">
+            {% csrf_token %}
+            {{ coach_assignment_form.as_p }}
+            <button class="button button--primary" type="submit">Assign Coach</button>
+        </form>
+    </article>
+
+    <article class="pdp-card pdp-card--form" id="game">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Step 7</p><h2>Create game</h2></div></div>
+        <form method="post" action="{% url 'leaguehub:manage-game-create' %}" class="pdp-form">
+            {% csrf_token %}
+            {{ game_form.as_p }}
+            <button class="button button--primary" type="submit">Create Game</button>
+        </form>
+    </article>
+    <article class="pdp-card">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Recent League Seasons</p><h2>Latest setup records</h2></div></div>
+        <div class="leaguehub-stack">
+            {% for item in recent_seasons %}
+                <a class="leaguehub-game-card" href="{% url 'leaguehub:dashboard' league_slug=item.league.slug season_slug=item.season.slug %}">
+                    <div class="leaguehub-game-card__meta">
+                        <span>{{ item.league.name }}</span>
+                        <span>{{ item.season.name }}</span>
+                    </div>
+                    <div class="leaguehub-game-card__teams"><strong>{{ item.title }}</strong></div>
+                </a>
+            {% empty %}
+                <p class="empty-state">No league seasons created yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="pdp-card">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Recent Teams</p><h2>Latest team records</h2></div></div>
+        <div class="leaguehub-stack">
+            {% for item in recent_teams %}
+                <a class="leaguehub-game-card" href="{% url 'leaguehub:team-detail' league_slug=item.league_season.league.slug season_slug=item.league_season.season.slug team_slug=item.slug %}">
+                    <div class="leaguehub-game-card__meta">
+                        <span>{{ item.league_season.title }}</span>
+                    </div>
+                    <div class="leaguehub-game-card__teams"><strong>{{ item.name }}</strong></div>
+                </a>
+            {% empty %}
+                <p class="empty-state">No teams created yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="pdp-card">
+        <div class="section-heading"><div><p class="section-heading__eyebrow">Recent Games</p><h2>Latest schedule records</h2></div></div>
+        <div class="leaguehub-stack">
+            {% for item in recent_games %}
+                <a class="leaguehub-game-card" href="{% url 'leaguehub:game-detail' pk=item.pk %}">
+                    <div class="leaguehub-game-card__meta">
+                        <span>{{ item.league_season.title }}</span>
+                        <span>{{ item.game_date }}</span>
+                    </div>
+                    <div class="leaguehub-game-card__teams"><strong>{{ item.away_team.name }}</strong><span>at</span><strong>{{ item.home_team.name }}</strong></div>
+                </a>
+            {% empty %}
+                <p class="empty-state">No games created yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

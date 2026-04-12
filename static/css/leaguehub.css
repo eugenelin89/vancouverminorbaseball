@@ -1,0 +1,346 @@
+.leaguehub-toolbar {
+    align-items: end;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-bottom: 1.5rem;
+}
+
+.leaguehub-toolbar__links,
+.leaguehub-toolbar__selectors {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+}
+
+.leaguehub-toolbar__links a {
+    color: #173a73;
+    font-family: "Barlow", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.leaguehub-selector {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.leaguehub-selector label {
+    color: #51627a;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.leaguehub-select {
+    appearance: none;
+    background: #fff;
+    border: 1px solid rgba(8, 25, 58, 0.14);
+    border-radius: 999px;
+    color: #09172f;
+    font-family: "Source Sans 3", sans-serif;
+    min-width: 220px;
+    padding: 0.7rem 2.75rem 0.7rem 0.95rem;
+}
+
+.pdp-input,
+.pdp-form select,
+.pdp-form textarea,
+.pdp-form input[type="text"],
+.pdp-form input[type="email"],
+.pdp-form input[type="password"],
+.pdp-form input[type="date"],
+.pdp-form input[type="time"],
+.pdp-form input[type="number"],
+.pdp-form input[type="file"] {
+    background: #fff;
+    border: 1px solid rgba(8, 25, 58, 0.14);
+    border-radius: 16px;
+    color: #09172f;
+    font-family: "Source Sans 3", sans-serif;
+    padding: 0.75rem 0.9rem;
+    width: 100%;
+}
+
+.pdp-form p {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0 0 0.9rem;
+}
+
+.pdp-form label {
+    color: #51627a;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.pdp-form .helptext {
+    color: #6a7890;
+    font-size: 0.85rem;
+}
+
+.pdp-form ul.errorlist {
+    color: #9a2434;
+    margin: 0 0 0.35rem;
+    padding-left: 1rem;
+}
+
+.leaguehub-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.leaguehub-grid--index {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.leaguehub-grid--two-column {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 1.75rem;
+}
+
+.leaguehub-grid--three-column {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.leaguehub-grid--management {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.leaguehub-scoreboard-hero,
+.leaguehub-scoreboard {
+    background:
+        radial-gradient(circle at top left, rgba(186, 155, 79, 0.18), transparent 32%),
+        linear-gradient(145deg, rgba(7, 20, 45, 0.96), rgba(18, 44, 88, 0.96));
+    border: 1px solid rgba(186, 155, 79, 0.22);
+    border-radius: 28px;
+    box-shadow: 0 28px 56px rgba(7, 20, 45, 0.2);
+    color: #f7f2e8;
+    padding: 1.75rem;
+}
+
+.leaguehub-scoreboard-hero {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.leaguehub-scoreboard-hero__meta {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.leaguehub-scoreboard-hero .draft-summary-card {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: none;
+    color: #f7f2e8;
+}
+
+.leaguehub-scoreboard-hero .draft-summary-card__label {
+    color: rgba(247, 242, 232, 0.72);
+}
+
+.leaguehub-scoreboard-hero .draft-summary-card__value {
+    color: #ffffff;
+}
+
+.leaguehub-scoreboard-hero .draft-summary-card--accent {
+    background: linear-gradient(135deg, rgba(186, 155, 79, 0.28), rgba(255, 255, 255, 0.14));
+    border-color: rgba(208, 177, 111, 0.45);
+}
+
+.leaguehub-scoreboard-hero .draft-summary-card--priority {
+    background: linear-gradient(135deg, rgba(66, 133, 244, 0.28), rgba(255, 255, 255, 0.14));
+    border-color: rgba(143, 188, 255, 0.4);
+}
+
+.leaguehub-scoreboard__header,
+.leaguehub-season-card__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.leaguehub-scoreboard__status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.leaguehub-scoreboard__rows {
+    margin-top: 1.5rem;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.leaguehub-scoreboard__row,
+.leaguehub-game-card__team-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.leaguehub-scoreboard__row {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 1rem 1.15rem;
+    font-size: 1.1rem;
+}
+
+.leaguehub-scoreboard__row strong {
+    font-size: 1.7rem;
+    line-height: 1;
+}
+
+.leaguehub-scoreboard__row a,
+.leaguehub-game-card a,
+.pdp-table a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.pdp-table a:hover,
+.leaguehub-scoreboard__row a:hover,
+.leaguehub-toolbar__links a:hover {
+    text-decoration: underline;
+}
+
+.leaguehub-kicker {
+    color: #d0b16f;
+    font-family: "Barlow", sans-serif;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+}
+
+.leaguehub-muted {
+    color: rgba(247, 242, 232, 0.76);
+    margin: 0.35rem 0 0;
+}
+
+.leaguehub-stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.leaguehub-game-card,
+.leaguehub-season-card {
+    background: #fff;
+    border: 1px solid rgba(8, 25, 58, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 18px 40px rgba(8, 25, 58, 0.08);
+    color: inherit;
+    display: block;
+    padding: 1.15rem 1.2rem;
+    text-decoration: none;
+}
+
+.leaguehub-game-card--awaiting {
+    border-color: rgba(186, 155, 79, 0.45);
+    box-shadow: 0 18px 40px rgba(186, 155, 79, 0.12);
+}
+
+.leaguehub-game-card--verified {
+    border-color: rgba(21, 102, 72, 0.25);
+    box-shadow: 0 18px 40px rgba(21, 102, 72, 0.12);
+}
+
+.leaguehub-game-card__meta,
+.leaguehub-season-card__meta,
+.leaguehub-season-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.leaguehub-game-card__meta,
+.leaguehub-season-card__meta {
+    color: #5d6a7f;
+    font-size: 0.9rem;
+    margin-bottom: 0.9rem;
+}
+
+.leaguehub-game-card__scoreboard {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.leaguehub-game-card__teams {
+    align-items: center;
+    display: flex;
+    gap: 0.55rem;
+    margin-bottom: 0.65rem;
+}
+
+.leaguehub-game-card__team-row strong,
+.leaguehub-game-card__scoreline {
+    color: #09172f;
+    font-family: "Barlow", sans-serif;
+    font-weight: 700;
+}
+
+.leaguehub-status {
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.38rem 0.72rem;
+    text-transform: uppercase;
+}
+
+.leaguehub-status--verified {
+    background: rgba(21, 102, 72, 0.12);
+    color: #156648;
+}
+
+.leaguehub-status--awaiting {
+    background: rgba(186, 155, 79, 0.16);
+    color: #8f6b18;
+}
+
+.leaguehub-status--scheduled {
+    background: rgba(8, 25, 58, 0.08);
+    color: #273a59;
+}
+
+.leaguehub-season-card__actions {
+    margin-top: 1rem;
+}
+
+.leaguehub-photo {
+    border-radius: 18px;
+    display: block;
+    height: auto;
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .leaguehub-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .leaguehub-grid--two-column {
+        grid-template-columns: 1fr;
+    }
+
+    .leaguehub-scoreboard__header,
+    .leaguehub-season-card__header {
+        flex-direction: column;
+    }
+
+    .leaguehub-scoreboard__status {
+        justify-content: flex-start;
+    }
+}

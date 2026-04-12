@@ -1,0 +1,183 @@
+{% extends "leaguehub/base.html" %}
+
+{% block title %}{{ game_display.away_team.name }} at {{ game_display.home_team.name }} | Game Detail{% endblock %}
+{% block leaguehub_title %}{{ game_display.away_team.name }} at {{ game_display.home_team.name }}{% endblock %}
+{% block leaguehub_subtitle %}Scoreboard-first game page with verification status, coach reports, and team photos.{% endblock %}
+
+{% block leaguehub_content %}
+<section class="leaguehub-scoreboard">
+    <div class="leaguehub-scoreboard__header">
+        <div>
+            <p class="leaguehub-kicker">{{ game_display.game_date }}</p>
+            <h2>{{ game_display.away_team.name }} at {{ game_display.home_team.name }}</h2>
+            <p class="leaguehub-muted">{{ game_display.location|default:"Location TBD" }}</p>
+        </div>
+        <div class="leaguehub-scoreboard__status">
+            <span class="{{ game_display.verification_badge_class }}">{{ game_display.verification_label }}</span>
+            <span class="leaguehub-status leaguehub-status--scheduled">{{ game_display.status_label }}</span>
+        </div>
+    </div>
+    <div class="leaguehub-scoreboard__rows">
+        <div class="leaguehub-scoreboard__row">
+            <span><a href="{{ game_display.away_team_url }}">{{ game_display.away_team.name }}</a></span>
+            <strong>{{ game_display.away_score|default:"-" }}</strong>
+        </div>
+        <div class="leaguehub-scoreboard__row">
+            <span><a href="{{ game_display.home_team_url }}">{{ game_display.home_team.name }}</a></span>
+            <strong>{{ game_display.home_score|default:"-" }}</strong>
+        </div>
+    </div>
+</section>
+
+<section class="pdp-grid">
+    <article class="draft-summary-card {% if game_display.is_verified %}draft-summary-card--accent{% else %}draft-summary-card--priority{% endif %}">
+        <p class="draft-summary-card__label">Verification</p>
+        <p class="draft-summary-card__value">{{ game_display.verification_label }}</p>
+    </article>
+    <article class="draft-summary-card">
+        <p class="draft-summary-card__label">Status</p>
+        <p class="draft-summary-card__value">{{ game_display.status_label }}</p>
+    </article>
+    <article class="draft-summary-card">
+        <p class="draft-summary-card__label">Date</p>
+        <p class="draft-summary-card__value">{{ game_display.game_date }}</p>
+    </article>
+    <article class="draft-summary-card">
+        <p class="draft-summary-card__label">Location</p>
+        <p class="draft-summary-card__value">{{ game_display.location|default:"TBD" }}</p>
+    </article>
+</section>
+
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Scoreboard</p>
+                <h2>{{ game_display.scoreline }}</h2>
+            </div>
+            <a class="button button--ghost" href="{% url 'leaguehub:dashboard' league_slug=league_season.league.slug season_slug=league_season.season.slug %}">Season Dashboard</a>
+        </div>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr><th>Team</th><th>Score</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><a href="{{ game_display.away_team_url }}">{{ game_display.away_team.name }}</a></td><td>{{ game_display.away_score|default:"-" }}</td></tr>
+                    <tr><td><a href="{{ game_display.home_team_url }}">{{ game_display.home_team.name }}</a></td><td>{{ game_display.home_score|default:"-" }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="pdp-card pdp-card--form">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Game Actions</p>
+                <h2>Score workflow</h2>
+            </div>
+        </div>
+
+        {% if request.user.is_authenticated and game_display.can_edit_verified_game %}
+            <h3>Admin score override</h3>
+            <form method="post" action="{% url 'leaguehub:submit-score' pk=game_display.id %}" class="pdp-form">
+                {% csrf_token %}
+                {{ admin_score_form.as_p }}
+                <button class="button button--primary" type="submit">Save Admin Override</button>
+            </form>
+        {% elif request.user.is_authenticated and game_display.can_submit_score %}
+            <h3>Submit score</h3>
+            <form method="post" action="{% url 'leaguehub:submit-score' pk=game_display.id %}" class="pdp-form">
+                {% csrf_token %}
+                {{ score_form.as_p }}
+                <button class="button button--primary" type="submit">Submit Score</button>
+            </form>
+        {% endif %}
+
+        {% if request.user.is_authenticated and game_display.can_verify_score %}
+            <h3>Verify score</h3>
+            <form method="post" action="{% url 'leaguehub:verify-score' pk=game_display.id %}" class="pdp-form">
+                {% csrf_token %}
+                {{ verify_form.as_p }}
+                <button class="button button--ghost" type="submit">Verify Final Score</button>
+            </form>
+        {% endif %}
+    </article>
+</section>
+
+<section class="pdp-grid pdp-grid--two">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Home Team Report</p>
+                <h2>{{ game_display.home_team.name }}</h2>
+            </div>
+        </div>
+        {% if game_display.home_story %}
+            <div class="stack-item">
+                <strong>{{ game_display.home_story.headline|default:"Coach report" }}</strong>
+                <p>{{ game_display.home_story.story }}</p>
+            </div>
+        {% else %}
+            <p class="empty-state">No home-team story yet.</p>
+        {% endif %}
+        {% if game_display.home_photo %}
+            <div class="stack-item">
+                <img class="leaguehub-photo" src="{{ game_display.home_photo.image.url }}" alt="{{ game_display.home_photo.caption|default:game_display.home_team.name }}">
+                {% if game_display.home_photo.caption %}<p>{{ game_display.home_photo.caption }}</p>{% endif %}
+            </div>
+        {% endif %}
+        {% if request.user.is_authenticated and game_display.can_submit_home_story %}
+            <h3>Submit home story</h3>
+            <form method="post" action="{% url 'leaguehub:submit-story' pk=game_display.id team_id=game_display.home_team.id %}" class="pdp-form">
+                {% csrf_token %}
+                {{ home_story_form.as_p }}
+                <button class="button button--primary" type="submit">Save Story</button>
+            </form>
+            <h3>Upload home photo</h3>
+            <form method="post" action="{% url 'leaguehub:submit-photo' pk=game_display.id team_id=game_display.home_team.id %}" enctype="multipart/form-data" class="pdp-form">
+                {% csrf_token %}
+                {{ home_photo_form.as_p }}
+                <button class="button button--ghost" type="submit">Upload Photo</button>
+            </form>
+        {% endif %}
+    </article>
+
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Away Team Report</p>
+                <h2>{{ game_display.away_team.name }}</h2>
+            </div>
+        </div>
+        {% if game_display.away_story %}
+            <div class="stack-item">
+                <strong>{{ game_display.away_story.headline|default:"Coach report" }}</strong>
+                <p>{{ game_display.away_story.story }}</p>
+            </div>
+        {% else %}
+            <p class="empty-state">No away-team story yet.</p>
+        {% endif %}
+        {% if game_display.away_photo %}
+            <div class="stack-item">
+                <img class="leaguehub-photo" src="{{ game_display.away_photo.image.url }}" alt="{{ game_display.away_photo.caption|default:game_display.away_team.name }}">
+                {% if game_display.away_photo.caption %}<p>{{ game_display.away_photo.caption }}</p>{% endif %}
+            </div>
+        {% endif %}
+        {% if request.user.is_authenticated and game_display.can_submit_away_story %}
+            <h3>Submit away story</h3>
+            <form method="post" action="{% url 'leaguehub:submit-story' pk=game_display.id team_id=game_display.away_team.id %}" class="pdp-form">
+                {% csrf_token %}
+                {{ away_story_form.as_p }}
+                <button class="button button--primary" type="submit">Save Story</button>
+            </form>
+            <h3>Upload away photo</h3>
+            <form method="post" action="{% url 'leaguehub:submit-photo' pk=game_display.id team_id=game_display.away_team.id %}" enctype="multipart/form-data" class="pdp-form">
+                {% csrf_token %}
+                {{ away_photo_form.as_p }}
+                <button class="button button--ghost" type="submit">Upload Photo</button>
+            </form>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

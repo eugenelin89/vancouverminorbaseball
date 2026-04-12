@@ -1,0 +1,48 @@
+{% extends "leaguehub/base.html" %}
+
+{% block title %}League Hub{% endblock %}
+{% block leaguehub_title %}League Hub{% endblock %}
+{% block leaguehub_subtitle %}Season dashboards, official standings, recent scores, and coach game reports in one place.{% endblock %}
+
+{% block leaguehub_content %}
+<section class="leaguehub-grid leaguehub-grid--index">
+    {% for item in league_seasons %}
+        <article class="leaguehub-season-card">
+            <div class="leaguehub-season-card__header">
+                <div>
+                    <p class="leaguehub-kicker">{{ item.league_name }}</p>
+                    <h2>{{ item.title }}</h2>
+                    <p class="leaguehub-muted">{{ item.season_name }}</p>
+                </div>
+                <a class="button button--primary" href="{{ item.dashboard_url }}">Open Dashboard</a>
+            </div>
+            <div class="leaguehub-season-card__meta">
+                <span>{{ item.team_count }} teams</span>
+                <span>{{ item.official_games }} official games</span>
+            </div>
+            {% if item.next_game %}
+                <a class="{{ item.next_game.card_class }}" href="{{ item.next_game.detail_url }}">
+                    <div class="leaguehub-game-card__meta">
+                        <span>{{ item.next_game.game_date }}</span>
+                        <span class="{{ item.next_game.verification_badge_class }}">{{ item.next_game.verification_label }}</span>
+                    </div>
+                    <div class="leaguehub-game-card__teams">
+                        <strong>{{ item.next_game.away_team.name }}</strong>
+                        <span>at</span>
+                        <strong>{{ item.next_game.home_team.name }}</strong>
+                    </div>
+                </a>
+            {% else %}
+                <p class="empty-state">No upcoming game scheduled yet.</p>
+            {% endif %}
+            <div class="leaguehub-season-card__actions">
+                <a class="button button--ghost" href="{{ item.standings_url }}">Standings</a>
+            </div>
+        </article>
+    {% empty %}
+        <article class="pdp-card">
+            <p class="empty-state">No active league seasons are available yet.</p>
+        </article>
+    {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "leaguehub/base.html" %}
+
+{% block title %}{{ league_season.title }} | Standings{% endblock %}
+{% block leaguehub_title %}{{ league_season.title }} Standings{% endblock %}
+{% block leaguehub_subtitle %}Official standings derived only from verified final games.{% endblock %}
+
+{% block leaguehub_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <div class="section-heading">
+            <div>
+                <p class="section-heading__eyebrow">Standings</p>
+                <h2>{{ league_season.league.name }}</h2>
+            </div>
+            <a class="button button--ghost" href="{% url 'leaguehub:dashboard' league_slug=league_season.league.slug season_slug=league_season.season.slug %}">Back To Dashboard</a>
+        </div>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Team</th>
+                        <th>GP</th>
+                        <th>W</th>
+                        <th>L</th>
+                        <th>T</th>
+                        <th>Pts</th>
+                        <th>RF</th>
+                        <th>RA</th>
+                        <th>Diff</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in standings %}
+                        <tr>
+                            <td>{{ row.rank }}</td>
+                            <td><strong><a href="{{ row.team_url }}">{{ row.team_name }}</a></strong></td>
+                            <td>{{ row.games_played }}</td>
+                            <td>{{ row.wins }}</td>
+                            <td>{{ row.losses }}</td>
+                            <td>{{ row.ties }}</td>
+                            <td>{{ row.points }}</td>
+                            <td>{{ row.runs_for }}</td>
+                            <td>{{ row.runs_against }}</td>
+                            <td>{{ row.run_differential }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="10">No verified standings data yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}

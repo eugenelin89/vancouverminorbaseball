@@ -1,0 +1,37 @@
+{% extends "pdp/base.html" %}
+{% load static %}
+
+{% block pdp_title %}{% block leaguehub_title %}League Hub{% endblock %}{% endblock %}
+{% block pdp_subtitle %}{% block leaguehub_subtitle %}Official standings, recent scores, and game coverage for each baseball season.{% endblock %}{% endblock %}
+
+{% block extra_head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/leaguehub.css' %}">
+{% endblock %}
+
+{% block pdp_content %}
+    <section class="leaguehub-toolbar">
+        <div class="leaguehub-toolbar__links">
+            <a href="{% url 'leaguehub:index' %}">League Hub Home</a>
+            {% if leaguehub_dashboard_url %}<a href="{{ leaguehub_dashboard_url }}">Dashboard</a>{% endif %}
+            {% if leaguehub_standings_url %}<a href="{{ leaguehub_standings_url }}">Standings</a>{% endif %}
+            {% if leaguehub_results_url %}<a href="{{ leaguehub_results_url }}">Results</a>{% endif %}
+            {% if request.user.is_authenticated and request.user.is_staff %}<a href="{% url 'leaguehub:manage' %}">Manage</a>{% endif %}
+        </div>
+        <div class="leaguehub-toolbar__selectors">
+            {% if leaguehub_season_form %}
+                <div class="leaguehub-selector">
+                    <label for="{{ leaguehub_season_form.season_destination.id_for_label }}">Season</label>
+                    {{ leaguehub_season_form.season_destination }}
+                </div>
+            {% endif %}
+            {% if leaguehub_team_form %}
+                <div class="leaguehub-selector">
+                    <label for="{{ leaguehub_team_form.team_destination.id_for_label }}">Team</label>
+                    {{ leaguehub_team_form.team_destination }}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+    {% block leaguehub_content %}{% endblock %}
+{% endblock %}

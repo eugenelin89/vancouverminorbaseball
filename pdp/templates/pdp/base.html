@@ -19,6 +19,8 @@
             </div>
             <nav class="pdp-nav">
                 {% if request.user.is_authenticated %}
+                    <a href="/">Site Home</a>
+                    <a href="{% url 'leaguehub:index' %}">League Hub</a>
                     <a href="{% url 'pdp:home' %}">Home</a>
                     <a href="{% url 'pdp:coach-dashboard' %}">Coach</a>
                     <a href="{% url 'pdp:parent-dashboard' %}">Parent</a>
