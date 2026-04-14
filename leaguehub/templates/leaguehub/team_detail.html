@@ -113,11 +113,11 @@
                     <div class="leaguehub-game-card__scoreboard">
                         <div class="leaguehub-game-card__team-row">
                             <span>{{ game.away_team.name }}</span>
-                            <strong>{{ game.away_score|default:"-" }}</strong>
+                            <strong>{{ game.away_score|default_if_none:"-" }}</strong>
                         </div>
                         <div class="leaguehub-game-card__team-row">
                             <span>{{ game.home_team.name }}</span>
-                            <strong>{{ game.home_score|default:"-" }}</strong>
+                            <strong>{{ game.home_score|default_if_none:"-" }}</strong>
                         </div>
                     </div>
                 </a>

@@ -20,11 +20,11 @@
     <div class="leaguehub-scoreboard__rows">
         <div class="leaguehub-scoreboard__row">
             <span><a href="{{ game_display.away_team_url }}">{{ game_display.away_team.name }}</a></span>
-            <strong>{{ game_display.away_score|default:"-" }}</strong>
+            <strong>{{ game_display.away_score|default_if_none:"-" }}</strong>
         </div>
         <div class="leaguehub-scoreboard__row">
             <span><a href="{{ game_display.home_team_url }}">{{ game_display.home_team.name }}</a></span>
-            <strong>{{ game_display.home_score|default:"-" }}</strong>
+            <strong>{{ game_display.home_score|default_if_none:"-" }}</strong>
         </div>
     </div>
 </section>
@@ -63,8 +63,8 @@
                     <tr><th>Team</th><th>Score</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td><a href="{{ game_display.away_team_url }}">{{ game_display.away_team.name }}</a></td><td>{{ game_display.away_score|default:"-" }}</td></tr>
-                    <tr><td><a href="{{ game_display.home_team_url }}">{{ game_display.home_team.name }}</a></td><td>{{ game_display.home_score|default:"-" }}</td></tr>
+                    <tr><td><a href="{{ game_display.away_team_url }}">{{ game_display.away_team.name }}</a></td><td>{{ game_display.away_score|default_if_none:"-" }}</td></tr>
+                    <tr><td><a href="{{ game_display.home_team_url }}">{{ game_display.home_team.name }}</a></td><td>{{ game_display.home_score|default_if_none:"-" }}</td></tr>
                 </tbody>
             </table>
         </div>
