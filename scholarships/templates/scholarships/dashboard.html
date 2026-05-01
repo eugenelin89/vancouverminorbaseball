@@ -1,0 +1,81 @@
+{% extends "scholarships/base.html" %}
+
+{% block title %}Scholarship Dashboard | Vancouver Minor Baseball{% endblock %}
+
+{% block scholarship_content %}
+<section class="scholarship-dashboard-hero">
+    <div>
+        <p class="scholarship-kicker">Applicant Dashboard</p>
+        <h1>{{ profile.full_name|default:request.user.get_full_name|default:request.user.username }}</h1>
+        <p class="scholarship-lead">Manage your annual scholarship application, check deadlines, and review submission status.</p>
+    </div>
+    <div class="scholarship-actions">
+        <a class="button button--ghost" href="{% url 'scholarships:overview' %}">Program Overview</a>
+        <a class="button button--ghost" href="{% url 'scholarships:logout' %}">Log out</a>
+    </div>
+</section>
+
+<section class="scholarship-grid scholarship-grid--dashboard">
+    <article class="scholarship-panel scholarship-panel--status">
+        <p class="scholarship-section-label">Current Cycle</p>
+        {% if cycle %}
+            <h2>{{ cycle.title }}</h2>
+            <dl class="scholarship-data-list">
+                <div>
+                    <dt>Deadline</dt>
+                    <dd>{{ cycle.application_deadline|date:"F j, Y" }}</dd>
+                </div>
+                <div>
+                    <dt>Status</dt>
+                    <dd><span class="status-pill status-pill--{{ cycle.status }}">{{ cycle.get_status_display }}</span></dd>
+                </div>
+                <div>
+                    <dt>Window</dt>
+                    <dd>{{ cycle.application_open_date|date:"M j" }} to {{ cycle.application_deadline|date:"M j, Y" }}</dd>
+                </div>
+            </dl>
+        {% else %}
+            <h2>No scholarship cycle is configured yet.</h2>
+        {% endif %}
+    </article>
+
+    <article class="scholarship-panel scholarship-panel--status">
+        <p class="scholarship-section-label">Your Application</p>
+        {% if application %}
+            <h2>{{ application.get_status_display }}</h2>
+            <p>
+                {% if application.can_edit %}
+                    Your application is still editable until the deadline.
+                {% else %}
+                    Your application is currently read-only.
+                {% endif %}
+            </p>
+            <div class="scholarship-actions scholarship-actions--stack">
+                <a class="button button--primary" href="{% url 'scholarships:application-detail' pk=application.pk %}">View Application</a>
+                {% if application.can_edit %}
+                    <a class="button button--ghost" href="{% url 'scholarships:application-edit' pk=application.pk %}">Edit Draft</a>
+                {% endif %}
+            </div>
+        {% elif cycle and cycle.is_accepting_applications %}
+            <h2>Application not started</h2>
+            <p>The cycle is open and ready for your submission.</p>
+            <a class="button button--primary" href="{% url 'scholarships:apply' %}">Start Application</a>
+        {% else %}
+            <h2>Applications unavailable</h2>
+            <p>There is no open application window right now.</p>
+        {% endif %}
+    </article>
+    
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Submission Guidance</p>
+        <h2>Before you submit</h2>
+        <ul class="scholarship-bullet-list">
+            <li>Prepare your 300–500 word statement before final submission.</li>
+            <li>Confirm at least one non-family adult reference is ready to support your application.</li>
+            <li>Optional supporting documents can be attached if requested.</li>
+            <li>Submitted applications become read-only unless staff re-open them.</li>
+        </ul>
+    </article>
+</section>
+{% endblock %}
+

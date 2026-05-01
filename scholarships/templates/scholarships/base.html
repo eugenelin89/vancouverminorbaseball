@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/scholarships.css' %}">
+{% endblock %}
+
+{% block body_class %}scholarship-shell{% endblock %}
+
+{% block content %}
+{% include "home/includes/site_header.html" %}
+
+<main id="main-content" class="scholarship-main">
+    <section class="scholarship-app">
+        {% if messages %}
+            <div class="message-stack scholarship-message-stack">
+                {% for message in messages %}
+                    <div class="message message--{{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block scholarship_content %}{% endblock %}
+    </section>
+</main>
+
+{% include "home/includes/footer.html" %}
+{% include "home/includes/nav_script.html" %}
+{% endblock %}
+

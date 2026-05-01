@@ -1,0 +1,55 @@
+<section class="section">
+    <h3>Section A: Applicant Information</h3>
+    <div class="grid">
+        <div><div class="label">Player Full Name</div><div class="value">{{ application.player_full_name }}</div></div>
+        <div><div class="label">Date of Birth</div><div class="value">{{ application.date_of_birth|date:"F j, Y" }}</div></div>
+        <div><div class="label">VCB Team / Program</div><div class="value">{{ application.vcb_team_or_program }}</div></div>
+        <div><div class="label">Primary Position(s)</div><div class="value">{{ application.primary_positions }}</div></div>
+        <div><div class="label">Years Participated</div><div class="value">{{ application.years_participated_in_vcb_programs }}</div></div>
+    </div>
+</section>
+
+<section class="section">
+    <h3>Section B: Post-Graduation Plans</h3>
+    <ul>
+        {% if application.pathway_college_university %}<li>College / University</li>{% endif %}
+        {% if application.pathway_trade_vocational_training %}<li>Trade or Vocational Training</li>{% endif %}
+        {% if application.pathway_recognized_training_program %}<li>Recognized Training or Development Program</li>{% endif %}
+        {% if application.pathway_undecided %}<li>Undecided</li>{% endif %}
+    </ul>
+    <div class="grid">
+        <div><div class="label">Institution / Program</div><div class="value">{{ application.institution_or_program_name|default:"-" }}</div></div>
+        <div><div class="label">Intended Field</div><div class="value">{{ application.intended_field_of_study_or_training|default:"-" }}</div></div>
+    </div>
+</section>
+
+<section class="section">
+    <h3>Section C: Applicant Statement</h3>
+    <div class="value">{{ application.nomination_statement|linebreaksbr }}</div>
+</section>
+
+<section class="section">
+    <h3>Section D: References</h3>
+    {% for reference in application.references.all %}
+        <div class="grid" style="margin-bottom: 1rem;">
+            <div><div class="label">Reference {{ reference.display_order }} Name</div><div class="value">{{ reference.name }}</div></div>
+            <div><div class="label">Role / Relationship</div><div class="value">{{ reference.role_relationship }}</div></div>
+            <div><div class="label">Email</div><div class="value">{{ reference.email }}</div></div>
+            <div><div class="label">Phone</div><div class="value">{{ reference.phone|default:"-" }}</div></div>
+        </div>
+    {% endfor %}
+</section>
+
+<section class="section">
+    <h3>Section E: Declarations &amp; Consent</h3>
+    <ul>
+        <li>Information accurate: {{ application.confirm_information_is_accurate|yesno:"Yes,No" }}</li>
+        <li>Good standing confirmed: {{ application.confirm_good_standing|yesno:"Yes,No" }}</li>
+        <li>Final decisions acknowledged: {{ application.confirm_decisions_are_final|yesno:"Yes,No" }}</li>
+        <li>Reference checks consented: {{ application.consent_to_reference_checks|yesno:"Yes,No" }}</li>
+    </ul>
+    <div class="grid">
+        <div><div class="label">Signature</div><div class="value">{{ application.nominator_signature }}</div></div>
+        <div><div class="label">Date</div><div class="value">{{ application.signature_date|date:"F j, Y" }}</div></div>
+    </div>
+</section>

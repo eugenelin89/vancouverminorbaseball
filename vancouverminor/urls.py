@@ -24,6 +24,7 @@ urlpatterns = [
     path('drafts/', include('drafts.urls')),
     path('leaguehub/', include('leaguehub.urls')),
     path('pdp/', include('pdp.urls')),
+    path('scholarships/', include('scholarships.urls')),
     path('', include('home.urls')),
 ]
 

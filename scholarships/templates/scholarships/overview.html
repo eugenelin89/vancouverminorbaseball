@@ -1,0 +1,98 @@
+{% extends "scholarships/base.html" %}
+
+{% block title %}18U Scholarship Program | Vancouver Minor Baseball{% endblock %}
+
+{% block scholarship_content %}
+<section class="scholarship-hero">
+    <div class="scholarship-hero__content">
+        <p class="scholarship-kicker">Annual Scholarship Program</p>
+        <h1>18U Graduating Player Scholarship Program</h1>
+        <p class="scholarship-lead">
+            Vancouver Community Baseball recognizes graduating 18U players who lead with character, commitment, and community pride.
+            This scholarship is values-based and focused on impact, growth, and contribution beyond athletic statistics alone.
+        </p>
+        <div class="scholarship-actions">
+            {% if request.user.is_staff %}
+                <a class="button button--primary" href="{% url 'scholarships:staff-application-list' %}">Open Staff Review</a>
+            {% elif request.user.is_authenticated and has_scholarship_profile %}
+                <a class="button button--primary" href="{% url 'scholarships:dashboard' %}">Open Applicant Dashboard</a>
+            {% else %}
+                <a class="button button--primary" href="{% url 'scholarships:signup' %}">Create Applicant Account</a>
+                <a class="button button--ghost" href="{% url 'scholarships:login' %}">Applicant Login</a>
+            {% endif %}
+        </div>
+    </div>
+    {% if cycle %}
+        <aside class="scholarship-cycle-card">
+            <p class="scholarship-cycle-card__eyebrow">Current Cycle</p>
+            <h2>{{ cycle.title }}</h2>
+            <p class="scholarship-cycle-card__meta">{{ cycle.year }} application window</p>
+            <dl class="scholarship-data-list">
+                <div>
+                    <dt>Open date</dt>
+                    <dd>{{ cycle.application_open_date|date:"F j, Y" }}</dd>
+                </div>
+                <div>
+                    <dt>Deadline</dt>
+                    <dd>{{ cycle.application_deadline|date:"F j, Y" }}</dd>
+                </div>
+                <div>
+                    <dt>Status</dt>
+                    <dd><span class="status-pill status-pill--{{ cycle.status }}">{{ cycle.get_status_display }}</span></dd>
+                </div>
+            </dl>
+            {% if cycle.public_announcement %}
+                <p class="scholarship-cycle-card__note">{{ cycle.public_announcement }}</p>
+            {% endif %}
+        </aside>
+    {% endif %}
+</section>
+
+<section class="scholarship-grid">
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Program Overview</p>
+        <h2>What this scholarship recognizes</h2>
+        <p>
+            The program exists to support graduating 18U players who exemplify excellence both on and off the field.
+            It reflects VCB’s commitment to developing strong athletes, accountable leaders, engaged students, and positive community members.
+        </p>
+        <ul class="scholarship-bullet-list">
+            <li>Values-driven selection focused on overall impact, character, and growth</li>
+            <li>Support for post-secondary, trade, vocational, and recognized development pathways</li>
+            <li>Annual recognition of players who embody the values of Vancouver Community Baseball</li>
+        </ul>
+    </article>
+
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Eligibility</p>
+        <h2>Who can apply</h2>
+        <ul class="scholarship-bullet-list">
+            {% for point in eligibility_points %}
+                <li>{{ point }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Selection Criteria</p>
+        <h2>How applications are reviewed</h2>
+        <ul class="scholarship-bullet-list">
+            {% for point in selection_points %}
+                <li>{{ point }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Application Checklist</p>
+        <h2>What applicants should prepare</h2>
+        <ul class="scholarship-bullet-list">
+            <li>Applicant information and VCB participation details</li>
+            <li>Post-graduation plans and intended field of study or training</li>
+            <li>A 300–500 word statement about growth, leadership, commitment, and community impact</li>
+            <li>One required reference and one optional second reference from non-family adults</li>
+            <li>Declarations, consent, and optional supporting documents</li>
+        </ul>
+    </article>
+</section>
+{% endblock %}

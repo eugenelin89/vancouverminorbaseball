@@ -1,0 +1,92 @@
+{% extends "scholarships/base.html" %}
+
+{% block title %}Scholarship Applications | Staff Review{% endblock %}
+
+{% block scholarship_content %}
+<section class="scholarship-dashboard-hero">
+    <div>
+        <p class="scholarship-kicker">Staff Review</p>
+        <h1>Scholarship Applications</h1>
+        <p class="scholarship-lead">Browse applications by year, status, and applicant, then open or download clean review copies.</p>
+    </div>
+</section>
+
+<section class="scholarship-panel">
+    <form method="get" class="scholarship-filter-bar">
+        <div class="field-group">
+            <label for="{{ filter_form.cycle.id_for_label }}">Cycle</label>
+            {{ filter_form.cycle }}
+        </div>
+        <div class="field-group">
+            <label for="{{ filter_form.status.id_for_label }}">Status</label>
+            {{ filter_form.status }}
+        </div>
+        <div class="field-group field-group--wide">
+            <label for="{{ filter_form.search.id_for_label }}">Search applicant</label>
+            {{ filter_form.search }}
+        </div>
+        <div class="scholarship-actions">
+            <button class="button button--primary" type="submit">Filter</button>
+        </div>
+    </form>
+</section>
+
+<section class="scholarship-grid scholarship-grid--staff">
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Applications</p>
+        <div class="table-shell">
+            <table class="scholarship-table">
+                <thead>
+                    <tr>
+                        <th>Applicant</th>
+                        <th>Cycle</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in object_list %}
+                        <tr>
+                            <td>
+                                <strong>{{ application.player_full_name }}</strong>
+                                <div class="table-subtext">{{ application.applicant.email }}</div>
+                            </td>
+                            <td>{{ application.cycle.year }}</td>
+                            <td><span class="status-pill status-pill--{{ application.status }}">{{ application.get_status_display }}</span></td>
+                            <td>{% if application.submitted_at %}{{ application.submitted_at|date:"M j, Y" }}{% else %}Draft{% endif %}</td>
+                            <td class="table-actions">
+                                <a href="{% url 'scholarships:staff-application-detail' pk=application.pk %}">Open</a>
+                                <a href="{% url 'scholarships:staff-application-download' pk=application.pk %}">Download</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">No applications matched the current filters.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Yearly Downloads</p>
+        <h2>Download by scholarship year</h2>
+        <ul class="download-list">
+            {% for cycle in cycles %}
+                <li>
+                    <div>
+                        <strong>{{ cycle.title }}</strong>
+                        <div class="table-subtext">{{ cycle.year }} · {{ cycle.get_status_display }}</div>
+                    </div>
+                    <a class="button button--ghost" href="{% url 'scholarships:staff-cycle-download' slug=cycle.slug %}">Download Year</a>
+                </li>
+            {% empty %}
+                <li>No cycles available yet.</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+{% endblock %}
+

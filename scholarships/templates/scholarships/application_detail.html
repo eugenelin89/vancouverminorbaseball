@@ -1,0 +1,22 @@
+{% extends "scholarships/base.html" %}
+
+{% block title %}{{ object.player_full_name }} | Scholarship Application{% endblock %}
+
+{% block scholarship_content %}
+<section class="scholarship-dashboard-hero">
+    <div>
+        <p class="scholarship-kicker">Application Summary</p>
+        <h1>{{ object.player_full_name }}</h1>
+        <p class="scholarship-lead">Review your submission for the {{ object.cycle.year }} scholarship cycle.</p>
+    </div>
+    <div class="scholarship-actions">
+        <span class="status-pill status-pill--{{ object.status }}">{{ object.get_status_display }}</span>
+        {% if object.can_edit %}
+            <a class="button button--primary" href="{% url 'scholarships:application-edit' pk=object.pk %}">Edit Draft</a>
+        {% endif %}
+    </div>
+</section>
+
+{% include "scholarships/partials/application_readonly.html" with application=object staff_view=False %}
+{% endblock %}
+

@@ -444,6 +444,7 @@ NAVIGATION = [
     {"label": "News", "url": "/#news", "children": []},
     {"label": "Draft", "url": "/drafts/live/2026-vcb-13u/", "children": []},
     {"label": "League Hub", "url": "/leaguehub/", "children": []},
+    {"label": "Scholarship", "url": "/scholarships/", "children": []},
     {"label": "Programs", "url": "/programs/", "children": []},
     {"label": "2026 Tryout Info", "url": "/tryouts/", "children": []},
     {"label": "Registration", "url": "/registration/", "children": [], "is_cta": True},
@@ -505,4 +506,5 @@ FOOTER_LINKS = [
     {"label": "Volunteer With VMB", "url": "https://forms.gle/hbY5oPrf25Volunteer"},
     {"label": "Sponsorship Opportunities", "url": "mailto:partnerships@vancouverminorbaseball.com"},
     {"label": "League Hub", "url": "/leaguehub/"},
+    {"label": "Scholarship Program", "url": "/scholarships/"},
 ]

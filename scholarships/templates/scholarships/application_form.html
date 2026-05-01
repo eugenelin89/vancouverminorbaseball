@@ -1,0 +1,147 @@
+{% extends "scholarships/base.html" %}
+
+{% block title %}{% if application %}Edit Scholarship Application{% else %}Scholarship Application{% endif %} | Vancouver Minor Baseball{% endblock %}
+
+{% block scholarship_content %}
+<section class="scholarship-dashboard-hero">
+    <div>
+        <p class="scholarship-kicker">{{ cycle.year }} Application</p>
+        <h1>18U Graduating Player Scholarship Application</h1>
+        <p class="scholarship-lead">
+            Complete all required sections. You may save a draft and return later, or submit once the application is complete.
+        </p>
+    </div>
+    <div class="scholarship-actions">
+        <a class="button button--ghost" href="{% url 'scholarships:dashboard' %}">Back to Dashboard</a>
+    </div>
+</section>
+
+<form method="post" enctype="multipart/form-data" class="scholarship-form scholarship-form--application">
+    {% csrf_token %}
+    {% include "scholarships/partials/form_errors.html" with form=form %}
+
+    <section class="scholarship-panel">
+        <p class="scholarship-section-label">Section A</p>
+        <h2>Applicant Information</h2>
+        <div class="form-grid form-grid--two">
+            <div class="field-group">
+                <label for="{{ form.player_full_name.id_for_label }}">Player Full Name</label>
+                {{ form.player_full_name }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+                {{ form.date_of_birth }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.vcb_team_or_program.id_for_label }}">VCB Team / Program</label>
+                {{ form.vcb_team_or_program }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.primary_positions.id_for_label }}">Primary Position(s)</label>
+                {{ form.primary_positions }}
+            </div>
+            <div class="field-group field-group--wide">
+                <label for="{{ form.years_participated_in_vcb_programs.id_for_label }}">Years Participated in VCB Programs</label>
+                {{ form.years_participated_in_vcb_programs }}
+            </div>
+        </div>
+    </section>
+
+    <section class="scholarship-panel">
+        <p class="scholarship-section-label">Section B</p>
+        <h2>Post-Graduation Plans</h2>
+        <div class="checkbox-grid">
+            <label class="checkbox-card">{{ form.pathway_college_university }} <span>College / University</span></label>
+            <label class="checkbox-card">{{ form.pathway_trade_vocational_training }} <span>Trade or Vocational Training</span></label>
+            <label class="checkbox-card">{{ form.pathway_recognized_training_program }} <span>Recognized Training or Development Program</span></label>
+            <label class="checkbox-card">{{ form.pathway_undecided }} <span>Undecided</span></label>
+        </div>
+        <div class="form-grid form-grid--two">
+            <div class="field-group">
+                <label for="{{ form.institution_or_program_name.id_for_label }}">Institution / Program Name</label>
+                {{ form.institution_or_program_name }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.intended_field_of_study_or_training.id_for_label }}">Intended Field of Study or Training</label>
+                {{ form.intended_field_of_study_or_training }}
+            </div>
+        </div>
+    </section>
+
+    <section class="scholarship-panel">
+        <p class="scholarship-section-label">Section C</p>
+        <h2>Applicant Statement</h2>
+        <p class="panel-intro">Provide a statement of approximately 300–500 words covering growth, leadership, commitment, community involvement, and alignment with VCB values.</p>
+        <div class="field-group">
+            <label for="{{ form.nomination_statement.id_for_label }}">Nomination Statement</label>
+            {{ form.nomination_statement }}
+        </div>
+    </section>
+
+    <section class="scholarship-panel">
+        <p class="scholarship-section-label">Section D</p>
+        <h2>References</h2>
+        <p class="panel-intro">Provide one required reference and one optional second reference. References must be non-family adults.</p>
+        <div class="reference-grid">
+            <div class="reference-card">
+                <h3>Reference 1</h3>
+                <div class="field-group"><label for="{{ form.reference_1_name.id_for_label }}">Name</label>{{ form.reference_1_name }}</div>
+                <div class="field-group"><label for="{{ form.reference_1_role_relationship.id_for_label }}">Role / Relationship</label>{{ form.reference_1_role_relationship }}</div>
+                <div class="field-group"><label for="{{ form.reference_1_email.id_for_label }}">Email</label>{{ form.reference_1_email }}</div>
+                <div class="field-group"><label for="{{ form.reference_1_phone.id_for_label }}">Phone (optional)</label>{{ form.reference_1_phone }}</div>
+            </div>
+            <div class="reference-card">
+                <h3>Reference 2 (optional)</h3>
+                <div class="field-group"><label for="{{ form.reference_2_name.id_for_label }}">Name</label>{{ form.reference_2_name }}</div>
+                <div class="field-group"><label for="{{ form.reference_2_role_relationship.id_for_label }}">Role / Relationship</label>{{ form.reference_2_role_relationship }}</div>
+                <div class="field-group"><label for="{{ form.reference_2_email.id_for_label }}">Email</label>{{ form.reference_2_email }}</div>
+                <div class="field-group"><label for="{{ form.reference_2_phone.id_for_label }}">Phone (optional)</label>{{ form.reference_2_phone }}</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="scholarship-panel">
+        <p class="scholarship-section-label">Section E</p>
+        <h2>Declarations &amp; Consent</h2>
+        <div class="declaration-list">
+            <label class="checkbox-row">{{ form.confirm_information_is_accurate }} <span>I confirm that the information provided is accurate to the best of my knowledge.</span></label>
+            <label class="checkbox-row">{{ form.confirm_good_standing }} <span>I confirm that the nominee is a graduating 18U player in good standing with Vancouver Community Baseball.</span></label>
+            <label class="checkbox-row">{{ form.confirm_decisions_are_final }} <span>I understand that scholarship decisions are final and not subject to appeal.</span></label>
+            <label class="checkbox-row">{{ form.consent_to_reference_checks }} <span>I consent to reference checks by the selection committee.</span></label>
+        </div>
+        <div class="form-grid form-grid--two">
+            <div class="field-group">
+                <label for="{{ form.nominator_signature.id_for_label }}">Nominator Signature</label>
+                {{ form.nominator_signature }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.signature_date.id_for_label }}">Date</label>
+                {{ form.signature_date }}
+            </div>
+        </div>
+    </section>
+
+    <section class="scholarship-panel">
+        <p class="scholarship-section-label">Supporting Documents</p>
+        <h2>Optional uploads</h2>
+        <div class="form-grid form-grid--two">
+            <div class="field-group">
+                <label for="{{ form.transcript_or_report_card.id_for_label }}">Transcript or Report Card</label>
+                {{ form.transcript_or_report_card }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.supporting_documents.id_for_label }}">Supporting Documents</label>
+                {{ form.supporting_documents }}
+            </div>
+        </div>
+    </section>
+
+    {{ form.submit_action }}
+
+    <div class="scholarship-actions scholarship-actions--split scholarship-actions--sticky">
+        <button class="button button--ghost" type="submit" onclick="document.getElementById('{{ form.submit_action.id_for_label }}').value='draft';">Save Draft</button>
+        <button class="button button--primary" type="submit" onclick="document.getElementById('{{ form.submit_action.id_for_label }}').value='submit';">Submit Application</button>
+    </div>
+</form>
+{% endblock %}
+

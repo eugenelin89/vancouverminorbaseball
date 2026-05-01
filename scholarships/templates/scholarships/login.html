@@ -1,0 +1,35 @@
+{% extends "scholarships/base.html" %}
+
+{% block title %}Scholarship Login | Vancouver Minor Baseball{% endblock %}
+
+{% block scholarship_content %}
+<section class="scholarship-auth-layout">
+    <article class="scholarship-panel scholarship-panel--feature">
+        <p class="scholarship-section-label">Applicant Login</p>
+        <h1>Return to your application</h1>
+        <p>
+            Sign in with the email address and password used when you created your scholarship account.
+        </p>
+    </article>
+
+    <article class="scholarship-panel scholarship-panel--form">
+        <form method="post" class="scholarship-form">
+            {% csrf_token %}
+            {% include "scholarships/partials/form_errors.html" with form=form %}
+            <div class="field-group">
+                <label for="{{ form.username.id_for_label }}">Email</label>
+                {{ form.username }}
+            </div>
+            <div class="field-group">
+                <label for="{{ form.password.id_for_label }}">Password</label>
+                {{ form.password }}
+            </div>
+            <div class="scholarship-actions scholarship-actions--split">
+                <button class="button button--primary" type="submit">Login</button>
+                <a class="button button--ghost" href="{% url 'scholarships:signup' %}">Create Account</a>
+            </div>
+        </form>
+    </article>
+</section>
+{% endblock %}
+

@@ -1,0 +1,97 @@
+<section class="scholarship-grid scholarship-grid--detail">
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Section A</p>
+        <h2>Applicant Information</h2>
+        <dl class="detail-list">
+            <div><dt>Player Full Name</dt><dd>{{ application.player_full_name }}</dd></div>
+            <div><dt>Date of Birth</dt><dd>{{ application.date_of_birth|date:"F j, Y" }}</dd></div>
+            <div><dt>VCB Team / Program</dt><dd>{{ application.vcb_team_or_program }}</dd></div>
+            <div><dt>Primary Position(s)</dt><dd>{{ application.primary_positions }}</dd></div>
+            <div><dt>Years Participated in VCB Programs</dt><dd>{{ application.years_participated_in_vcb_programs }}</dd></div>
+        </dl>
+    </article>
+
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Section B</p>
+        <h2>Post-Graduation Plans</h2>
+        <ul class="scholarship-bullet-list">
+            {% if application.pathway_college_university %}<li>College / University</li>{% endif %}
+            {% if application.pathway_trade_vocational_training %}<li>Trade or Vocational Training</li>{% endif %}
+            {% if application.pathway_recognized_training_program %}<li>Recognized Training or Development Program</li>{% endif %}
+            {% if application.pathway_undecided %}<li>Undecided</li>{% endif %}
+        </ul>
+        <dl class="detail-list">
+            <div><dt>Institution / Program</dt><dd>{{ application.institution_or_program_name|default:"-" }}</dd></div>
+            <div><dt>Intended Field</dt><dd>{{ application.intended_field_of_study_or_training|default:"-" }}</dd></div>
+        </dl>
+    </article>
+
+    <article class="scholarship-panel scholarship-panel--full">
+        <p class="scholarship-section-label">Section C</p>
+        <h2>Applicant Statement</h2>
+        <p class="application-statement">{{ application.nomination_statement|linebreaksbr }}</p>
+    </article>
+
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Section D</p>
+        <h2>References</h2>
+        <div class="reference-grid">
+            {% for reference in application.references.all %}
+                <div class="reference-card">
+                    <h3>Reference {{ reference.display_order }}</h3>
+                    <dl class="detail-list">
+                        <div><dt>Name</dt><dd>{{ reference.name }}</dd></div>
+                        <div><dt>Role / Relationship</dt><dd>{{ reference.role_relationship }}</dd></div>
+                        <div><dt>Email</dt><dd>{{ reference.email }}</dd></div>
+                        <div><dt>Phone</dt><dd>{{ reference.phone|default:"-" }}</dd></div>
+                    </dl>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="scholarship-panel">
+        <p class="scholarship-section-label">Section E</p>
+        <h2>Declarations &amp; Consent</h2>
+        <ul class="scholarship-bullet-list">
+            <li>Information accurate: {{ application.confirm_information_is_accurate|yesno:"Yes,No" }}</li>
+            <li>Good standing confirmed: {{ application.confirm_good_standing|yesno:"Yes,No" }}</li>
+            <li>Final decisions acknowledged: {{ application.confirm_decisions_are_final|yesno:"Yes,No" }}</li>
+            <li>Reference checks consented: {{ application.consent_to_reference_checks|yesno:"Yes,No" }}</li>
+        </ul>
+        <dl class="detail-list">
+            <div><dt>Nominator Signature</dt><dd>{{ application.nominator_signature }}</dd></div>
+            <div><dt>Date</dt><dd>{{ application.signature_date|date:"F j, Y" }}</dd></div>
+        </dl>
+    </article>
+
+    <article class="scholarship-panel scholarship-panel--full">
+        <p class="scholarship-section-label">Supporting Documents</p>
+        <h2>Uploads</h2>
+        <ul class="scholarship-bullet-list">
+            <li>
+                Transcript or Report Card:
+                {% if application.transcript_or_report_card %}
+                    <a href="{{ application.transcript_or_report_card.url }}">Download file</a>
+                {% else %}
+                    Not provided
+                {% endif %}
+            </li>
+            <li>
+                Supporting Documents:
+                {% if application.supporting_documents %}
+                    <a href="{{ application.supporting_documents.url }}">Download file</a>
+                {% else %}
+                    Not provided
+                {% endif %}
+            </li>
+        </ul>
+        {% if staff_view and application.internal_review_notes %}
+            <div class="internal-notes">
+                <h3>Internal Review Notes</h3>
+                <p>{{ application.internal_review_notes|linebreaksbr }}</p>
+            </div>
+        {% endif %}
+    </article>
+</section>
+
