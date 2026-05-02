@@ -2,7 +2,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db.models import Q
-from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
@@ -72,6 +71,8 @@ class ScholarshipLoginView(LoginView):
     authentication_form = ApplicantLoginForm
 
     def get_success_url(self):
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return reverse("scholarships:staff-application-list")
         return reverse("scholarships:dashboard")
 
     def get_context_data(self, **kwargs):
@@ -85,11 +86,17 @@ class ScholarshipLogoutView(LogoutView):
 
 
 class ApplicantRequiredMixin(LoginRequiredMixin):
+    login_url = reverse_lazy("scholarships:login")
+
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_staff or request.user.is_superuser:
             return super().dispatch(request, *args, **kwargs)
         if not hasattr(request.user, "scholarship_profile"):
-            raise Http404
+            messages.error(
+                request,
+                "This account does not have a scholarship applicant profile yet. Create an applicant account to continue.",
+            )
+            return redirect("scholarships:signup")
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -229,6 +236,8 @@ class ScholarshipApplicationDetailView(ApplicantApplicationMixin, DetailView):
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    login_url = reverse_lazy("scholarships:login")
+
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_superuser
 
