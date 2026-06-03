@@ -141,8 +141,8 @@ class ScholarshipApplicationForm(forms.ModelForm):
     def clean_nomination_statement(self):
         statement = self.cleaned_data["nomination_statement"].strip()
         words = [word for word in statement.split() if word.strip()]
-        if len(words) < 250:
-            raise ValidationError("Applicant statement must be at least 250 words.")
+        if len(words) < 200:
+            raise ValidationError("Applicant statement must be at least 200 words.")
         if len(words) > 700:
             raise ValidationError("Applicant statement must be no more than 700 words.")
         return statement
@@ -225,4 +225,3 @@ class StaffApplicationFilterForm(forms.Form):
         required=False,
     )
     search = forms.CharField(required=False)
-
