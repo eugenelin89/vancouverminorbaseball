@@ -279,4 +279,22 @@ Because the apex domain shares infrastructure with other subdomains:
 3. Run through the site on mobile and desktop whenever you touch CSS.
 4. Document any new deployment steps in this README so future developers stay aligned.
 
+## Prompt Registry
+
+Reusable project prompts live in `prompts/`.
+
+- Store each prompt as a Markdown file.
+- Name prompt files with the format `[new app name]_prompt_[id].md`.
+- Use lowercase app names and underscores when the app name has multiple words.
+- Start prompt IDs at `0` and increment by `1` for each new prompt.
+- Use the next unused integer ID when creating a new prompt.
+
+Example: `analytics_prompt_0.md`
+
+Current analytics prompt session:
+
+```bash
+codex resume 019f15b0-39b4-75a2-97ff-26808c125814
+```
+
 With this structure and deployment workflow, future developers can confidently maintain the `home.vancouverminor.com` subdomain alongside the organization’s other applications. 
