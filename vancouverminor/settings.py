@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'pdp',
     'leaguehub',
     'scholarships',
+    'players',
 ]
 
 MIDDLEWARE = [
