@@ -6,6 +6,8 @@ Create the shared `players` app and canonical player identity foundation used by
 
 `players.Player` is the canonical future player identity model. It should not depend on legacy `pdp.PlayerProfile`. Existing PDP player data is relevant only for coexistence, migration planning, or temporary bridge logic if explicitly required.
 
+See detailed engineering plan: [engineering/phase_01_players_foundation.md](engineering/phase_01_players_foundation.md)
+
 ## Architecture References
 
 - [02 Players](../architecture/02_players.md)

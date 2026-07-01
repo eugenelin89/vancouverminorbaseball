@@ -31,6 +31,16 @@ Never implement multiple phases in a single Codex task unless explicitly instruc
 
 Before implementing Phase 1, complete [repository_assessment.md](repository_assessment.md).
 
+## Phase Documents And Engineering Plans
+
+Phase documents track implementation progress, scope, acceptance criteria, Definition of Done, and phase review status. They are the checklist/status source for each phase.
+
+Engineering documents contain detailed technical implementation plans. They may evolve during each phase as implementation details are clarified, but they should not redefine architecture or replace the phase checklist.
+
+Current engineering plans:
+
+- [Phase 1 Engineering Plan: Players Foundation](engineering/phase_01_players_foundation.md)
+
 ## Phase Documents
 
 - [Phase 01: Players Foundation](phase_01_players_foundation.md)
