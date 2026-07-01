@@ -35,6 +35,54 @@ For implementation tasks:
 
 Do not load every document unless making cross-cutting architectural changes.
 
+## Phase Context Sets
+
+### Phase 1: Players Foundation
+
+- [02 Players](02_players.md)
+- [04 Imports](04_imports.md)
+- [09 Services](09_services.md)
+- [10 Permissions](10_permissions.md)
+
+### Phase 2: Player Import Workflow
+
+- [02 Players](02_players.md)
+- [04 Imports](04_imports.md)
+- [09 Services](09_services.md)
+- [10 Permissions](10_permissions.md)
+
+### Phase 3: Analytics Observation Foundation
+
+- [03 Analytics](03_analytics.md)
+- [05 Coach Assessments](05_coach_assessments.md)
+- [09 Services](09_services.md)
+- [10 Permissions](10_permissions.md)
+
+### Phase 4: Coach Assessment Workflow
+
+- [03 Analytics](03_analytics.md)
+- [05 Coach Assessments](05_coach_assessments.md)
+- [09 Services](09_services.md)
+- [10 Permissions](10_permissions.md)
+
+### Phase 5: Draft Context
+
+- [06 Draft Integration](06_draft_integration.md)
+- [09 Services](09_services.md)
+
+### Phase 6: Player Experience
+
+- [07 Player Experience](07_player_experience.md)
+- [08 Reporting](08_reporting.md)
+- [09 Services](09_services.md)
+
+### Phase 7: Command Center and Reporting
+
+- [07 Player Experience](07_player_experience.md)
+- [08 Reporting](08_reporting.md)
+- [09 Services](09_services.md)
+- [10 Permissions](10_permissions.md)
+
 ### Implement Player App
 
 Read:
