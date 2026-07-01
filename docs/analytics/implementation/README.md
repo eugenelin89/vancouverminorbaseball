@@ -19,14 +19,17 @@ If implementation discovers an architectural issue, update the Architecture Hand
 ## Implementation Workflow
 
 1. Review architecture.
-2. Expand the phase plan.
-3. Implement only that phase.
-4. Review implementation against architecture.
-5. Apply approved fixes.
-6. Mark the phase complete.
-7. Continue to the next phase.
+2. Review or complete repository assessment.
+3. Expand the phase plan.
+4. Implement only that phase.
+5. Review implementation against architecture.
+6. Apply approved fixes.
+7. Mark the phase complete.
+8. Continue to the next phase.
 
 Never implement multiple phases in a single Codex task unless explicitly instructed.
+
+Before implementing Phase 1, complete [repository_assessment.md](repository_assessment.md).
 
 ## Phase Documents
 

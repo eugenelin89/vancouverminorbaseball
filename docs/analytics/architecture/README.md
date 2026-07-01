@@ -1,5 +1,15 @@
 # Analytics Architecture Handbook
 
+## Architecture Version
+
+Version: 1.0.0
+
+Status: Draft / Pre-implementation
+
+Last Updated: 2026-07-01
+
+Update this version when significant architecture decisions change.
+
 ## Purpose
 
 This folder contains the authoritative architecture specification for the Analytics subsystem.
