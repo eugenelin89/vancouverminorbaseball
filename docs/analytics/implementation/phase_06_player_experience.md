@@ -10,6 +10,17 @@ Create the practical staff-facing player experience for Version 1: search, Playe
 - [08 Reporting](../architecture/08_reporting.md)
 - [09 Services](../architecture/09_services.md)
 
+## Existing Project Integration
+
+Before implementing this phase, inspect relevant existing project conventions, including:
+
+- template/layout conventions
+- URL routing conventions
+- search/filter form patterns
+- permission patterns for staff and coaches
+- service-layer patterns for read models
+- test organization for page rendering and filters
+
 ## Scope
 
 - Player search/filtering.
@@ -31,13 +42,13 @@ Create the practical staff-facing player experience for Version 1: search, Playe
 
 ## Deliverables
 
-- Player search page.
-- Player Profile page with timeline.
-- Player Comparison page.
-- `analytics/services/timeline_service.py`.
-- `analytics/services/comparison_service.py`.
-- Search/filter helpers using `players` services/models.
-- Tests for search, timeline, and comparison behavior.
+- [ ] Player search page.
+- [ ] Player Profile page with timeline.
+- [ ] Player Comparison page.
+- [ ] `analytics/services/timeline_service.py`.
+- [ ] `analytics/services/comparison_service.py`.
+- [ ] Search/filter helpers using `players` services/models.
+- [ ] Tests for search, timeline, and comparison behavior.
 
 ## Models
 
@@ -111,6 +122,17 @@ Exact route names can follow project conventions.
 - No future timeline/event abstractions are implemented prematurely.
 - Tests for this phase pass.
 
+## Definition of Done
+
+This phase is complete when:
+
+- [ ] All deliverables are complete.
+- [ ] Acceptance criteria are satisfied.
+- [ ] Tests for the phase pass.
+- [ ] Documentation is updated if implementation details changed.
+- [ ] Phase Review is completed.
+- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+
 ## Risks / Open Questions
 
 - Search/filter performance may need basic indexes depending on data size.
@@ -122,3 +144,12 @@ Exact route names can follow project conventions.
 
 ## Phase Review
 
+### What went well
+
+### Challenges
+
+### Technical debt
+
+### Architecture changes
+
+### Recommendations for the next phase

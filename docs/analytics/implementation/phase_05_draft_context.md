@@ -9,6 +9,16 @@ Display draft context from the existing `drafts` app without asking coaches to m
 - [06 Draft Integration](../architecture/06_draft_integration.md)
 - [09 Services](../architecture/09_services.md)
 
+## Existing Project Integration
+
+Before implementing this phase, inspect relevant existing project conventions, including:
+
+- existing `drafts` models and service-layer patterns
+- URL and template conventions for cross-app links
+- permission patterns for staff/coach views
+- query optimization patterns
+- test organization for cross-app behavior
+
 ## Scope
 
 - Match `players.Player` records to existing draft data.
@@ -27,11 +37,11 @@ Display draft context from the existing `drafts` app without asking coaches to m
 
 ## Deliverables
 
-- `analytics/services/draft_service.py`.
-- Draft matching helper functions.
-- Draft context summary objects for templates/services.
-- Basic draft-context display on relevant assessment/profile views.
-- Tests for draft matching and unmatched states.
+- [ ] `analytics/services/draft_service.py`.
+- [ ] Draft matching helper functions.
+- [ ] Draft context summary objects for templates/services.
+- [ ] Basic draft-context display on relevant assessment/profile views.
+- [ ] Tests for draft matching and unmatched states.
 
 ## Models
 
@@ -84,6 +94,17 @@ Display draft context from the existing `drafts` app without asking coaches to m
 - Missing/unmatched context is clear to staff/coaches.
 - Tests for this phase pass.
 
+## Definition of Done
+
+This phase is complete when:
+
+- [ ] All deliverables are complete.
+- [ ] Acceptance criteria are satisfied.
+- [ ] Tests for the phase pass.
+- [ ] Documentation is updated if implementation details changed.
+- [ ] Phase Review is completed.
+- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+
 ## Risks / Open Questions
 
 - Existing draft data may not have enough stable identifiers for reliable matching.
@@ -95,3 +116,12 @@ Display draft context from the existing `drafts` app without asking coaches to m
 
 ## Phase Review
 
+### What went well
+
+### Challenges
+
+### Technical debt
+
+### Architecture changes
+
+### Recommendations for the next phase

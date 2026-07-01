@@ -11,6 +11,18 @@ Create the shared `players` app and canonical player identity foundation used by
 - [09 Services](../architecture/09_services.md)
 - [10 Permissions](../architecture/10_permissions.md)
 
+## Existing Project Integration
+
+Before implementing this phase, inspect relevant existing project conventions, including:
+
+- existing app structure
+- installed apps and settings conventions
+- existing auth/user model usage
+- admin configuration patterns
+- model timestamp patterns
+- service-layer patterns
+- test organization and fixtures
+
 ## Scope
 
 - Create the `players` Django app.
@@ -34,18 +46,18 @@ Create the shared `players` app and canonical player identity foundation used by
 
 ## Deliverables
 
-- `players` app added to `INSTALLED_APPS`.
-- `players.Player` model.
-- `players.PlayerAlias` model.
-- `players.PlayerSourceIdentifier` model.
-- `players.PlayerSourceRow` model.
-- `players.PlayerTag` model.
-- `players/services/identity_service.py`.
-- `players/services/matching_service.py`.
-- `players/services/import_service.py` scaffolding.
-- `players/services/tag_service.py`.
-- Admin registrations.
-- Focused model and service tests.
+- [ ] `players` app added to `INSTALLED_APPS`.
+- [ ] `players.Player` model.
+- [ ] `players.PlayerAlias` model.
+- [ ] `players.PlayerSourceIdentifier` model.
+- [ ] `players.PlayerSourceRow` model.
+- [ ] `players.PlayerTag` model.
+- [ ] `players/services/identity_service.py`.
+- [ ] `players/services/matching_service.py`.
+- [ ] `players/services/import_service.py` scaffolding.
+- [ ] `players/services/tag_service.py`.
+- [ ] Admin registrations.
+- [ ] Focused model and service tests.
 
 ## Models
 
@@ -144,6 +156,17 @@ Create the shared `players` app and canonical player identity foundation used by
 - Matching service returns structured results for exact, high-confidence, ambiguous, and no-match cases.
 - Tests for this phase pass.
 
+## Definition of Done
+
+This phase is complete when:
+
+- [ ] All deliverables are complete.
+- [ ] Acceptance criteria are satisfied.
+- [ ] Tests for the phase pass.
+- [ ] Documentation is updated if implementation details changed.
+- [ ] Phase Review is completed.
+- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+
 ## Risks / Open Questions
 
 - Exact field names for team/division context may need to align with imported CSVs.
@@ -155,3 +178,12 @@ Create the shared `players` app and canonical player identity foundation used by
 
 ## Phase Review
 
+### What went well
+
+### Challenges
+
+### Technical debt
+
+### Architecture changes
+
+### Recommendations for the next phase

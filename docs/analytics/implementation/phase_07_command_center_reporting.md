@@ -11,6 +11,17 @@ Provide staff/admin users with the Version 1 Analytics Command Center and simple
 - [09 Services](../architecture/09_services.md)
 - [10 Permissions](../architecture/10_permissions.md)
 
+## Existing Project Integration
+
+Before implementing this phase, inspect relevant existing project conventions, including:
+
+- dashboard/page layout conventions
+- template partial patterns
+- permission patterns for staff-only pages
+- ORM aggregation patterns
+- service-layer patterns for metrics/reporting
+- test organization for summary services and views
+
 ## Scope
 
 - Analytics Command Center.
@@ -35,14 +46,14 @@ Provide staff/admin users with the Version 1 Analytics Command Center and simple
 
 ## Deliverables
 
-- Analytics Command Center page.
-- Metrics service summaries.
-- Reporting service summaries.
-- Completion status cards/tables.
-- Import status summaries.
-- Draft matching summaries.
-- Recent observations list.
-- Tests for metrics and permissions.
+- [ ] Analytics Command Center page.
+- [ ] Metrics service summaries.
+- [ ] Reporting service summaries.
+- [ ] Completion status cards/tables.
+- [ ] Import status summaries.
+- [ ] Draft matching summaries.
+- [ ] Recent observations list.
+- [ ] Tests for metrics and permissions.
 
 ## Models
 
@@ -109,6 +120,17 @@ Provide staff/admin users with the Version 1 Analytics Command Center and simple
 - Reports remain simple server-rendered summaries and tables.
 - Tests for this phase pass.
 
+## Definition of Done
+
+This phase is complete when:
+
+- [ ] All deliverables are complete.
+- [ ] Acceptance criteria are satisfied.
+- [ ] Tests for the phase pass.
+- [ ] Documentation is updated if implementation details changed.
+- [ ] Phase Review is completed.
+- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+
 ## Risks / Open Questions
 
 - Metrics should avoid excessive database queries.
@@ -120,3 +142,12 @@ Provide staff/admin users with the Version 1 Analytics Command Center and simple
 
 ## Phase Review
 
+### What went well
+
+### Challenges
+
+### Technical debt
+
+### Architecture changes
+
+### Recommendations for the next phase

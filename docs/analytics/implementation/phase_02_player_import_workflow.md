@@ -11,6 +11,18 @@ Build the staff/admin player import workflow that turns roster/member CSV files 
 - [09 Services](../architecture/09_services.md)
 - [10 Permissions](../architecture/10_permissions.md)
 
+## Existing Project Integration
+
+Before implementing this phase, inspect relevant existing project conventions, including:
+
+- upload handling patterns
+- form patterns
+- messages and redirect conventions
+- authentication and permission patterns
+- admin configuration patterns for import/provenance records
+- service-layer patterns
+- test organization and fixtures for file uploads
+
 ## Scope
 
 - Add staff/admin import workflow exposed through Analytics.
@@ -34,15 +46,15 @@ Build the staff/admin player import workflow that turns roster/member CSV files 
 
 ## Deliverables
 
-- Analytics Import Players page.
-- CSV upload form.
-- Import preview page.
-- Column mapping support.
-- Import confirmation action.
-- Conflict/ambiguous match review path.
-- Row-level import error reporting.
-- Provenance persistence via `players.PlayerSourceRow`.
-- Tests for CSV parsing, matching, merging, conflicts, and permissions.
+- [ ] Analytics Import Players page.
+- [ ] CSV upload form.
+- [ ] Import preview page.
+- [ ] Column mapping support.
+- [ ] Import confirmation action.
+- [ ] Conflict/ambiguous match review path.
+- [ ] Row-level import error reporting.
+- [ ] Provenance persistence via `players.PlayerSourceRow`.
+- [ ] Tests for CSV parsing, matching, merging, conflicts, and permissions.
 
 ## Models
 
@@ -125,6 +137,17 @@ Exact names can follow project URL conventions.
 - Import errors are visible to staff/admin users.
 - Tests for this phase pass.
 
+## Definition of Done
+
+This phase is complete when:
+
+- [ ] All deliverables are complete.
+- [ ] Acceptance criteria are satisfied.
+- [ ] Tests for the phase pass.
+- [ ] Documentation is updated if implementation details changed.
+- [ ] Phase Review is completed.
+- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+
 ## Risks / Open Questions
 
 - CSV source formats may contain inconsistent headers or sensitive fields.
@@ -136,3 +159,12 @@ Exact names can follow project URL conventions.
 
 ## Phase Review
 
+### What went well
+
+### Challenges
+
+### Technical debt
+
+### Architecture changes
+
+### Recommendations for the next phase

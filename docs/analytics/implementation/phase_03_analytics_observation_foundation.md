@@ -11,6 +11,17 @@ Create the Analytics observation, question, response, source, role, and evaluati
 - [09 Services](../architecture/09_services.md)
 - [10 Permissions](../architecture/10_permissions.md)
 
+## Existing Project Integration
+
+Before implementing this phase, inspect relevant existing project conventions, including:
+
+- model conventions
+- timestamp and status-field patterns
+- seed/setup helper or data migration patterns
+- admin configuration patterns
+- service-layer patterns
+- test organization and fixtures
+
 ## Scope
 
 - Create the `analytics` app.
@@ -38,20 +49,20 @@ Create the Analytics observation, question, response, source, role, and evaluati
 
 ## Deliverables
 
-- `analytics` app added to `INSTALLED_APPS`.
-- `EvaluationCycle`.
-- `ObservationType`.
-- `ObservationSource`.
-- `EvaluatorRole`.
-- `ObservationQuestionSet`.
-- `ObservationQuestion`.
-- `Observation`.
-- `ObservationResponse` with `payload` JSON field.
-- Default `coach_assessment` observation type.
-- Default Version 1 observation sources.
-- Default evaluator roles.
-- Default coach assessment question set seed/setup helper.
-- Core services and tests.
+- [ ] `analytics` app added to `INSTALLED_APPS`.
+- [ ] `EvaluationCycle`.
+- [ ] `ObservationType`.
+- [ ] `ObservationSource`.
+- [ ] `EvaluatorRole`.
+- [ ] `ObservationQuestionSet`.
+- [ ] `ObservationQuestion`.
+- [ ] `Observation`.
+- [ ] `ObservationResponse` with `payload` JSON field.
+- [ ] Default `coach_assessment` observation type.
+- [ ] Default Version 1 observation sources.
+- [ ] Default evaluator roles.
+- [ ] Default coach assessment question set seed/setup helper.
+- [ ] Core services and tests.
 
 ## Models
 
@@ -124,6 +135,17 @@ Create the Analytics observation, question, response, source, role, and evaluati
 - Version 1 supports only `coach_assessment` workflows.
 - Tests for this phase pass.
 
+## Definition of Done
+
+This phase is complete when:
+
+- [ ] All deliverables are complete.
+- [ ] Acceptance criteria are satisfied.
+- [ ] Tests for the phase pass.
+- [ ] Documentation is updated if implementation details changed.
+- [ ] Phase Review is completed.
+- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+
 ## Risks / Open Questions
 
 - Question-set versioning should remain simple but sufficient for historical interpretability.
@@ -135,3 +157,12 @@ Create the Analytics observation, question, response, source, role, and evaluati
 
 ## Phase Review
 
+### What went well
+
+### Challenges
+
+### Technical debt
+
+### Architecture changes
+
+### Recommendations for the next phase

@@ -11,6 +11,18 @@ Replace the spreadsheet coach assessment workflow with server-rendered Django pa
 - [09 Services](../architecture/09_services.md)
 - [10 Permissions](../architecture/10_permissions.md)
 
+## Existing Project Integration
+
+Before implementing this phase, inspect relevant existing project conventions, including:
+
+- authentication and permission patterns
+- class-based view patterns
+- form validation patterns
+- messages and redirect conventions
+- template/layout conventions
+- service-layer patterns for workflow actions
+- test organization for view and permission tests
+
 ## Scope
 
 - Coach-facing player list.
@@ -34,12 +46,12 @@ Replace the spreadsheet coach assessment workflow with server-rendered Django pa
 
 ## Deliverables
 
-- Coach assessment list page.
-- Coach assessment form.
-- Staff observation detail/review page.
-- Services for submission and response validation.
-- Permission checks for coach/staff behavior.
-- Tests for workflow and permissions.
+- [ ] Coach assessment list page.
+- [ ] Coach assessment form.
+- [ ] Staff observation detail/review page.
+- [ ] Services for submission and response validation.
+- [ ] Permission checks for coach/staff behavior.
+- [ ] Tests for workflow and permissions.
 
 ## Models
 
@@ -109,6 +121,17 @@ Exact route names can follow project conventions.
 - Duplicate-submission rules are enforced.
 - Tests for this phase pass.
 
+## Definition of Done
+
+This phase is complete when:
+
+- [ ] All deliverables are complete.
+- [ ] Acceptance criteria are satisfied.
+- [ ] Tests for the phase pass.
+- [ ] Documentation is updated if implementation details changed.
+- [ ] Phase Review is completed.
+- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+
 ## Risks / Open Questions
 
 - Exact authentication/coach-role source may need to align with existing users/groups.
@@ -120,3 +143,12 @@ Exact route names can follow project conventions.
 
 ## Phase Review
 
+### What went well
+
+### Challenges
+
+### Technical debt
+
+### Architecture changes
+
+### Recommendations for the next phase
