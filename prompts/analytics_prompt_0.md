@@ -12,6 +12,14 @@ Version 1 should implement only the `coach_assessment` workflow. The Observation
 
 Future-ready architecture is required, but future product surfaces are not. Keep Version 1 focused on coach assessments, CSV roster imports, player search, player timeline, staff review, and draft context display.
 
+## Decision Support
+
+The Analytics platform exists to organize observations, measurements, historical context, and reports in order to support better decision-making.
+
+It does not replace the judgment of coaches, evaluators, coordinators, or administrators.
+
+Final baseball decisions, including player placement, draft selections, coaching assignments, player development plans, and roster decisions, remain the responsibility of people, not software.
+
 ## Goals
 
 - Give admins and staff a first version of an Analytics Command Center for player observations, imports, draft context, and evaluation trends.
@@ -37,6 +45,8 @@ Initial observation type:
 
 - `coach_assessment`
 
+Use a lightweight `ObservationType` model or equivalent controlled lookup table instead of assuming observation type will always be a freeform string. Version 1 only needs one record: `coach_assessment`.
+
 Future observation types may include the following, but Version 1 should not build UI, workflows, or admin management for them:
 
 - evaluator tryout score
@@ -49,6 +59,17 @@ Future observation types may include the following, but Version 1 should not bui
 - seasonal stats snapshot
 - attendance note
 - development note
+
+Future `ObservationType` records may include:
+
+- tryout
+- game
+- practice
+- bullpen
+- video
+- AI
+- attendance
+- development_note
 
 Each observation should include:
 
@@ -142,6 +163,49 @@ The player model should stand on its own in the `players` app. It should be reus
 
 Do not expose sensitive fields such as addresses, medical notes, phone numbers, emails, or guardian/contact details to ordinary coach assessment screens unless explicitly needed and permissioned.
 
+## App Responsibility Boundaries
+
+Keep app ownership clear so future modules can reuse shared concepts without duplicating them.
+
+`players` owns:
+
+- canonical player identity
+- aliases
+- source identifiers
+- player matching
+- player tags
+
+`analytics` owns:
+
+- observations
+- evaluations
+- reports
+- metrics
+- timelines
+- comparisons
+
+`drafts` owns:
+
+- draft process
+- draft selections
+- draft actions
+
+Future `pdp` may own:
+
+- development plans
+- goals
+- milestones
+
+Future `video` may own:
+
+- media
+- AI analysis
+
+Future `recruiting` may own:
+
+- recruiting history
+- recruiting reports
+
 ## Player Tags
 
 Add a lightweight tagging system so staff can organize and search players using baseball-specific labels.
@@ -172,6 +236,22 @@ Version 1 requirements:
 - coaches do not manage tags unless future permissions allow it
 
 Keep tagging intentionally simple.
+
+## Watch Lists
+
+Future versions may add lightweight Watch Lists to help staff organize players they want to monitor.
+
+Example watch lists:
+
+- Future AAA
+- Strong Prospect
+- Follow Up
+- Potential Catcher
+- Interesting Pitcher
+
+Watch Lists are different from Player Tags. Tags describe a player. Watch Lists help staff organize players they want to monitor.
+
+Do not implement Watch Lists in Version 1.
 
 ## Coach Assessment Workflow
 
@@ -242,7 +322,7 @@ Import requirements:
 - Allow staff to map source columns to `players.Player` fields.
 - Normalize common header variants, for example `First Name` and `First` should both map to first name.
 - Merge files that refer to the same players instead of creating duplicates.
-- Match players conservatively using a combination of first name, last name, birthdate, team, division, email, registration ID, registrant ID, team ID, or other stable identifiers when available.
+- Match players conservatively using reusable player-matching logic from `players.services.matching_service`, using a combination of first name, last name, birthdate, team, division, email, registration ID, registrant ID, team ID, or other stable identifiers when available.
 - Flag ambiguous matches for staff review instead of automatically merging risky records.
 - If an imported player already exists with a high-confidence match, enrich the existing `players.Player` record instead of creating a duplicate.
 - For high-confidence matches, fill missing fields from the new import and attach the new source row to the existing player.
@@ -378,6 +458,54 @@ Possible future AI capabilities include:
 - development recommendations
 - report generation
 
+## Future Measurements
+
+Observations and measurements are different concepts.
+
+Observations represent evaluator opinions, notes, or structured feedback.
+
+Measurements represent objective values.
+
+Future measurements may include:
+
+- fastball velocity
+- exit velocity
+- throwing velocity
+- sprint time
+- pop time
+- height
+- weight
+- pitch count
+- workload
+
+Do not implement measurements in Version 1. Version 1 should continue using only observations.
+
+Future architecture may introduce models such as:
+
+- `MeasurementDefinition`
+- `PlayerMeasurement`
+- `MeasurementRecord`
+
+## Future Observation Attachments
+
+Future versions may allow observations to include attachments.
+
+Possible future model:
+
+- `ObservationAttachment`
+
+Possible attachment types:
+
+- video
+- photo
+- PDF
+- CSV
+- radar screenshot
+- TrackMan export
+- Rapsodo export
+
+Do not implement attachment workflows in Version 1. Ensure the architecture does not prevent adding attachments later.
+
 ## Reporting
 
 Do not implement a reporting engine in Version 1.
@@ -494,15 +622,34 @@ No advanced search UI is required. Simple server-rendered filters are sufficient
 
 ## Service Organization
 
-Use a structured `analytics/services/` package instead of one large service module.
+Use structured service packages instead of one large service module.
 
-Recommended service modules:
+Because `players.Player` is the canonical player identity model, player-specific business logic belongs in the `players` app. The analytics app should consume these services instead of owning player identity, player matching, or player tag management.
+
+Recommended `players` service modules:
+
+```text
+players/
+    services/
+        identity_service.py
+        matching_service.py
+        tag_service.py
+```
+
+The `players` service package should own:
+
+- player identity management
+- player matching
+- player tag management
+
+Player matching should be reusable infrastructure for future apps such as analytics, recruiting, attendance, video, and PDP.
+
+Recommended `analytics` service modules:
 
 ```text
 analytics/
     services/
         observation_service.py
-        player_service.py
         import_service.py
         draft_service.py
         metrics_service.py
@@ -511,6 +658,8 @@ analytics/
         question_service.py
         reporting_service.py
 ```
+
+Analytics services should call `players.services.identity_service`, `players.services.matching_service`, and `players.services.tag_service` when they need player identity, player matching, or tag behavior.
 
 Business logic should live inside these service modules. Views should coordinate requests and responses. Templates should remain presentation only. Keep model methods limited to validation or simple helper methods.
 
@@ -538,7 +687,7 @@ The Version 1 UI should include only:
 8. Add basic draft-context display and service logic to match `players.Player` records to existing draft data.
 9. Seed the initial coach assessment question set.
 10. Use Django ORM aggregation where possible.
-11. Put analytics queries, CSV import, player matching, draft matching, question handling, reporting calculations, timeline assembly, comparison logic, and observation creation in service modules, not directly inside templates.
+11. Put analytics queries, CSV import, draft matching, question handling, reporting calculations, timeline assembly, comparison logic, and observation creation in analytics service modules, not directly inside templates. Put player identity management, player matching, and tag management in `players/services/`.
 12. Add focused tests for permission behavior, CSV parsing, import merging, ambiguous match handling, conflict handling, observation submission, response validation, evaluator-role filtering, question-set versioning, and draft-data matching.
 13. Use templates and CSS consistent with the existing project style.
 
@@ -551,12 +700,13 @@ Prefer a normalized shape that supports the first coach-assessment workflow whil
 - `players.Player`: canonical player identity record owned by the separate `players` app and referenced by analytics.
 - `PlayerTag`: lightweight staff-managed tags with a many-to-many relationship to `players.Player`.
 - `PlayerSourceRow`: original source row data and unmapped fields linked to a `players.Player` record for auditability.
+- `ObservationType`: lightweight controlled lookup table for observation types. Version 1 only needs `coach_assessment`.
 - `ObservationQuestionSet`: reusable collection/version of active questions assigned to a cycle and observation type.
 - `ObservationQuestion`: category, prompt text, display order, active flag, response type, scoring/evaluation configuration, effective dates, retired date, and version metadata. Version 1 only needs 1-5 numeric ratings and freeform notes/text.
 - `ObservationSource`: minimal source/provider metadata for coach, staff/manual entry, imported CSV, and draft matching context. Keep future sources such as AI or third-party systems possible, but do not build provider management infrastructure in Version 1.
 - `EvaluatorRole`: role key and display label for the evaluator's role at submission time.
 - `Observation`: evaluation cycle, `players.Player`, optional linked `drafts.DraftPlayer`, observation type, observation source, evaluator/user, evaluator role snapshot, status, submitted timestamp, notes, and source metadata.
-- `ObservationResponse`: observation, question, response type, numeric value, text value, boolean value, selected choice, raw value, unit, and metadata.
+- `ObservationResponse`: observation, question, response type, numeric value, text value, boolean value, selected choice, raw value, unit, payload, and metadata. Use `payload` as a JSON field for future structured responses, including possible AI-generated response details. Version 1 does not need UI for payload values.
 
 Represent the initial coach workflow as:
 
@@ -582,12 +732,15 @@ Historical observations must remain interpretable even after questions change. S
 - Do not build provider management UI in Version 1.
 - Do not fully implement future response types unless required by coach assessments.
 - Do not implement a reporting engine in Version 1.
+- Do not implement measurements in Version 1.
+- Do not implement observation attachment workflows in Version 1.
+- Do not implement Watch Lists in Version 1.
 - Do not add charts or JavaScript-heavy visualizations in the first version.
 - Staff users can review all observations.
 - Coaches can submit coach-assessment observations.
 - Authenticated coaches may evaluate any player they know well enough to assess.
 - Coaches may edit their own draft/unsubmitted observations, but staff/admin users control whether submitted observations can be reopened.
-- Use a structured `analytics/services/` package for analytics queries, CSV import, player matching, draft matching, metrics, timeline assembly, player comparison, reporting calculations, question handling, and observation workflows.
+- Use structured service packages. `players/services/` owns player identity management, player matching, and player tag management. `analytics/services/` owns analytics queries, CSV import orchestration, draft matching, metrics, timeline assembly, player comparison, reporting calculations, question handling, and observation workflows.
 - Prefer conservative, readable implementation over abstraction-heavy design.
 
 ## Deliverables
@@ -604,11 +757,12 @@ Historical observations must remain interpretable even after questions change. S
 - Coach assessment observation list, form, and detail views
 - Basic draft-context display
 - Structured `analytics/services/` package
+- Structured `players/services/` package for identity, matching, and tags
 - Service functions for metrics
 - Service functions for importing CSVs and merging `players.Player` records
 - Service functions for matching `players.Player` records to draft data
 - Service functions for timeline, comparison, question, observation, and reporting calculations
-- Models and migrations for the `players.Player` model, evaluation cycles, player tags, imports, observation sources, question sets, questions, observations, responses, and evaluator roles
+- Models and migrations for the `players.Player` model, player tags, evaluation cycles, observation types, imports, observation sources, question sets, questions, observations, responses, and evaluator roles
 - Initial seed data or setup helper for the default coach assessment question set
 - Dashboard, import, Player Profile/timeline, comparison, and observation templates
 - Minimal CSS if needed
