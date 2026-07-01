@@ -4,6 +4,8 @@
 
 Create the shared `players` app and canonical player identity foundation used by Analytics and future VCB systems.
 
+`players.Player` is the canonical future player identity model. It should not depend on legacy `pdp.PlayerProfile`. Existing PDP player data is relevant only for coexistence, migration planning, or temporary bridge logic if explicitly required.
+
 ## Architecture References
 
 - [02 Players](../architecture/02_players.md)
@@ -31,6 +33,7 @@ Before implementing this phase, inspect relevant existing project conventions, i
 - Add basic player identity, matching, import, and tag service modules as scaffolding.
 - Add admin configuration for player identity management.
 - Add tests for player model behavior and matching service basics.
+- Ensure the Phase 1 design does not make `players.Player` dependent on `pdp.PlayerProfile`.
 
 ## Out of Scope
 
@@ -42,6 +45,8 @@ Before implementing this phase, inspect relevant existing project conventions, i
 - Timeline.
 - Draft context display.
 - Reporting.
+- Migrating PDP workflows from `pdp.PlayerProfile` to `players.Player` unless explicitly instructed.
+- Designing `players.Player` as an extension of `pdp.PlayerProfile`.
 - Measurements, Watch Lists, attachments, AI, parent/player portals.
 
 ## Deliverables
@@ -169,6 +174,7 @@ This phase is complete when:
 
 ## Risks / Open Questions
 
+- Existing `pdp.PlayerProfile` is legacy/transitionary and overlaps with `players.Player`; Phase 1 must avoid dependency on PDP while preserving coexistence.
 - Exact field names for team/division context may need to align with imported CSVs.
 - Identifier uniqueness rules must avoid blocking legitimate multi-source imports.
 - Sensitive imported fields must not leak into coach-facing future screens.

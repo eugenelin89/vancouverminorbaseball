@@ -34,7 +34,7 @@ Existing installed Django apps:
 - `leaguehub`: league/season/team/game management, score submission and verification, standings, game stories/photos, and score audit entries.
 - `scholarships`: scholarship applicant signup/login, application workflow, staff review, downloads, references, and scholarship cycles.
 
-Analytics implementation needs to coexist with `pdp.PlayerProfile`, but the Analytics architecture now calls for a new canonical `players.Player` model in a separate `players` app. Phase 1 should introduce this carefully without assuming the existing PDP player model can simply be removed or renamed.
+Analytics implementation needs to coexist with `pdp.PlayerProfile`, but `pdp.PlayerProfile` is legacy/transitionary. The new `players.Player` model should be treated as the canonical future player identity model, not as a dependent extension of `pdp.PlayerProfile`. Phase 1 should introduce `players.Player` carefully without migrating PDP workflows unless explicitly instructed.
 
 ## User/Auth Model And Permission Patterns
 
@@ -235,7 +235,8 @@ There is no project-wide `common` or `core` app, no shared abstract timestamp mo
 
 Practical implementation guidance:
 
-- Create the new `players` app as the canonical player identity bounded context, but inspect and plan migration/coexistence with `pdp.PlayerProfile` before linking or replacing anything.
+- Create the new `players` app as the canonical player identity bounded context. Treat `pdp.PlayerProfile` only as a legacy coexistence, migration-planning, or temporary bridge concern if required.
+- Analytics should reference `players.Player` directly rather than going through `pdp.PlayerProfile`.
 - Keep `players` services reusable and independent of Analytics UI. Analytics should call these services for import, matching, aliases, source identifiers, and tags.
 - Keep Analytics focused on observations, question sets, responses, evaluator roles, timelines, comparison, reports, and draft context.
 - Follow the existing view pattern: class-based views, forms for validation, services for business logic, messages for user feedback, and redirects after successful POSTs.
@@ -248,7 +249,7 @@ Practical implementation guidance:
 
 ## Risks / Ambiguities
 
-- The existing `pdp.PlayerProfile` overlaps with the planned `players.Player`. Phase 1 must decide how to coexist, migrate, or cross-reference without breaking PDP.
+- The existing `pdp.PlayerProfile` overlaps with the planned `players.Player`, but it is legacy/transitionary. Phase 1 must avoid making `players.Player` depend on `pdp.PlayerProfile` while still avoiding disruption to existing PDP workflows.
 - Existing apps reference `pdp.models.Season`; there is no shared season app. Analytics may need seasons/cycles and should avoid creating a conflicting season concept without an architecture update.
 - Draft players currently live in `drafts.DraftPlayer`, separate from canonical player identity. Draft context integration will need matching/linking rules later.
 - There is no custom role/group framework. Evaluator roles for Analytics need a clear model/service boundary and should not rely only on `is_staff`.
@@ -260,12 +261,12 @@ Practical implementation guidance:
 ## Recommendations For Phase 1
 
 - Implement only the `players` foundation needed by later Analytics phases: `Player`, aliases, source identifiers, source rows/provenance, tags, and the matching/import service surface called for by the architecture.
-- Before creating models, map the exact field overlap between `pdp.PlayerProfile`, `drafts.DraftPlayer`, and the planned `players.Player`.
+- Before creating models, map the exact field overlap between legacy `pdp.PlayerProfile`, `drafts.DraftPlayer`, and the planned canonical `players.Player`.
 - Keep the first `players.Player` model minimal and stable: identity fields, active flag if needed, timestamps, and metadata/provenance fields only where justified.
 - Use an app-local abstract `TimeStampedModel` in `players` unless a shared base model is approved later.
 - Put matching, import, alias, identity, and tag behavior under `players/services/`.
 - Write service tests first for player matching/import behavior, including exact match, likely duplicate, conflict, and no-match cases.
 - Add practical admin registrations for all Phase 1 `players` models with search by name, email, source identifiers, and aliases.
 - Do not implement Analytics observation UI in Phase 1.
-- Do not migrate PDP workflows to `players.Player` during Phase 1 unless explicitly scoped; document any bridge requirement for a later phase.
+- Do not migrate PDP workflows to `players.Player` during Phase 1 unless explicitly instructed; document any coexistence or temporary bridge requirement for a later phase.
 - Use the existing preview/confirm import pattern, but keep the import business rules inside `players`, even if the later entry point is shown from Analytics.

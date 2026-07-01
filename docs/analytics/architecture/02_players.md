@@ -11,6 +11,10 @@ Use:
 - App: `players`
 - Main model: `Player`
 
+`players.Player` is the canonical future player identity model. It must not be designed as a dependent extension of the legacy `pdp.PlayerProfile` model.
+
+`pdp.PlayerProfile` is transitionary and should only be considered for coexistence, migration planning, or temporary bridge logic if required. Do not migrate PDP workflows in Version 1 unless explicitly instructed.
+
 Avoid naming the app `player_profiles`, because the player entity will eventually be used by many systems, not just profile pages.
 
 Avoid putting the canonical player model inside `analytics`, because future apps such as analytics, drafts, PDP, video, attendance, recruiting, awards, and parent/player portals will all need to reference the same player identity.
