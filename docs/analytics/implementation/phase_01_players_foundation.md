@@ -53,18 +53,18 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 ## Deliverables
 
-- [ ] `players` app added to `INSTALLED_APPS`.
-- [ ] `players.Player` model.
-- [ ] `players.PlayerAlias` model.
-- [ ] `players.PlayerSourceIdentifier` model.
-- [ ] `players.PlayerSourceRow` model.
-- [ ] `players.PlayerTag` model.
-- [ ] `players/services/identity_service.py`.
-- [ ] `players/services/matching_service.py`.
-- [ ] `players/services/import_service.py` scaffolding.
-- [ ] `players/services/tag_service.py`.
-- [ ] Admin registrations.
-- [ ] Focused model and service tests.
+- [x] `players` app added to `INSTALLED_APPS`.
+- [x] `players.Player` model.
+- [x] `players.PlayerAlias` model.
+- [x] `players.PlayerSourceIdentifier` model.
+- [x] `players.PlayerSourceRow` model.
+- [x] `players.PlayerTag` model.
+- [x] `players/services/identity_service.py`.
+- [x] `players/services/matching_service.py`.
+- [x] `players/services/import_service.py` scaffolding.
+- [x] `players/services/tag_service.py`.
+- [x] Admin registrations.
+- [x] Focused model and service tests.
 
 ## Models
 
@@ -167,12 +167,12 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 This phase is complete when:
 
-- [ ] All deliverables are complete.
-- [ ] Acceptance criteria are satisfied.
-- [ ] Tests for the phase pass.
-- [ ] Documentation is updated if implementation details changed.
-- [ ] Phase Review is completed.
-- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+- [x] All deliverables are complete.
+- [x] Acceptance criteria are satisfied.
+- [x] Tests for the phase pass.
+- [x] Documentation is updated if implementation details changed.
+- [x] Phase Review is completed.
+- [x] `docs/analytics/implementation/STATUS.md` is updated.
 
 ## Risks / Open Questions
 
@@ -183,15 +183,37 @@ This phase is complete when:
 
 ## Implementation Notes
 
+Implemented on 2026-07-01.
+
+Created the `players` app with canonical player identity models, app-local services, Django admin registrations, and focused tests.
+
+Verification completed:
+
+- `python manage.py makemigrations players`
+- `python manage.py migrate`
+- `python manage.py test players`
+- `python manage.py test`
 
 ## Phase Review
 
 ### What went well
 
+The existing repository conventions mapped cleanly to the new app: app-local timestamp base model, service modules, admin registrations, and app-level tests.
+
+The `players.Player` implementation remained independent from legacy `pdp.PlayerProfile`, as required.
+
 ### Challenges
+
+The local runtime is Python 3.9, so service modules needed `from __future__ import annotations` for modern type annotations.
 
 ### Technical debt
 
+No immediate Phase 1 technical debt was introduced. Future phases still need explicit PDP coexistence/migration planning before connecting PDP workflows to `players.Player`.
+
 ### Architecture changes
 
+None.
+
 ### Recommendations for the next phase
+
+Phase 2 should build the player import workflow on top of `players.services.import_service` and `players.services.matching_service`, keeping import business logic in the `players` app even if the UI entry point is presented from Analytics.

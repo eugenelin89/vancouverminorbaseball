@@ -375,6 +375,17 @@ The initial migration should only create `players` tables and the many-to-many t
 - Should `PlayerTag.name` uniqueness be case-sensitive or enforced through a normalized slug only?
 - Should Phase 1 include any read-only bridge metadata back to legacy PDP records, or should that wait for an explicit migration/bridge phase?
 
+## Implementation Decisions
+
+- Used an app-local `TimeStampedModel` in `players.models` to match existing `pdp`, `leaguehub`, and `scholarships` conventions without introducing a shared base app.
+- Kept `players.Player` fully independent from legacy `pdp.PlayerProfile`; no foreign keys, bridge models, or migration hooks were added.
+- Stored source identifiers in normalized lowercase/casefolded form for deterministic matching and uniqueness checks across imports.
+- Stored player aliases with a separate `normalized_alias` field so display aliases can remain human-readable while matching stays consistent.
+- Used free-text fields for `gender`, `bats`, `throws`, `division`, `team_name`, and positions to preserve import flexibility in Phase 1.
+- Implemented `import_service.py` as scaffolding only: dataclasses and cleaning/mapping helpers, with no upload UI or preview/confirm workflow.
+- Added admin inlines for aliases and source identifiers on `PlayerAdmin` because those are part of day-to-day identity management.
+- Added `from __future__ import annotations` in service modules because the current runtime is Python 3.9.
+
 ## Recommended Implementation Sequence
 
 1. Scaffold the `players` app and add it to settings.
@@ -386,6 +397,17 @@ The initial migration should only create `players` tables and the many-to-many t
 7. Run full `python manage.py test`.
 8. Update Phase 1 checklist and status only after implementation is verified.
 
-## Notes
+## Implementation Notes
 
-Keep this document as the detailed technical plan for Phase 1. The higher-level phase tracking document remains `docs/analytics/implementation/phase_01_players_foundation.md`.
+Implemented on 2026-07-01.
+
+The implementation followed the engineering plan without requiring architecture changes. The generated migration creates only `players` tables and related indexes/constraints, plus the `PlayerTag.players` many-to-many table.
+
+Verification completed:
+
+- `python manage.py makemigrations players`
+- `python manage.py migrate`
+- `python manage.py test players`
+- `python manage.py test`
+
+Keep this document as the detailed technical plan and implementation record for Phase 1. The higher-level phase tracking document remains `docs/analytics/implementation/phase_01_players_foundation.md`.

@@ -2,8 +2,8 @@
 
 ## Overall Progress
 
-- [ ] Repository Assessment
-- [ ] Phase 1 - Players Foundation
+- [x] Repository Assessment
+- [x] Phase 1 - Players Foundation
 - [ ] Phase 2 - Player Import Workflow
 - [ ] Phase 3 - Analytics Observation Foundation
 - [ ] Phase 4 - Coach Assessment Workflow
@@ -13,13 +13,13 @@
 
 ## Current Phase
 
-Repository Assessment
+Phase 1 - Players Foundation
 
-Status: Not Started
+Status: Complete
 
-Started: Not Started
+Started: 2026-07-01
 
-Completed: —
+Completed: 2026-07-01
 
 ## Architecture Reference
 
@@ -28,3 +28,5 @@ Current architecture handbook:
 `docs/analytics/architecture/README.md`
 
 ## Notes
+
+Phase 1 implemented the canonical `players.Player` foundation without depending on legacy `pdp.PlayerProfile` or migrating PDP workflows.
