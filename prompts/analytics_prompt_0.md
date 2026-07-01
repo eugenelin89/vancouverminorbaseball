@@ -37,6 +37,19 @@ Final baseball decisions, including player placement, draft selections, coaching
 - Keep the UI server-rendered with Django templates.
 - Do not introduce frontend build tooling.
 
+## Design Principles
+
+This platform is intentionally designed using several architectural principles:
+
+- Build only the smallest useful Version 1.
+- Favor explicit, readable Django code over clever abstractions.
+- Separate player identity from baseball observations.
+- Treat observations as historical records that should rarely be modified.
+- Prefer configuration over hard-coded baseball rules.
+- Keep business logic in service modules.
+- Design for incremental expansion rather than predicting every future requirement.
+- Support coaches and staff through better information rather than automation of baseball decisions.
+
 ## Observation Architecture
 
 Use a flexible observation model instead of a narrow assessment-only model.
