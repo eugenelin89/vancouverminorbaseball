@@ -21,7 +21,7 @@ Future-ready architecture is required, but future product surfaces are not. Keep
 - Allow questions, categories, scoring methods, and response types to evolve over time without implementing non-coach-assessment workflows in Version 1.
 - Pull draft round, selected round, team, and pick context from the existing `drafts` app where possible.
 - Support CSV imports for player/member/roster data with conservative matching and merge review.
-- Use `PlayerProfile` as the analytics app's player model for imports, coach assessments, search, timelines, draft matching, reporting, and future expansion.
+- Introduce a separate `players` app with `players.Player` as the canonical player identity model for imports, coach assessments, search, timelines, draft matching, reporting, and future expansion.
 - Reuse existing models and service-layer patterns.
 - Avoid duplicating business logic from existing apps.
 - Keep the UI server-rendered with Django templates.
@@ -91,24 +91,44 @@ Examples:
 
 The cycle should define which observation question set is used for coach assessments. The cycle model may include minimal fields that make future structured observation types possible, but Version 1 should not implement workflows for those future types.
 
-## Player Profile
+## Shared Player App
 
-Use `PlayerProfile` as the analytics app's central player model.
+Introduce a separate Django app named `players`.
 
-`PlayerProfile` should support:
+The `players` app should own the core player identity model used across the project.
+
+Use:
+
+- App: `players`
+- Main model: `Player`
+
+Avoid naming the app `player_profiles`, because the player entity will eventually be used by many systems, not just profile pages.
+
+Avoid putting the canonical player model inside `analytics`, because future apps such as analytics, drafts, PDP, video, attendance, recruiting, awards, and parent/player portals will all need to reference the same player identity.
+
+Analytics should reference `players.Player`.
+
+Example:
+
+```python
+class Observation(models.Model):
+    player = models.ForeignKey("players.Player", on_delete=models.CASCADE)
+```
+
+`players.Player` should support:
 
 - CSV imports
 - coach assessments
 - player search
-- player profile pages
+- Player Profile pages
 - player timeline display
 - draft matching
 - reporting
 - future expansion
 
-The model should stand on its own inside the analytics app. Do not over-emphasize migration into a future PDP model, but keep the design clean enough that it can later link to a future PDP player model if needed.
+The player model should stand on its own in the `players` app. It should be reusable by analytics and future project apps.
 
-`PlayerProfile` should support the fields needed for Version 1 imports, coach assessments, player search, timeline display, and draft matching:
+`players.Player` should support the fields needed for Version 1 imports, coach assessments, player search, timeline display, and draft matching:
 
 - First name
 - Last name
@@ -126,7 +146,7 @@ Do not expose sensitive fields such as addresses, medical notes, phone numbers, 
 
 Add a lightweight tagging system so staff can organize and search players using baseball-specific labels.
 
-Create `PlayerTag` with a many-to-many relationship to `PlayerProfile`.
+Create `PlayerTag` with a many-to-many relationship to `players.Player`.
 
 Example tags:
 
@@ -199,7 +219,7 @@ The current spreadsheet includes draft context rows such as:
 
 In the app:
 
-- Birth year should come from the player profile record or imported draft/player data when available.
+- Birth year should come from the `players.Player` record or imported draft/player data when available.
 - Actual draft selection data should come from the existing `drafts` app.
 - Draft room, team, selected round, pick number, and selection order should be derived from `Draft`, `DraftTeam`, `DraftPlayer`, and `DraftAction`.
 - Coaches may answer subjective observation questions, including where the player should have been drafted based on performance and peers.
@@ -219,18 +239,18 @@ Import requirements:
 
 - Support CSV upload through a staff/admin-only import workflow.
 - Provide a preview step before committing imported data.
-- Allow staff to map source columns to player profile fields.
+- Allow staff to map source columns to `players.Player` fields.
 - Normalize common header variants, for example `First Name` and `First` should both map to first name.
 - Merge files that refer to the same players instead of creating duplicates.
 - Match players conservatively using a combination of first name, last name, birthdate, team, division, email, registration ID, registrant ID, team ID, or other stable identifiers when available.
 - Flag ambiguous matches for staff review instead of automatically merging risky records.
-- If an imported player already exists with a high-confidence match, enrich the existing player profile record instead of creating a duplicate.
+- If an imported player already exists with a high-confidence match, enrich the existing `players.Player` record instead of creating a duplicate.
 - For high-confidence matches, fill missing fields from the new import and attach the new source row to the existing player.
 - Do not silently overwrite important existing player fields when the new import conflicts with stored data.
 - Record field-level conflicts during import preview and allow staff/admin users to choose whether to keep the existing value, use the imported value, or store the imported value only as source-row metadata.
 - If one imported row matches multiple possible existing players, mark it as ambiguous and require staff review before merge.
 - If one existing player appears in multiple imported files, keep one player record and attach each source row/import record to that player.
-- If no existing player can be matched confidently, create a new `PlayerProfile`.
+- If no existing player can be matched confidently, create a new `players.Player`.
 - Preserve source filename, import timestamp, imported-by user, row number, original row data, and unmapped extra fields for audit/debugging.
 - Support importing multiple CSVs for the same evaluation cycle, because different exports may contain different details about the same members.
 - Make imported player records available for coach assessment even when they are not linked to draft data.
@@ -515,7 +535,7 @@ The Version 1 UI should include only:
 5. Add a coach-facing player list showing available players, the coach's own completion status, and already-submitted observations.
 6. Add a coach-assessment observation form for one evaluator to score one player.
 7. Add an observation detail/read-only view for staff review.
-8. Add basic draft-context display and service logic to match player profiles to existing draft data.
+8. Add basic draft-context display and service logic to match `players.Player` records to existing draft data.
 9. Seed the initial coach assessment question set.
 10. Use Django ORM aggregation where possible.
 11. Put analytics queries, CSV import, player matching, draft matching, question handling, reporting calculations, timeline assembly, comparison logic, and observation creation in service modules, not directly inside templates.
@@ -528,14 +548,14 @@ Prefer a normalized shape that supports the first coach-assessment workflow whil
 
 - `EvaluationCycle`: time window/event/season/draft/program context for observations.
 - `ImportedRosterFile`: uploaded file metadata, source type, uploaded-by user, status, preview snapshot, row errors, conflict summary, and import summary.
-- `PlayerProfile`: analytics player record for imports, coach observations, search, profile pages, timeline, draft matching, reporting, and future expansion.
-- `PlayerTag`: lightweight staff-managed tags with a many-to-many relationship to `PlayerProfile`.
-- `PlayerSourceRow`: original source row data and unmapped fields linked to a player profile for auditability.
+- `players.Player`: canonical player identity record owned by the separate `players` app and referenced by analytics.
+- `PlayerTag`: lightweight staff-managed tags with a many-to-many relationship to `players.Player`.
+- `PlayerSourceRow`: original source row data and unmapped fields linked to a `players.Player` record for auditability.
 - `ObservationQuestionSet`: reusable collection/version of active questions assigned to a cycle and observation type.
 - `ObservationQuestion`: category, prompt text, display order, active flag, response type, scoring/evaluation configuration, effective dates, retired date, and version metadata. Version 1 only needs 1-5 numeric ratings and freeform notes/text.
 - `ObservationSource`: minimal source/provider metadata for coach, staff/manual entry, imported CSV, and draft matching context. Keep future sources such as AI or third-party systems possible, but do not build provider management infrastructure in Version 1.
 - `EvaluatorRole`: role key and display label for the evaluator's role at submission time.
-- `Observation`: evaluation cycle, player profile, optional linked `drafts.DraftPlayer`, observation type, observation source, evaluator/user, evaluator role snapshot, status, submitted timestamp, notes, and source metadata.
+- `Observation`: evaluation cycle, `players.Player`, optional linked `drafts.DraftPlayer`, observation type, observation source, evaluator/user, evaluator role snapshot, status, submitted timestamp, notes, and source metadata.
 - `ObservationResponse`: observation, question, response type, numeric value, text value, boolean value, selected choice, raw value, unit, and metadata.
 
 Represent the initial coach workflow as:
@@ -573,6 +593,8 @@ Historical observations must remain interpretable even after questions change. S
 ## Deliverables
 
 - `analytics` Django app
+- `players` Django app
+- Canonical `players.Player` model
 - URL routing
 - Analytics Command Center
 - Staff/admin CSV import workflow
@@ -583,10 +605,10 @@ Historical observations must remain interpretable even after questions change. S
 - Basic draft-context display
 - Structured `analytics/services/` package
 - Service functions for metrics
-- Service functions for importing CSVs and merging player profile records
-- Service functions for matching player profiles to draft data
+- Service functions for importing CSVs and merging `players.Player` records
+- Service functions for matching `players.Player` records to draft data
 - Service functions for timeline, comparison, question, observation, and reporting calculations
-- Models and migrations for evaluation cycles, player profiles, player tags, imports, observation sources, question sets, questions, observations, responses, and evaluator roles
+- Models and migrations for the `players.Player` model, evaluation cycles, player tags, imports, observation sources, question sets, questions, observations, responses, and evaluator roles
 - Initial seed data or setup helper for the default coach assessment question set
 - Dashboard, import, Player Profile/timeline, comparison, and observation templates
 - Minimal CSS if needed
