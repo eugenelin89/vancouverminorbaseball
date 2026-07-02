@@ -16,10 +16,26 @@
                 <label>
                     Action
                     <select name="row_{{ row.row_number }}_action">
-                        <option value="commit">Commit if possible</option>
+                        {% if row.match_status == "ambiguous" %}
+                            <option value="use_candidate">Use selected existing player</option>
+                            <option value="create_new">Create new player</option>
+                        {% else %}
+                            <option value="commit">Commit resolved row</option>
+                        {% endif %}
                         <option value="skip">Skip row</option>
                     </select>
                 </label>
+                {% if row.match_status == "ambiguous" %}
+                    <label>
+                        Existing player
+                        <select name="row_{{ row.row_number }}_candidate">
+                            <option value="">---------</option>
+                            {% for candidate in row.candidate_options %}
+                                <option value="{{ candidate.id }}">{{ candidate.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                {% endif %}
                 {% for conflict in row.field_conflicts %}
                     <label>
                         {{ conflict.field_name }}: existing "{{ conflict.existing_value }}", imported "{{ conflict.imported_value }}"

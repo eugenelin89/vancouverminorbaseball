@@ -57,8 +57,11 @@
     </div>
     <form method="post" action="{% url 'analytics:import-confirm' pk=import_batch.pk %}" class="pdp-form">
         {% csrf_token %}
-        <a class="button button--ghost" href="{% url 'analytics:import-conflicts' pk=import_batch.pk %}">Review Conflicts</a>
-        <button class="button button--primary" type="submit">Confirm Import</button>
+        {% if preview.summary.rows_needs_review or preview.summary.rows_error %}
+            <a class="button button--primary" href="{% url 'analytics:import-conflicts' pk=import_batch.pk %}">Review Rows</a>
+        {% else %}
+            <button class="button button--primary" type="submit">Confirm Import</button>
+        {% endif %}
     </form>
 </article>
 {% endblock %}

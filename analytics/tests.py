@@ -3,7 +3,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
-from players.models import Player, PlayerImportBatch
+from players.models import Player, PlayerImportBatch, PlayerSourceRow
 from players.services.import_service import SOURCE_MEMBER_LIST
 
 
@@ -105,3 +105,52 @@ class AnalyticsImportViewTests(TestCase):
         self.assertEqual(upload_response.status_code, 302)
         self.assertContains(response, "Row 2")
         self.assertContains(response, "team_name")
+
+    def test_preview_routes_review_rows_through_conflict_review(self):
+        self.client.force_login(self.staff)
+        Player.objects.create(first_name="Eugene", last_name="Lin", birthdate="2012-05-01", team_name="Old")
+        self.client.post(
+            reverse("analytics:import-new"),
+            {
+                "source": SOURCE_MEMBER_LIST,
+                "csv_file": SimpleUploadedFile(
+                    "member.csv",
+                    b"First,Last,DOB,Team\nEugene,Lin,2012-05-01,New\n",
+                    content_type="text/csv",
+                ),
+            },
+        )
+        batch = PlayerImportBatch.objects.get()
+
+        response = self.client.get(reverse("analytics:import-preview", kwargs={"pk": batch.pk}))
+
+        self.assertContains(response, "Review Rows")
+        self.assertNotContains(response, "Confirm Import")
+
+    def test_conflict_page_can_commit_ambiguous_row_to_selected_candidate(self):
+        self.client.force_login(self.staff)
+        Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
+        selected = Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
+        self.client.post(
+            reverse("analytics:import-new"),
+            {
+                "source": SOURCE_MEMBER_LIST,
+                "csv_file": SimpleUploadedFile(
+                    "member.csv",
+                    b"First,Last,Birth Year,Division,Team\nEugene,Lin,2012,13U,Expos\n",
+                    content_type="text/csv",
+                ),
+            },
+        )
+        batch = PlayerImportBatch.objects.get()
+
+        response = self.client.post(
+            reverse("analytics:import-confirm", kwargs={"pk": batch.pk}),
+            {"row_2_action": "use_candidate", "row_2_candidate": str(selected.id)},
+            follow=True,
+        )
+
+        selected.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(selected.team_name, "Expos")
+        self.assertEqual(PlayerSourceRow.objects.get().player, selected)

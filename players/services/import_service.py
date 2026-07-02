@@ -22,7 +22,9 @@ from players.services.matching_service import (
     MATCH_EXACT,
     MATCH_HIGH_CONFIDENCE,
     MATCH_NO_MATCH,
+    PlayerMatchResult,
     find_player_match,
+    match_by_identifier,
 )
 
 
@@ -36,12 +38,18 @@ SOURCE_CHOICES = [
     (SOURCE_MANUAL_STAFF, "Manual staff CSV"),
 ]
 
+MAX_CSV_UPLOAD_BYTES = 5 * 1024 * 1024
+MAX_CSV_ROWS = 5000
+
 ACTION_CREATE = "create"
 ACTION_UPDATE = "update"
 ACTION_NEEDS_REVIEW = "needs_review"
 ACTION_SKIP = "skip"
 ACTION_ERROR = "error"
 
+RESOLUTION_ACTION_COMMIT = "commit"
+RESOLUTION_ACTION_CREATE_NEW = "create_new"
+RESOLUTION_ACTION_USE_CANDIDATE = "use_candidate"
 RESOLUTION_KEEP_EXISTING = "keep_existing"
 RESOLUTION_USE_IMPORTED = "use_imported"
 RESOLUTION_METADATA_ONLY = "metadata_only"
@@ -63,6 +71,8 @@ PLAYER_FIELD_KEYS = [
 ]
 
 CONFLICT_FIELDS = [
+    "first_name",
+    "last_name",
     "preferred_name",
     "birthdate",
     "birth_year",
@@ -150,6 +160,7 @@ class ImportPreviewRow:
     matched_player_name: str = ""
     candidate_ids: list[int] = field(default_factory=list)
     candidate_names: list[str] = field(default_factory=list)
+    candidate_options: list[dict[str, Any]] = field(default_factory=list)
     field_conflicts: list[dict[str, str]] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     action: str = ACTION_CREATE
@@ -204,8 +215,14 @@ def parse_player_csv(file_obj) -> ParsedCsvFile:
     file_name = getattr(file_obj, "name", "players.csv")
     if not file_name.lower().endswith(".csv"):
         raise ValidationError("Upload a .csv file.")
+    file_size = getattr(file_obj, "size", None)
+    if file_size is not None and file_size > MAX_CSV_UPLOAD_BYTES:
+        raise ValidationError("CSV uploads are limited to 5 MB.")
 
     raw_data = file_obj.read()
+    raw_size = len(raw_data.encode("utf-8")) if isinstance(raw_data, str) else len(raw_data)
+    if raw_size > MAX_CSV_UPLOAD_BYTES:
+        raise ValidationError("CSV uploads are limited to 5 MB.")
     if isinstance(raw_data, bytes):
         raw_data = raw_data.decode("utf-8-sig")
     file_obj.seek(0)
@@ -233,6 +250,8 @@ def parse_player_csv(file_obj) -> ParsedCsvFile:
 
     rows = []
     for row_number, row in enumerate(reader, start=2):
+        if len(rows) >= MAX_CSV_ROWS:
+            raise ValidationError(f"CSV uploads are limited to {MAX_CSV_ROWS} data rows.")
         original_row = {}
         cleaned_row = {}
         for header in reader.fieldnames:
@@ -433,8 +452,34 @@ def _match_identity(identity: dict[str, Any], source_identifiers: list[dict[str,
         "division": model_identity.get("division", ""),
     }
     if source_identifiers:
-        first_identifier = source_identifiers[0]
-        match_data.update(first_identifier)
+        exact_matches = []
+        exact_score = None
+        seen_player_ids = set()
+        for identifier in source_identifiers:
+            identifier_result = match_by_identifier(
+                identifier.get("source", ""),
+                identifier.get("identifier_type", ""),
+                identifier.get("identifier_value", ""),
+            )
+            if identifier_result.status == MATCH_EXACT and identifier_result.player:
+                if identifier_result.player.id not in seen_player_ids:
+                    exact_matches.append(identifier_result.player)
+                    exact_score = identifier_result.score
+                    seen_player_ids.add(identifier_result.player.id)
+        if len(exact_matches) == 1:
+            return PlayerMatchResult(
+                status=MATCH_EXACT,
+                player=exact_matches[0],
+                candidates=exact_matches,
+                reason="Matched by source identifier.",
+                score=exact_score,
+            )
+        if len(exact_matches) > 1:
+            return PlayerMatchResult(
+                status=MATCH_AMBIGUOUS,
+                candidates=exact_matches,
+                reason="Multiple source identifiers matched different players.",
+            )
     return find_player_match(match_data)
 
 
@@ -503,6 +548,7 @@ def preview_row(*, row: dict[str, Any], mapping_config: dict[str, str], source: 
         matched_player_name=getattr(matched_player, "display_name", ""),
         candidate_ids=[candidate.id for candidate in candidates],
         candidate_names=[candidate.display_name for candidate in candidates],
+        candidate_options=[{"id": candidate.id, "name": candidate.display_name} for candidate in candidates],
         field_conflicts=field_conflicts,
         errors=errors,
         action=action,
@@ -631,13 +677,53 @@ def record_import_source_row(player: Player, import_batch: PlayerImportBatch, pr
 def _resolutions_for_row(resolutions: dict[str, Any], row_number: int) -> tuple[str, dict[str, str]]:
     row_key = str(row_number)
     row_resolution = resolutions.get(row_key, {}) if resolutions else {}
-    return row_resolution.get("action", "commit"), row_resolution.get("fields", {})
+    return row_resolution.get("action", RESOLUTION_ACTION_COMMIT), row_resolution.get("fields", {})
+
+
+def _candidate_id_for_row(resolutions: dict[str, Any], row_number: int) -> int | None:
+    row_key = str(row_number)
+    row_resolution = resolutions.get(row_key, {}) if resolutions else {}
+    candidate_id = row_resolution.get("candidate_id")
+    if not candidate_id:
+        return None
+    try:
+        return int(candidate_id)
+    except (TypeError, ValueError):
+        return None
+
+
+def _unresolved_review_messages(preview: dict[str, Any], resolutions: dict[str, Any]) -> list[str]:
+    messages = []
+    for preview_row_data in preview.get("rows", []):
+        row_number = preview_row_data["row_number"]
+        row_action, field_resolutions = _resolutions_for_row(resolutions, row_number)
+        if row_action == ACTION_SKIP:
+            continue
+        if preview_row_data["action"] == ACTION_ERROR:
+            messages.append(f"Row {row_number}: fix mapping/data errors or explicitly skip the row.")
+            continue
+        if preview_row_data["match_status"] == MATCH_AMBIGUOUS:
+            candidate_id = _candidate_id_for_row(resolutions, row_number)
+            if row_action == RESOLUTION_ACTION_CREATE_NEW:
+                continue
+            if row_action == RESOLUTION_ACTION_USE_CANDIDATE and candidate_id in preview_row_data.get("candidate_ids", []):
+                continue
+            messages.append(f"Row {row_number}: choose an existing candidate, create a new player, or skip the row.")
+            continue
+        if preview_row_data["action"] == ACTION_NEEDS_REVIEW:
+            conflict_fields = {conflict["field_name"] for conflict in preview_row_data.get("field_conflicts", [])}
+            resolved_fields = set(field_resolutions)
+            if conflict_fields and conflict_fields.issubset(resolved_fields):
+                continue
+            messages.append(f"Row {row_number}: resolve all field conflicts or explicitly skip the row.")
+    return messages
 
 
 @transaction.atomic
 def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: dict[str, Any] | None = None) -> ImportCommitResult:
     """Commit a previewed import batch to canonical player records."""
     _ensure_staff(actor)
+    resolutions = resolutions or {}
     locked_batch = PlayerImportBatch.objects.select_for_update().get(pk=import_batch.pk)
     if locked_batch.status == PlayerImportStatus.COMMITTED:
         raise ValidationError("This import batch has already been committed.")
@@ -646,29 +732,36 @@ def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: 
     if not preview:
         preview = build_import_preview(import_batch=locked_batch)
 
+    unresolved_messages = _unresolved_review_messages(preview, resolutions)
+    if unresolved_messages:
+        locked_batch.status = PlayerImportStatus.NEEDS_REVIEW
+        locked_batch.row_errors = unresolved_messages
+        locked_batch.save(update_fields=["status", "row_errors", "updated_at"])
+        raise ValidationError("Resolve or explicitly skip review rows before committing this import.")
+
     result = ImportCommitResult(rows_processed=len(preview.get("rows", [])))
     for preview_row_data in preview.get("rows", []):
         row_number = preview_row_data["row_number"]
+        row_action, field_resolutions = _resolutions_for_row(resolutions, row_number)
+        if row_action == ACTION_SKIP:
+            result.skipped += 1
+            continue
         if preview_row_data["action"] == ACTION_ERROR:
             result.skipped += 1
             result.errors.append(f"Row {row_number}: {'; '.join(preview_row_data['errors'])}")
             continue
 
-        row_action, field_resolutions = _resolutions_for_row(resolutions or {}, row_number)
-        if row_action == ACTION_SKIP:
-            result.skipped += 1
-            continue
-        if preview_row_data["action"] == ACTION_NEEDS_REVIEW and not field_resolutions and preview_row_data["match_status"] != MATCH_AMBIGUOUS:
-            result.skipped += 1
-            result.conflicts += 1
-            continue
-        if preview_row_data["match_status"] == MATCH_AMBIGUOUS:
-            result.skipped += 1
-            result.conflicts += 1
-            continue
-
         player = None
-        if preview_row_data["matched_player_id"]:
+        if preview_row_data["match_status"] == MATCH_AMBIGUOUS:
+            if row_action == RESOLUTION_ACTION_CREATE_NEW:
+                player = create_player_from_import(preview_row_data["identity"])
+                result.created += 1
+            else:
+                candidate_id = _candidate_id_for_row(resolutions, row_number)
+                player = Player.objects.select_for_update().get(pk=candidate_id)
+                apply_player_updates(player, preview_row_data["identity"])
+                result.updated += 1
+        elif preview_row_data["matched_player_id"]:
             player = Player.objects.select_for_update().get(pk=preview_row_data["matched_player_id"])
             apply_player_updates(player, preview_row_data["identity"], field_resolutions=field_resolutions)
             result.updated += 1

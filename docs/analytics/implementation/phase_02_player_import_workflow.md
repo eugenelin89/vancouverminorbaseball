@@ -170,6 +170,22 @@ Verification completed:
 - `python manage.py test analytics`
 - `python manage.py test`
 
+Review fixes applied on 2026-07-02:
+
+- Prevented commits when conflict, error, or ambiguous rows remain unresolved.
+- Added ambiguous match resolution to choose an existing candidate, create a new player, or skip the row.
+- Updated matching to try all source identifiers and mark rows ambiguous if identifiers point to different players.
+- Made sensitive import JSON fields read-only in admin.
+- Routed preview rows needing review through conflict review before commit.
+- Added first-name and last-name conflict detection for identifier matches.
+- Added CSV size and row-count guardrails.
+
+Review-fix verification completed:
+
+- `python manage.py test players`
+- `python manage.py test analytics`
+- `python manage.py test`
+
 ## Phase Review
 
 ### What went well
@@ -184,11 +200,15 @@ The generated migration placed the `PlayerSourceRow.import_batch` index before t
 
 Conflict review was intentionally kept simple to avoid building a spreadsheet-like editor in Version 1.
 
+The Phase 2 review found that ambiguous rows needed an actual resolution path and that unresolved rows should not be partially committed. The fix keeps Phase 2 simple by requiring all review rows to be resolved or explicitly skipped before any commit mutates player records.
+
 ### Technical debt
 
 The Analytics UI is intentionally minimal and uses existing PDP shell styling. Future phases may refine navigation and layout as the Analytics Command Center grows.
 
 Sensitive imported fields are preserved in provenance; future privacy rules should define exactly which staff roles may view sensitive source-row data.
+
+Sensitive import JSON fields are read-only in admin after the review fixes, but broader role-based privacy rules remain future work.
 
 ### Architecture changes
 

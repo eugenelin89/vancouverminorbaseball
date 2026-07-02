@@ -15,7 +15,12 @@ from players.services.import_service import (
     ACTION_CREATE,
     ACTION_ERROR,
     ACTION_NEEDS_REVIEW,
+    ACTION_SKIP,
     ACTION_UPDATE,
+    MAX_CSV_ROWS,
+    MAX_CSV_UPLOAD_BYTES,
+    RESOLUTION_ACTION_CREATE_NEW,
+    RESOLUTION_ACTION_USE_CANDIDATE,
     SOURCE_MEMBER_LIST,
     SOURCE_ROSTER_DETAIL,
     build_import_preview,
@@ -239,6 +244,16 @@ class PlayerImportWorkflowTests(TestCase):
         with self.assertRaises(ValidationError):
             parse_player_csv(self.upload(body=b"First,\nA,B\n"))
 
+    def test_parse_csv_rejects_oversized_uploads(self):
+        with self.assertRaises(ValidationError):
+            parse_player_csv(self.upload(body=b"First,Last\n" + (b"A,B\n" * ((MAX_CSV_UPLOAD_BYTES // 4) + 1))))
+
+    def test_parse_csv_rejects_too_many_rows(self):
+        rows = b"".join([b"A,B\n" for _ in range(MAX_CSV_ROWS + 1)])
+
+        with self.assertRaises(ValidationError):
+            parse_player_csv(self.upload(body=b"First,Last\n" + rows))
+
     def test_suggest_mapping_for_member_and_roster_headers(self):
         member_mapping = suggest_mapping(["First", "Last", "Gender", "Team"], source=SOURCE_MEMBER_LIST)
         roster_mapping = suggest_mapping(["First Name", "Last Name", "DOB", "Registration ID"], source=SOURCE_ROSTER_DETAIL)
@@ -275,6 +290,41 @@ class PlayerImportWorkflowTests(TestCase):
         self.assertEqual(row["action"], ACTION_UPDATE)
         self.assertEqual(row["matched_player_id"], player.id)
 
+    def test_preview_tries_all_source_identifiers(self):
+        player = Player.objects.create(first_name="Eugene", last_name="Lin")
+        add_source_identifier(player, SOURCE_ROSTER_DETAIL, "registrant_id", "MEM-1")
+        batch = create_import_batch(
+            file_obj=self.upload(
+                name="roster detail for 13u house.csv",
+                body=b"First Name,Last Name,Registration ID,Registrant ID\nEugene,Lin,NO-MATCH,MEM-1\n",
+            ),
+            source=SOURCE_ROSTER_DETAIL,
+            uploaded_by=self.staff,
+        )
+
+        row = batch.preview_snapshot["preview"]["rows"][0]
+        self.assertEqual(row["action"], ACTION_UPDATE)
+        self.assertEqual(row["matched_player_id"], player.id)
+
+    def test_preview_marks_conflicting_source_identifiers_as_ambiguous(self):
+        player_one = Player.objects.create(first_name="Eugene", last_name="Lin")
+        player_two = Player.objects.create(first_name="Gene", last_name="Lynn")
+        add_source_identifier(player_one, SOURCE_ROSTER_DETAIL, "registration_id", "REG-1")
+        add_source_identifier(player_two, SOURCE_ROSTER_DETAIL, "registrant_id", "MEM-1")
+        batch = create_import_batch(
+            file_obj=self.upload(
+                name="roster detail for 13u house.csv",
+                body=b"First Name,Last Name,Registration ID,Registrant ID\nEugene,Lin,REG-1,MEM-1\n",
+            ),
+            source=SOURCE_ROSTER_DETAIL,
+            uploaded_by=self.staff,
+        )
+
+        row = batch.preview_snapshot["preview"]["rows"][0]
+        self.assertEqual(row["action"], ACTION_NEEDS_REVIEW)
+        self.assertEqual(row["match_status"], MATCH_AMBIGUOUS)
+        self.assertCountEqual(row["candidate_ids"], [player_one.id, player_two.id])
+
     def test_preview_high_confidence_match_and_conflict(self):
         player = Player.objects.create(
             first_name="Eugene",
@@ -295,6 +345,22 @@ class PlayerImportWorkflowTests(TestCase):
         self.assertEqual(row["action"], ACTION_NEEDS_REVIEW)
         self.assertEqual(row["matched_player_id"], player.id)
         self.assertEqual(row["field_conflicts"][0]["field_name"], "team_name")
+
+    def test_preview_treats_name_difference_on_identifier_match_as_conflict(self):
+        player = Player.objects.create(first_name="Eugene", last_name="Lin")
+        add_source_identifier(player, SOURCE_ROSTER_DETAIL, "registration_id", "REG-1")
+        batch = create_import_batch(
+            file_obj=self.upload(
+                name="roster detail for 13u house.csv",
+                body=b"First Name,Last Name,Registration ID\nGene,Lin,REG-1\n",
+            ),
+            source=SOURCE_ROSTER_DETAIL,
+            uploaded_by=self.staff,
+        )
+
+        row = batch.preview_snapshot["preview"]["rows"][0]
+        self.assertEqual(row["action"], ACTION_NEEDS_REVIEW)
+        self.assertEqual(row["field_conflicts"][0]["field_name"], "first_name")
 
     def test_preview_ambiguous_match_and_missing_name_error(self):
         Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
@@ -352,6 +418,77 @@ class PlayerImportWorkflowTests(TestCase):
 
         player.refresh_from_db()
         self.assertEqual(player.team_name, "New")
+
+    def test_commit_rejects_unresolved_review_rows_without_mutating_player(self):
+        player = Player.objects.create(first_name="Eugene", last_name="Lin", birthdate="2012-05-01", team_name="Old")
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"First,Last,DOB,Team\nEugene,Lin,2012-05-01,New\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+        )
+
+        with self.assertRaises(ValidationError):
+            commit_import_batch(import_batch=batch, actor=self.staff)
+
+        player.refresh_from_db()
+        batch.refresh_from_db()
+        self.assertEqual(player.team_name, "Old")
+        self.assertEqual(batch.status, PlayerImportStatus.NEEDS_REVIEW)
+        self.assertFalse(PlayerSourceRow.objects.exists())
+
+    def test_commit_allows_error_rows_to_be_explicitly_skipped(self):
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"Last\nMissingFirst\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+        )
+
+        result = commit_import_batch(import_batch=batch, actor=self.staff, resolutions={"2": {"action": ACTION_SKIP}})
+
+        batch.refresh_from_db()
+        self.assertEqual(result.skipped, 1)
+        self.assertEqual(batch.status, PlayerImportStatus.COMMITTED)
+        self.assertFalse(Player.objects.exists())
+
+    def test_commit_resolves_ambiguous_match_to_selected_candidate(self):
+        player_one = Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
+        player_two = Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"First,Last,Birth Year,Division,Team\nEugene,Lin,2012,13U,Expos\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+        )
+
+        result = commit_import_batch(
+            import_batch=batch,
+            actor=self.staff,
+            resolutions={"2": {"action": RESOLUTION_ACTION_USE_CANDIDATE, "candidate_id": str(player_two.id)}},
+        )
+
+        player_two.refresh_from_db()
+        self.assertEqual(result.updated, 1)
+        self.assertEqual(Player.objects.count(), 2)
+        self.assertEqual(player_two.team_name, "Expos")
+        self.assertEqual(PlayerSourceRow.objects.get().player, player_two)
+        self.assertFalse(PlayerSourceRow.objects.filter(player=player_one).exists())
+
+    def test_commit_can_create_new_player_from_ambiguous_row(self):
+        Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
+        Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"First,Last,Birth Year,Division\nEugene,Lin,2012,13U\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+        )
+
+        result = commit_import_batch(
+            import_batch=batch,
+            actor=self.staff,
+            resolutions={"2": {"action": RESOLUTION_ACTION_CREATE_NEW}},
+        )
+
+        self.assertEqual(result.created, 1)
+        self.assertEqual(Player.objects.count(), 3)
 
     def test_commit_prevents_double_commit(self):
         batch = create_import_batch(file_obj=self.upload(), source=SOURCE_MEMBER_LIST, uploaded_by=self.staff)

@@ -52,6 +52,7 @@ class PlayerSourceRowAdmin(TimeStampedAdmin):
     list_display = ("player", "import_batch", "source", "source_filename", "row_number", "imported_by", "imported_at")
     list_filter = ("source", "import_batch", "imported_at")
     search_fields = ("player__first_name", "player__last_name", "source_filename", "import_batch__original_filename")
+    readonly_fields = TimeStampedAdmin.readonly_fields + ("original_row", "unmapped_fields")
 
 
 @admin.register(PlayerImportBatch)
@@ -69,7 +70,13 @@ class PlayerImportBatchAdmin(TimeStampedAdmin):
     )
     list_filter = ("status", "source", "created_at")
     search_fields = ("original_filename", "uploaded_by__username", "uploaded_by__email")
-    readonly_fields = ("created_at", "updated_at", "committed_at")
+    readonly_fields = TimeStampedAdmin.readonly_fields + (
+        "committed_at",
+        "preview_snapshot",
+        "row_errors",
+        "conflict_summary",
+        "import_summary",
+    )
 
 
 @admin.register(PlayerTag)

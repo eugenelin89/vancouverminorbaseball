@@ -58,6 +58,9 @@ def parse_conflict_resolutions(post_data):
         if key.startswith("row_") and key.endswith("_action"):
             row_number = key.removeprefix("row_").removesuffix("_action")
             resolutions.setdefault(row_number, {"fields": {}})["action"] = value
+        elif key.startswith("row_") and key.endswith("_candidate"):
+            row_number = key.removeprefix("row_").removesuffix("_candidate")
+            resolutions.setdefault(row_number, {"action": "commit", "fields": {}})["candidate_id"] = value
         elif key.startswith("row_") and "_field_" in key:
             row_part, field_name = key.removeprefix("row_").split("_field_", 1)
             resolutions.setdefault(row_part, {"action": "commit", "fields": {}})["fields"][field_name] = value

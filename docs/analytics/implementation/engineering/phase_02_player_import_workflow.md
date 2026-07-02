@@ -791,6 +791,12 @@ If an `analytics` app is created without models, `makemigrations analytics` shou
 - Staff/admin access is enforced in Analytics views and in import service mutation entry points.
 - Imported sensitive fields remain in `original_row` / `unmapped_fields` provenance and are not promoted to canonical player fields.
 - Corrected the generated migration operation order so `PlayerSourceRow.import_batch` is added before its index.
+- Added a commit preflight that blocks the entire commit when any conflict, ambiguous, or error row is unresolved. This avoids partial imports without row-level committed state in Phase 2 and lets staff return to resolve or explicitly skip rows.
+- Added real ambiguous-row resolution with three staff choices: use a selected existing candidate, create a new player, or skip the row.
+- Updated import matching to check all mapped source identifiers before falling back to name/birthdate matching. If multiple identifiers match different players, the row is marked ambiguous.
+- Added `first_name` and `last_name` to import conflict detection so source-identifier matches do not silently hide name discrepancies.
+- Added CSV guardrails: 5 MB maximum upload size and 5,000 data rows per upload.
+- Made sensitive import JSON fields read-only in Django admin and routed preview pages with review rows through the conflict review page before commit.
 
 ## Recommended Implementation Sequence
 
@@ -819,8 +825,13 @@ Verification completed:
 - `python manage.py test analytics`
 - `python manage.py test`
 
+Review-fix verification completed:
+
+- `python manage.py test players`
+- `python manage.py test analytics`
+- `python manage.py test`
+
 Test results:
 
-- `players`: 30 tests passing.
-- `analytics`: 5 tests passing.
-- full suite: 69 tests passing.
+- Initial implementation: `players` 30 tests passing, `analytics` 5 tests passing, full suite 69 tests passing.
+- Review fixes: `players` 39 tests passing, `analytics` 7 tests passing, full suite 80 tests passing.
