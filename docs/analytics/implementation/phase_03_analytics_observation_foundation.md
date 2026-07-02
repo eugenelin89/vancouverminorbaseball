@@ -49,20 +49,20 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 ## Deliverables
 
-- [ ] `analytics` app added to `INSTALLED_APPS`.
-- [ ] `EvaluationCycle`.
-- [ ] `ObservationType`.
-- [ ] `ObservationSource`.
-- [ ] `EvaluatorRole`.
-- [ ] `ObservationQuestionSet`.
-- [ ] `ObservationQuestion`.
-- [ ] `Observation`.
-- [ ] `ObservationResponse` with `payload` JSON field.
-- [ ] Default `coach_assessment` observation type.
-- [ ] Default Version 1 observation sources.
-- [ ] Default evaluator roles.
-- [ ] Default coach assessment question set seed/setup helper.
-- [ ] Core services and tests.
+- [x] `analytics` app added to `INSTALLED_APPS`.
+- [x] `EvaluationCycle`.
+- [x] `ObservationType`.
+- [x] `ObservationSource`.
+- [x] `EvaluatorRole`.
+- [x] `ObservationQuestionSet`.
+- [x] `ObservationQuestion`.
+- [x] `Observation`.
+- [x] `ObservationResponse` with `payload` JSON field.
+- [x] Default `coach_assessment` observation type.
+- [x] Default Version 1 observation sources.
+- [x] Default evaluator roles.
+- [x] Default coach assessment question set seed/setup helper.
+- [x] Core services and tests.
 
 ## Models
 
@@ -139,12 +139,12 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 This phase is complete when:
 
-- [ ] All deliverables are complete.
-- [ ] Acceptance criteria are satisfied.
-- [ ] Tests for the phase pass.
-- [ ] Documentation is updated if implementation details changed.
-- [ ] Phase Review is completed.
-- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+- [x] All deliverables are complete.
+- [x] Acceptance criteria are satisfied.
+- [x] Tests for the phase pass.
+- [x] Documentation is updated if implementation details changed.
+- [x] Phase Review is completed.
+- [x] `docs/analytics/implementation/STATUS.md` is updated.
 
 ## Risks / Open Questions
 
@@ -154,15 +154,69 @@ This phase is complete when:
 
 ## Implementation Notes
 
+Implemented on 2026-07-02.
+
+Phase 3 extended the existing Phase 2 `analytics` app rather than creating a second app. The app was already installed and continued to serve the Phase 2 import UI unchanged.
+
+Created the Analytics observation foundation models:
+
+- `EvaluationCycle`
+- `ObservationType`
+- `ObservationSource`
+- `EvaluatorRole`
+- `ObservationQuestionSet`
+- `ObservationQuestion`
+- `Observation`
+- `ObservationResponse`
+
+Created admin registration for all Phase 3 models.
+
+Created:
+
+- `analytics/services/question_service.py`
+- `analytics/services/observation_service.py`
+
+Created migrations:
+
+- `analytics/migrations/0001_initial.py`
+- `analytics/migrations/0002_seed_observation_defaults.py`
+
+Verification completed:
+
+- `python manage.py makemigrations analytics`
+- `python manage.py migrate`
+- `python manage.py test analytics`
+- `python manage.py test players`
+- `python manage.py test`
 
 ## Phase Review
 
 ### What went well
 
+The observation foundation fit cleanly into the existing minimal Analytics app from Phase 2. No changes were needed to the Phase 2 import views, templates, forms, or URL patterns.
+
+The `players.Player` boundary stayed intact: observations reference `players.Player` directly and no player identity, matching, or import behavior was duplicated in Analytics.
+
+Default coach assessment setup is available both through a migration and through an idempotent question service.
+
 ### Challenges
+
+The duplicate coach-assessment constraint needed an `observation_type_key` snapshot because Django conditional unique constraints cannot filter through a related `ObservationType.key`.
+
+The default seed migration intentionally mirrors the setup service with migration-safe model access instead of importing runtime service code.
 
 ### Technical debt
 
+Question-set lifecycle management is intentionally minimal. Future phases may need explicit workflows for creating a new question-set version, retiring an old version, and assigning a version to an evaluation cycle.
+
+The coach/staff permission model is still future work for Phase 4. Phase 3 stores evaluator role snapshots but does not introduce a full role-permission system.
+
 ### Architecture changes
 
+None.
+
 ### Recommendations for the next phase
+
+Phase 4 should build coach-facing forms on top of `analytics.services.question_service` and `analytics.services.observation_service` rather than hard-coding coach assessment questions.
+
+Phase 4 should define the user-facing edit/submit/reopen rules for draft and submitted observations.

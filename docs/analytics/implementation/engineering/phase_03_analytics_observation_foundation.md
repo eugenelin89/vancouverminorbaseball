@@ -850,6 +850,81 @@ If using a data migration, verify that re-running tests creates defaults determi
 14. Run `python manage.py test`.
 15. Update `STATUS.md`, the Phase 3 tracker, and this engineering plan with implementation decisions and phase review.
 
-## Notes
+## Implementation Decisions
 
-This is an engineering plan only. No Django code, migrations, views, templates, or tests are implemented by this document.
+- Extended the existing Phase 2 `analytics` app instead of creating a new app. This preserved the Phase 2 import UI and avoided duplicate app configuration.
+- Added a local `TimeStampedModel` in `analytics.models`, consistent with the app-local timestamp pattern already used elsewhere in the repository.
+- Added `Observation.observation_type_key` as a snapshot field so the database can enforce one `coach_assessment` per evaluator/player/evaluation cycle without joining through `ObservationType`.
+- Stored evaluator role snapshots on `Observation` with `evaluator_role_key` and `evaluator_role_name` so future reporting can filter by the role at submission time even if role records change later.
+- Added `EvaluationCycle.coach_assessment_question_set` as the Phase 3 link between a cycle and the active coach assessment question set.
+- Implemented default coach assessment setup in both an idempotent runtime service and a migration-safe data migration. The migration mirrors the service data rather than importing runtime service code.
+- Kept Version 1 response handling limited to `rating_1_5` and `text` in `observation_service`, while the model remains future-ready with fields such as boolean, selected choice, raw value, unit, payload, and metadata.
+- Registered `ObservationQuestion` both inline under `ObservationQuestionSet` and directly in admin because the Phase 3 tracker explicitly calls for registering questions.
+- Did not add any Phase 3 views, templates, URLs, reporting, timeline, draft integration, measurements, attachments, AI, or coach-facing UI.
+
+## Implementation Notes
+
+Implemented on 2026-07-02.
+
+Files created:
+
+- `analytics/models.py`
+- `analytics/admin.py`
+- `analytics/services/__init__.py`
+- `analytics/services/question_service.py`
+- `analytics/services/observation_service.py`
+- `analytics/migrations/0001_initial.py`
+- `analytics/migrations/0002_seed_observation_defaults.py`
+
+Files updated:
+
+- `analytics/tests.py`
+- `docs/analytics/implementation/STATUS.md`
+- `docs/analytics/implementation/phase_03_analytics_observation_foundation.md`
+- `docs/analytics/implementation/engineering/phase_03_analytics_observation_foundation.md`
+
+Verification completed:
+
+- `python manage.py makemigrations analytics`
+- `python manage.py migrate`
+- `python manage.py test analytics`
+- `python manage.py test players`
+- `python manage.py test`
+
+Test results:
+
+- `analytics`: 25 tests passing.
+- `players`: 39 tests passing.
+- full suite: 98 tests passing.
+
+## Phase Review
+
+### What went well
+
+The observation model, question setup, and response persistence fit cleanly into the existing app and service patterns.
+
+The Phase 2 import UI remained untouched and continued passing through the Analytics test suite.
+
+The `players.Player` boundary remained clean: Analytics references players but does not own player identity, matching, or import behavior.
+
+### Challenges
+
+Django cannot enforce a conditional unique constraint through `ObservationType.key`, so `Observation.observation_type_key` is required for the database-level coach assessment duplicate rule.
+
+The default seed data is duplicated between the runtime setup service and the migration to keep the migration safe and historical.
+
+### Technical debt
+
+Question-set version lifecycle operations are intentionally minimal. Phase 4 or a later staff admin phase may need explicit workflows for copying, retiring, and assigning question sets.
+
+Observation editing/reopen rules are not implemented yet. Phase 4 should define the user-facing policy.
+
+### Architecture changes
+
+None.
+
+### Recommendations for the next phase
+
+Build Phase 4 coach assessment forms from `ObservationQuestionSet` and `ObservationQuestion`, not hard-coded question lists.
+
+Use `analytics.services.observation_service` for draft/submitted observation creation and response persistence.
