@@ -1,0 +1,16 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Upload Player CSV{% endblock %}
+{% block analytics_subtitle %}Start a staff-only player identity import.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card pdp-card--form">
+    <h2>Upload CSV</h2>
+    <form method="post" enctype="multipart/form-data" class="pdp-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">Preview Import</button>
+        <a class="button button--ghost" href="{% url 'analytics:import-list' %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

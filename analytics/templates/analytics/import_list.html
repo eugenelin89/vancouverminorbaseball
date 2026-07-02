@@ -1,0 +1,41 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Player Imports{% endblock %}
+{% block analytics_subtitle %}Upload roster and member CSVs into canonical player records.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <div class="pdp-section-heading">
+        <h2>Import batches</h2>
+        <a class="button button--primary" href="{% url 'analytics:import-new' %}">New Import</a>
+    </div>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Rows</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for batch in import_batches %}
+                    <tr>
+                        <td><a href="{% url 'analytics:import-detail' pk=batch.pk %}">{{ batch.original_filename }}</a></td>
+                        <td>{{ batch.source }}</td>
+                        <td>{{ batch.get_status_display }}</td>
+                        <td>{{ batch.rows_processed }}</td>
+                        <td>{{ batch.rows_created }}</td>
+                        <td>{{ batch.rows_updated }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No imports yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

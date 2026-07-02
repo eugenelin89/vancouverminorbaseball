@@ -4,7 +4,7 @@
 
 - [x] Repository Assessment
 - [x] Phase 1 - Players Foundation
-- [ ] Phase 2 - Player Import Workflow
+- [x] Phase 2 - Player Import Workflow
 - [ ] Phase 3 - Analytics Observation Foundation
 - [ ] Phase 4 - Coach Assessment Workflow
 - [ ] Phase 5 - Draft Context
@@ -13,13 +13,13 @@
 
 ## Current Phase
 
-Phase 1 - Players Foundation
+Phase 2 - Player Import Workflow
 
 Status: Complete
 
-Started: 2026-07-01
+Started: 2026-07-02
 
-Completed: 2026-07-01
+Completed: 2026-07-02
 
 ## Architecture Reference
 
@@ -30,3 +30,5 @@ Current architecture handbook:
 ## Notes
 
 Phase 1 implemented the canonical `players.Player` foundation without depending on legacy `pdp.PlayerProfile` or migrating PDP workflows.
+
+Phase 2 implemented staff/admin player CSV import through a minimal Analytics UI while keeping import business logic in `players.services.import_service`.

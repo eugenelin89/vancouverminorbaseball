@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from players.models import Player, PlayerAlias, PlayerSourceIdentifier, PlayerSourceRow, PlayerTag
+from players.models import Player, PlayerAlias, PlayerImportBatch, PlayerSourceIdentifier, PlayerSourceRow, PlayerTag
 
 
 class TimeStampedAdmin(admin.ModelAdmin):
@@ -49,9 +49,27 @@ class PlayerSourceIdentifierAdmin(TimeStampedAdmin):
 
 @admin.register(PlayerSourceRow)
 class PlayerSourceRowAdmin(TimeStampedAdmin):
-    list_display = ("player", "source", "source_filename", "row_number", "imported_by", "imported_at")
-    list_filter = ("source", "imported_at")
-    search_fields = ("player__first_name", "player__last_name", "source_filename")
+    list_display = ("player", "import_batch", "source", "source_filename", "row_number", "imported_by", "imported_at")
+    list_filter = ("source", "import_batch", "imported_at")
+    search_fields = ("player__first_name", "player__last_name", "source_filename", "import_batch__original_filename")
+
+
+@admin.register(PlayerImportBatch)
+class PlayerImportBatchAdmin(TimeStampedAdmin):
+    list_display = (
+        "original_filename",
+        "source",
+        "status",
+        "uploaded_by",
+        "rows_processed",
+        "rows_created",
+        "rows_updated",
+        "rows_conflicted",
+        "created_at",
+    )
+    list_filter = ("status", "source", "created_at")
+    search_fields = ("original_filename", "uploaded_by__username", "uploaded_by__email")
+    readonly_fields = ("created_at", "updated_at", "committed_at")
 
 
 @admin.register(PlayerTag)

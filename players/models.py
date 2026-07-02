@@ -111,8 +111,63 @@ class PlayerSourceIdentifier(TimeStampedModel):
         return f"{self.source}:{self.identifier_type}:{self.identifier_value}"
 
 
+class PlayerImportStatus(models.TextChoices):
+    UPLOADED = "uploaded", "Uploaded"
+    PREVIEWED = "previewed", "Previewed"
+    NEEDS_REVIEW = "needs_review", "Needs Review"
+    COMMITTED = "committed", "Committed"
+    FAILED = "failed", "Failed"
+    CANCELLED = "cancelled", "Cancelled"
+
+
+class PlayerImportBatch(TimeStampedModel):
+    source = models.CharField(max_length=80)
+    original_filename = models.CharField(max_length=255)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="player_import_batches",
+    )
+    status = models.CharField(max_length=40, choices=PlayerImportStatus.choices, default=PlayerImportStatus.UPLOADED)
+    mapping_config = models.JSONField(default=dict, blank=True)
+    preview_snapshot = models.JSONField(default=dict, blank=True)
+    row_errors = models.JSONField(default=list, blank=True)
+    conflict_summary = models.JSONField(default=dict, blank=True)
+    import_summary = models.JSONField(default=dict, blank=True)
+    rows_processed = models.PositiveIntegerField(default=0)
+    rows_created = models.PositiveIntegerField(default=0)
+    rows_updated = models.PositiveIntegerField(default=0)
+    rows_skipped = models.PositiveIntegerField(default=0)
+    rows_conflicted = models.PositiveIntegerField(default=0)
+    committed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["source", "-created_at"]),
+            models.Index(fields=["uploaded_by", "-created_at"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        self.source = normalize_lookup_value(self.source).replace(" ", "_")
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.original_filename
+
+
 class PlayerSourceRow(TimeStampedModel):
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="source_rows")
+    import_batch = models.ForeignKey(
+        PlayerImportBatch,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="source_rows",
+    )
     source = models.CharField(max_length=80)
     source_filename = models.CharField(max_length=255, blank=True)
     row_number = models.PositiveIntegerField(null=True, blank=True)
@@ -133,6 +188,7 @@ class PlayerSourceRow(TimeStampedModel):
             models.Index(fields=["source", "source_filename"]),
             models.Index(fields=["player", "source"]),
             models.Index(fields=["imported_at"]),
+            models.Index(fields=["import_batch", "row_number"]),
         ]
 
     def save(self, *args, **kwargs):

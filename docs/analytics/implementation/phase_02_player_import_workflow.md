@@ -46,15 +46,15 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 ## Deliverables
 
-- [ ] Analytics Import Players page.
-- [ ] CSV upload form.
-- [ ] Import preview page.
-- [ ] Column mapping support.
-- [ ] Import confirmation action.
-- [ ] Conflict/ambiguous match review path.
-- [ ] Row-level import error reporting.
-- [ ] Provenance persistence via `players.PlayerSourceRow`.
-- [ ] Tests for CSV parsing, matching, merging, conflicts, and permissions.
+- [x] Analytics Import Players page.
+- [x] CSV upload form.
+- [x] Import preview page.
+- [x] Column mapping support.
+- [x] Import confirmation action.
+- [x] Conflict/ambiguous match review path.
+- [x] Row-level import error reporting.
+- [x] Provenance persistence via `players.PlayerSourceRow`.
+- [x] Tests for CSV parsing, matching, merging, conflicts, and permissions.
 
 ## Models
 
@@ -141,12 +141,12 @@ Exact names can follow project URL conventions.
 
 This phase is complete when:
 
-- [ ] All deliverables are complete.
-- [ ] Acceptance criteria are satisfied.
-- [ ] Tests for the phase pass.
-- [ ] Documentation is updated if implementation details changed.
-- [ ] Phase Review is completed.
-- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+- [x] All deliverables are complete.
+- [x] Acceptance criteria are satisfied.
+- [x] Tests for the phase pass.
+- [x] Documentation is updated if implementation details changed.
+- [x] Phase Review is completed.
+- [x] `docs/analytics/implementation/STATUS.md` is updated.
 
 ## Risks / Open Questions
 
@@ -156,15 +156,44 @@ This phase is complete when:
 
 ## Implementation Notes
 
+Implemented on 2026-07-02.
+
+Created a minimal `analytics` app for staff/admin player import UI only. Player import business logic remains in `players.services.import_service`.
+
+Created `players.PlayerImportBatch` and linked `players.PlayerSourceRow` to import batches with a nullable `import_batch` foreign key.
+
+Verification completed:
+
+- `python manage.py makemigrations players`
+- `python manage.py migrate`
+- `python manage.py test players`
+- `python manage.py test analytics`
+- `python manage.py test`
 
 ## Phase Review
 
 ### What went well
 
+The existing drafts and PDP import patterns translated cleanly into a persisted preview workflow: upload, mapping, preview, conflict review, confirm, and detail.
+
+The player import ownership boundary stayed intact: Analytics provides thin UI orchestration while `players` owns parsing, matching, preview, conflicts, commit, and provenance.
+
 ### Challenges
+
+The generated migration placed the `PlayerSourceRow.import_batch` index before the field operation, so the migration operation order was corrected before applying it.
+
+Conflict review was intentionally kept simple to avoid building a spreadsheet-like editor in Version 1.
 
 ### Technical debt
 
+The Analytics UI is intentionally minimal and uses existing PDP shell styling. Future phases may refine navigation and layout as the Analytics Command Center grows.
+
+Sensitive imported fields are preserved in provenance; future privacy rules should define exactly which staff roles may view sensitive source-row data.
+
 ### Architecture changes
 
+None.
+
 ### Recommendations for the next phase
+
+Phase 3 should consume `players.Player` records and should not duplicate import/matching logic. If observations need imported context, read it through `players` models/services.

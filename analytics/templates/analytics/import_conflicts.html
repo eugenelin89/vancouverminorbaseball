@@ -1,0 +1,41 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Import Conflict Review{% endblock %}
+{% block analytics_subtitle %}Resolve field conflicts or skip rows before committing.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Rows needing review</h2>
+    <form method="post" action="{% url 'analytics:import-confirm' pk=import_batch.pk %}" class="pdp-form">
+        {% csrf_token %}
+        {% for row in review_rows %}
+            <section class="pdp-list__item pdp-list__item--stack">
+                <h3>Row {{ row.row_number }} · {{ row.identity.first_name }} {{ row.identity.last_name }}</h3>
+                {% if row.candidate_names %}<p>Ambiguous candidates: {{ row.candidate_names|join:", " }}</p>{% endif %}
+                {% if row.errors %}<p>{{ row.errors|join:", " }}</p>{% endif %}
+                <label>
+                    Action
+                    <select name="row_{{ row.row_number }}_action">
+                        <option value="commit">Commit if possible</option>
+                        <option value="skip">Skip row</option>
+                    </select>
+                </label>
+                {% for conflict in row.field_conflicts %}
+                    <label>
+                        {{ conflict.field_name }}: existing "{{ conflict.existing_value }}", imported "{{ conflict.imported_value }}"
+                        <select name="row_{{ row.row_number }}_field_{{ conflict.field_name }}">
+                            <option value="keep_existing">Keep existing</option>
+                            <option value="use_imported">Use imported</option>
+                            <option value="metadata_only">Metadata only</option>
+                        </select>
+                    </label>
+                {% endfor %}
+            </section>
+        {% empty %}
+            <p>No conflict rows need review.</p>
+        {% endfor %}
+        <button class="button button--primary" type="submit">Commit Import</button>
+        <a class="button button--ghost" href="{% url 'analytics:import-preview' pk=import_batch.pk %}">Back to Preview</a>
+    </form>
+</article>
+{% endblock %}

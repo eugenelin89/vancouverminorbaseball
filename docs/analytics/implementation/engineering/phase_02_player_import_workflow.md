@@ -773,11 +773,24 @@ If an `analytics` app is created without models, `makemigrations analytics` shou
 
 ## Open Questions
 
-- Should Phase 2 create the minimal `analytics` app now for the import UI, or should the import UI temporarily live under `players` until the Analytics Command Center phase?
+- Resolved: Phase 2 created the minimal `analytics` app for the import UI.
 - Should imported email and phone fields ever be visible to staff in import review, or should they be stored only in provenance until explicit privacy rules are written?
 - What exact source names should be used for the first real files if filenames are inconsistent?
 - Should unresolved conflict rows be allowed to leave an import batch in `needs_review` after some rows are committed, or should Phase 2 require all unresolved rows to be skipped before commit?
 - Should staff be able to cancel/delete import batches, or only leave them as failed/cancelled records?
+
+## Implementation Decisions
+
+- Created the minimal `analytics` app now for import UI routing, forms, templates, and staff-only views.
+- Kept import business logic in `players.services.import_service`; Analytics views only validate UI forms, call services, display results, and redirect.
+- Added `players.PlayerImportBatch` to persist upload metadata, mapping config, preview snapshots, row errors, conflict summaries, and import summaries.
+- Added nullable `PlayerSourceRow.import_batch` so existing and future source rows can be grouped by upload while preserving provenance if a batch is removed.
+- Persisted preview state in `PlayerImportBatch.preview_snapshot` rather than relying on hidden preview payloads because Phase 2 includes mapping refresh and conflict review.
+- Kept CSV support only; XLSX and other formats remain out of scope.
+- Implemented conflict review as row-focused form controls rather than a spreadsheet-like editor.
+- Staff/admin access is enforced in Analytics views and in import service mutation entry points.
+- Imported sensitive fields remain in `original_row` / `unmapped_fields` provenance and are not promoted to canonical player fields.
+- Corrected the generated migration operation order so `PlayerSourceRow.import_batch` is added before its index.
 
 ## Recommended Implementation Sequence
 
@@ -792,6 +805,22 @@ If an `analytics` app is created without models, `makemigrations analytics` shou
 9. Run migrations and required tests.
 10. Update `STATUS.md`, `phase_02_player_import_workflow.md`, and this engineering plan with implementation decisions and Phase Review.
 
-## Notes
+## Implementation Notes
 
-This is a planning document only. Do not treat any proposed implementation detail as an architecture change. If Phase 2 implementation reveals a conflict with the Architecture Handbook, stop and update architecture first.
+Implemented on 2026-07-02.
+
+The implementation followed the architecture without requiring Architecture Handbook changes. Analytics owns only UI orchestration for this phase; `players` owns import state, matching, merge behavior, and provenance.
+
+Verification completed:
+
+- `python manage.py makemigrations players`
+- `python manage.py migrate`
+- `python manage.py test players`
+- `python manage.py test analytics`
+- `python manage.py test`
+
+Test results:
+
+- `players`: 30 tests passing.
+- `analytics`: 5 tests passing.
+- full suite: 69 tests passing.

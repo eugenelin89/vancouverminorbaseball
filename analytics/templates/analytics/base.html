@@ -1,0 +1,10 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}{% block analytics_title %}Analytics{% endblock %}{% endblock %}
+{% block pdp_subtitle %}{% block analytics_subtitle %}Player data workflows for staff and administrators.{% endblock %}{% endblock %}
+
+{% block pdp_content %}
+    <section class="pdp-grid pdp-grid--single">
+        {% block analytics_content %}{% endblock %}
+    </section>
+{% endblock %}

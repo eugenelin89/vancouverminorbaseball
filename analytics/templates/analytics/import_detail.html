@@ -1,0 +1,27 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Import Result{% endblock %}
+{% block analytics_subtitle %}Review import summary and row issues.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>{{ import_batch.original_filename }}</h2>
+    <p>{{ import_batch.source }} · {{ import_batch.get_status_display }}</p>
+    <div class="pdp-stat-grid">
+        <div><strong>{{ import_batch.rows_processed }}</strong><span>Processed</span></div>
+        <div><strong>{{ import_batch.rows_created }}</strong><span>Created</span></div>
+        <div><strong>{{ import_batch.rows_updated }}</strong><span>Updated</span></div>
+        <div><strong>{{ import_batch.rows_skipped }}</strong><span>Skipped</span></div>
+        <div><strong>{{ import_batch.rows_conflicted }}</strong><span>Conflicts</span></div>
+    </div>
+    {% if import_batch.row_errors %}
+        <h3>Issues</h3>
+        <ul>
+            {% for error in import_batch.row_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <a class="button button--ghost" href="{% url 'analytics:import-list' %}">Back to Imports</a>
+</article>
+{% endblock %}

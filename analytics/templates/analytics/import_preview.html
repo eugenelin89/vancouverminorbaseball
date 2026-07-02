@@ -1,0 +1,64 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Import Preview{% endblock %}
+{% block analytics_subtitle %}Review mapping, row status, and conflicts before committing.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card pdp-card--form">
+    <h2>Column mapping</h2>
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ mapping_form.as_p }}
+        <button class="button button--primary" type="submit">Refresh Preview</button>
+    </form>
+</article>
+
+<article class="pdp-card">
+    <h2>{{ import_batch.original_filename }}</h2>
+    <p>{{ import_batch.source }} · {{ import_batch.get_status_display }}</p>
+    {% if preview.summary %}
+        <div class="pdp-stat-grid">
+            <div><strong>{{ preview.summary.rows_processed }}</strong><span>Rows</span></div>
+            <div><strong>{{ preview.summary.rows_create }}</strong><span>Create</span></div>
+            <div><strong>{{ preview.summary.rows_update }}</strong><span>Update</span></div>
+            <div><strong>{{ preview.summary.rows_needs_review }}</strong><span>Review</span></div>
+            <div><strong>{{ preview.summary.rows_error }}</strong><span>Errors</span></div>
+        </div>
+    {% endif %}
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr>
+                    <th>Row</th>
+                    <th>Player</th>
+                    <th>Action</th>
+                    <th>Match</th>
+                    <th>Issues</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in preview.rows %}
+                    <tr>
+                        <td>{{ row.row_number }}</td>
+                        <td>{{ row.identity.first_name }} {{ row.identity.last_name }}</td>
+                        <td>{{ row.action }}</td>
+                        <td>{% if row.matched_player_name %}{{ row.matched_player_name }}{% else %}{{ row.match_status }}{% endif %}</td>
+                        <td>
+                            {% if row.errors %}{{ row.errors|join:", " }}{% endif %}
+                            {% if row.field_conflicts %}{{ row.field_conflicts|length }} conflict{{ row.field_conflicts|length|pluralize }}{% endif %}
+                            {% if row.candidate_names %}{{ row.candidate_names|join:", " }}{% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No preview rows available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <form method="post" action="{% url 'analytics:import-confirm' pk=import_batch.pk %}" class="pdp-form">
+        {% csrf_token %}
+        <a class="button button--ghost" href="{% url 'analytics:import-conflicts' pk=import_batch.pk %}">Review Conflicts</a>
+        <button class="button button--primary" type="submit">Confirm Import</button>
+    </form>
+</article>
+{% endblock %}
