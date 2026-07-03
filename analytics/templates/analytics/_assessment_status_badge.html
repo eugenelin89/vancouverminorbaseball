@@ -1,0 +1,9 @@
+{% if status == "submitted" %}
+    <span class="pdp-badge pdp-badge--success">Submitted</span>
+{% elif status == "draft" %}
+    <span class="pdp-badge">Draft</span>
+{% elif status == "reopened" %}
+    <span class="pdp-badge pdp-badge--warning">Reopened</span>
+{% else %}
+    <span class="pdp-badge pdp-badge--muted">Not started</span>
+{% endif %}

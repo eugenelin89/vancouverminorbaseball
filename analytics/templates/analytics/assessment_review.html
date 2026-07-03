@@ -1,0 +1,17 @@
+{% extends "analytics/assessment_detail.html" %}
+
+{% block analytics_title %}Review: {{ observation.player.display_name }}{% endblock %}
+{% block analytics_subtitle %}{{ observation.evaluation_cycle.name }} · {{ observation.evaluator_role_name }}{% endblock %}
+
+{% block analytics_content %}
+{{ block.super }}
+{% if observation.status == "submitted" %}
+    <article class="pdp-card">
+        <h2>Staff Actions</h2>
+        <form method="post">
+            {% csrf_token %}
+            <button class="button button--ghost" type="submit" name="action" value="reopen">Reopen</button>
+        </form>
+    </article>
+{% endif %}
+{% endblock %}

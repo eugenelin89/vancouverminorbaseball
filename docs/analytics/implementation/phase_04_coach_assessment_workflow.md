@@ -46,12 +46,12 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 ## Deliverables
 
-- [ ] Coach assessment list page.
-- [ ] Coach assessment form.
-- [ ] Staff observation detail/review page.
-- [ ] Services for submission and response validation.
-- [ ] Permission checks for coach/staff behavior.
-- [ ] Tests for workflow and permissions.
+- [x] Coach assessment list page.
+- [x] Coach assessment form.
+- [x] Staff observation detail/review page.
+- [x] Services for submission and response validation.
+- [x] Permission checks for coach/staff behavior.
+- [x] Tests for workflow and permissions.
 
 ## Models
 
@@ -125,12 +125,12 @@ Exact route names can follow project conventions.
 
 This phase is complete when:
 
-- [ ] All deliverables are complete.
-- [ ] Acceptance criteria are satisfied.
-- [ ] Tests for the phase pass.
-- [ ] Documentation is updated if implementation details changed.
-- [ ] Phase Review is completed.
-- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+- [x] All deliverables are complete.
+- [x] Acceptance criteria are satisfied.
+- [x] Tests for the phase pass.
+- [x] Documentation is updated if implementation details changed.
+- [x] Phase Review is completed.
+- [x] `docs/analytics/implementation/STATUS.md` is updated.
 
 ## Risks / Open Questions
 
@@ -140,15 +140,62 @@ This phase is complete when:
 
 ## Implementation Notes
 
+Implemented on 2026-07-03.
+
+Created a dynamic coach assessment workflow on top of the Phase 3 observation foundation. Questions are loaded from `ObservationQuestionSet` / `ObservationQuestion` through `question_service`; templates do not hard-code question text.
+
+Created:
+
+- `analytics/assessment_forms.py`
+- `analytics/services/coach_assessment_service.py`
+- `analytics/services/permissions.py`
+- `analytics/templates/analytics/assessment_list.html`
+- `analytics/templates/analytics/assessment_form.html`
+- `analytics/templates/analytics/assessment_detail.html`
+- `analytics/templates/analytics/assessment_review.html`
+- `analytics/templates/analytics/observation_review_list.html`
+- `analytics/templates/analytics/_assessment_question.html`
+- `analytics/templates/analytics/_assessment_status_badge.html`
+
+Updated:
+
+- `analytics/views.py`
+- `analytics/urls.py`
+- `analytics/tests.py`
+
+Verification completed:
+
+- `python manage.py makemigrations analytics --check`
+- `python manage.py test analytics`
+- `python manage.py test players`
+- `python manage.py test`
 
 ## Phase Review
 
 ### What went well
 
+The dynamic form worked cleanly with the Phase 3 question and observation services.
+
+The existing Phase 2 import UI remained intact while the assessment workflow was added to the same Analytics app.
+
+The workflow uses `players.Player` directly and does not duplicate player identity or import logic.
+
 ### Challenges
+
+There is no dedicated coach role model yet, so Phase 4 follows the architecture guidance that authenticated users may submit coach assessments while staff/admin users can review all observations.
+
+Draft save and submit use the same dynamic form with different required-field behavior, so the view must instantiate the form based on the POST action.
 
 ### Technical debt
 
+The coach assessment list uses a simple active-cycle selection and basic filters. A richer cycle picker can be added later if needed.
+
+The staff review workflow is intentionally basic and does not include reporting, comparison, exports, or timelines.
+
 ### Architecture changes
 
+None.
+
 ### Recommendations for the next phase
+
+Phase 5 should consume submitted observations as read-only context and should not add reporting/timeline behavior unless that phase explicitly calls for it.

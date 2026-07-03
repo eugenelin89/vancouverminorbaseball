@@ -667,6 +667,82 @@ Follow current app-level `analytics/tests.py` convention unless the file becomes
 14. Run `python manage.py test`.
 15. Update `STATUS.md`, the Phase 4 tracker, and this engineering plan with implementation decisions and phase review.
 
-## Notes
+## Implementation Decisions
 
-This is an engineering plan only. No Django code, migrations, views, templates, or tests are implemented by this document.
+- Added `analytics/assessment_forms.py` with a dynamic `CoachAssessmentForm` that builds fields from active `ObservationQuestion` records.
+- Kept question text out of templates. Templates render grouped question/form-field pairs supplied by the form/view layer.
+- Added `analytics/services/coach_assessment_service.py` for Phase 4 workflow helpers such as active cycle lookup, player assessment status, draft get/create, display grouping, and staff reopen.
+- Added `analytics/services/permissions.py` for small coach/staff observation permission checks.
+- Treated authenticated users as coach assessment submitters because the repository does not yet have a dedicated coach role source.
+- Preserved the Phase 2 import UI routes and templates while adding assessment and staff review routes.
+- Implemented staff reopen as a simple status change from `submitted` to `reopened`; reopened observations are editable by the original evaluator.
+- Did not add migrations, reporting, timelines, draft context, measurements, attachments, AI, PDP migration work, or future observation workflows.
+
+## Implementation Notes
+
+Implemented on 2026-07-03.
+
+Files created:
+
+- `analytics/assessment_forms.py`
+- `analytics/services/coach_assessment_service.py`
+- `analytics/services/permissions.py`
+- `analytics/templates/analytics/assessment_list.html`
+- `analytics/templates/analytics/assessment_form.html`
+- `analytics/templates/analytics/assessment_detail.html`
+- `analytics/templates/analytics/assessment_review.html`
+- `analytics/templates/analytics/observation_review_list.html`
+- `analytics/templates/analytics/_assessment_question.html`
+- `analytics/templates/analytics/_assessment_status_badge.html`
+
+Files updated:
+
+- `analytics/views.py`
+- `analytics/urls.py`
+- `analytics/tests.py`
+- `docs/analytics/implementation/STATUS.md`
+- `docs/analytics/implementation/phase_04_coach_assessment_workflow.md`
+- `docs/analytics/implementation/engineering/phase_04_coach_assessment_workflow.md`
+
+Verification completed:
+
+- `python manage.py makemigrations analytics --check`
+- `python manage.py test analytics`
+- `python manage.py test players`
+- `python manage.py test`
+
+Test results:
+
+- `analytics`: 42 tests passing.
+- `players`: 39 tests passing.
+- full suite: 115 tests passing.
+
+## Phase Review
+
+### What went well
+
+The Phase 3 observation and question services were sufficient for Phase 4. The workflow did not need model changes.
+
+Dynamic question rendering worked without hard-coding question text in templates.
+
+The Phase 2 import UI remained intact and continued passing through the Analytics regression tests.
+
+### Challenges
+
+The project does not yet have a dedicated coach role source. Phase 4 uses authenticated-user access for coach assessment submission and staff/superuser checks for review.
+
+The assessment list and staff review filters are intentionally simple to avoid drifting into reporting or dashboard functionality.
+
+### Technical debt
+
+The active cycle picker is basic. Future work may need a clearer cycle selection and staff cycle management workflow.
+
+`analytics/tests.py` now contains import, foundation, and workflow tests. A future cleanup could split it into a tests package.
+
+### Architecture changes
+
+None.
+
+### Recommendations for the next phase
+
+Keep Phase 5 focused on draft context. Do not turn the staff review list into reporting, comparison, or timeline functionality.

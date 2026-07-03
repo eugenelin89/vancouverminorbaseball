@@ -1,0 +1,32 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}{{ player.display_name }}{% endblock %}
+{% block analytics_subtitle %}{{ cycle.name }} · {{ observation.get_status_display }}{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card pdp-card--form">
+    <h2>Coach Assessment</h2>
+    {% if question_set.rubric.labels %}
+        <p>
+            {% for value, label in question_set.rubric.labels.items %}
+                <strong>{{ value }}</strong> {{ label }}{% if not forloop.last %} · {% endif %}
+            {% endfor %}
+        </p>
+    {% endif %}
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for group in question_groups %}
+            <section class="pdp-list__item pdp-list__item--stack">
+                <h3>{{ group.category }}</h3>
+                {% for item in group.questions %}
+                    {% include "analytics/_assessment_question.html" with question=item.question field=item.field %}
+                {% endfor %}
+            </section>
+        {% endfor %}
+        <button class="button button--ghost" type="submit" name="action" value="save_draft">Save Draft</button>
+        <button class="button button--primary" type="submit" name="action" value="submit">Submit Assessment</button>
+        <a class="button button--ghost" href="{% url 'analytics:assessment-list' %}">Back</a>
+    </form>
+</article>
+{% endblock %}

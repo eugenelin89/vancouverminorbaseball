@@ -1,18 +1,29 @@
 from django.urls import path
 
 from analytics.views import (
+    CoachAssessmentDetailView,
+    CoachAssessmentEditView,
+    CoachAssessmentListView,
     PlayerImportConfirmView,
     PlayerImportConflictView,
     PlayerImportDetailView,
     PlayerImportListView,
     PlayerImportPreviewView,
     PlayerImportUploadView,
+    StaffObservationReviewDetailView,
+    StaffObservationReviewListView,
 )
 
 
 app_name = "analytics"
 
 urlpatterns = [
+    path("assessments/", CoachAssessmentListView.as_view(), name="assessment-list"),
+    path("assessments/players/<int:player_id>/", CoachAssessmentEditView.as_view(), name="assessment-player"),
+    path("assessments/<int:observation_id>/", CoachAssessmentDetailView.as_view(), name="assessment-detail"),
+    path("assessments/<int:observation_id>/edit/", CoachAssessmentEditView.as_view(), name="assessment-edit"),
+    path("observations/review/", StaffObservationReviewListView.as_view(), name="observation-review-list"),
+    path("observations/<int:observation_id>/review/", StaffObservationReviewDetailView.as_view(), name="observation-review-detail"),
     path("imports/", PlayerImportListView.as_view(), name="import-list"),
     path("imports/new/", PlayerImportUploadView.as_view(), name="import-new"),
     path("imports/<int:pk>/preview/", PlayerImportPreviewView.as_view(), name="import-preview"),

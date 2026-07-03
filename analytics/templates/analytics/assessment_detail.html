@@ -1,0 +1,35 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}{{ observation.player.display_name }}{% endblock %}
+{% block analytics_subtitle %}{{ observation.evaluation_cycle.name }} · {{ observation.get_status_display }}{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Assessment</h2>
+    <p>Evaluator: {{ observation.evaluator }} · Role: {{ observation.evaluator_role_name }}</p>
+    {% if observation.submitted_at %}<p>Submitted: {{ observation.submitted_at }}</p>{% endif %}
+    {% for group in question_groups %}
+        <section class="pdp-list__item pdp-list__item--stack">
+            <h3>{{ group.category }}</h3>
+            {% for item in group.questions %}
+                <div>
+                    <strong>{{ item.question.prompt }}</strong>
+                    {% if item.response %}
+                        {% if item.response.numeric_value %}
+                            <span>{{ item.response.numeric_value|floatformat:0 }}</span>
+                        {% else %}
+                            <p>{{ item.response.text_value }}</p>
+                        {% endif %}
+                    {% else %}
+                        <span>Not answered</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </section>
+    {% endfor %}
+    {% if observation.evaluator_id == request.user.id and observation.status == "draft" or observation.evaluator_id == request.user.id and observation.status == "reopened" %}
+        <a class="button button--primary" href="{% url 'analytics:assessment-edit' observation_id=observation.id %}">Edit</a>
+    {% endif %}
+    <a class="button button--ghost" href="{% url 'analytics:assessment-list' %}">Back</a>
+</article>
+{% endblock %}

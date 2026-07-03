@@ -1,0 +1,54 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Observation Review{% endblock %}
+{% block analytics_subtitle %}Review submitted coach assessment observations.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Observations</h2>
+    <form method="get" class="pdp-form">
+        <label>
+            Search
+            <input type="search" name="q" value="{{ request.GET.q }}">
+        </label>
+        <label>
+            Status
+            <select name="status">
+                <option value="">All</option>
+                <option value="draft" {% if request.GET.status == "draft" %}selected{% endif %}>Draft</option>
+                <option value="submitted" {% if request.GET.status == "submitted" %}selected{% endif %}>Submitted</option>
+                <option value="reopened" {% if request.GET.status == "reopened" %}selected{% endif %}>Reopened</option>
+            </select>
+        </label>
+        <button class="button button--primary" type="submit">Filter</button>
+    </form>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Cycle</th>
+                    <th>Evaluator</th>
+                    <th>Status</th>
+                    <th>Submitted</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for observation in observations %}
+                    <tr>
+                        <td>{{ observation.player.display_name }}</td>
+                        <td>{{ observation.evaluation_cycle.name }}</td>
+                        <td>{{ observation.evaluator }}</td>
+                        <td>{{ observation.get_status_display }}</td>
+                        <td>{{ observation.submitted_at|default:"" }}</td>
+                        <td><a class="button button--ghost" href="{% url 'analytics:observation-review-detail' observation_id=observation.id %}">Review</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No observations found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}
