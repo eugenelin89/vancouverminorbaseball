@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -580,6 +581,14 @@ class CoachAssessmentWorkflowTests(TestCase):
         self.assertContains(response, self.player.display_name)
         self.assertContains(response, "Not started")
 
+    def test_invalid_cycle_parameter_does_not_crash_assessment_list(self):
+        self.client.force_login(self.coach)
+
+        response = self.client.get(reverse("analytics:assessment-list"), {"cycle": "not-a-number"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.player.display_name)
+
     def test_coach_can_open_dynamic_assessment_form_for_any_active_player(self):
         prompt = self.setup_result.question_set.questions.first().prompt
         self.client.force_login(self.coach)
@@ -589,6 +598,22 @@ class CoachAssessmentWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.other_player.display_name)
         self.assertContains(response, prompt)
+
+    def test_invalid_cycle_parameter_does_not_crash_assessment_form(self):
+        self.client.force_login(self.coach)
+
+        response = self.client.get(reverse("analytics:assessment-player", kwargs={"player_id": self.player.id}), {"cycle": "bad"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.player.display_name)
+
+    def test_assessment_edit_uses_submit_permission_helper(self):
+        self.client.force_login(self.coach)
+
+        with patch("analytics.views.can_submit_coach_assessment", return_value=False):
+            response = self.client.get(reverse("analytics:assessment-player", kwargs={"player_id": self.player.id}))
+
+        self.assertEqual(response.status_code, 403)
 
     def test_coach_can_save_partial_draft(self):
         question = self.setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5).first()
@@ -668,6 +693,20 @@ class CoachAssessmentWorkflowTests(TestCase):
         self.assertEqual(detail_response.status_code, 403)
         self.assertEqual(edit_response.status_code, 403)
 
+    def test_coach_detail_context_controls_edit_and_back_link(self):
+        result = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+        )
+        self.client.force_login(self.coach)
+
+        response = self.client.get(reverse("analytics:assessment-detail", kwargs={"observation_id": result.observation.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("analytics:assessment-edit", kwargs={"observation_id": result.observation.id}))
+        self.assertContains(response, f'href="{reverse("analytics:assessment-list")}"')
+
     def test_staff_review_requires_staff_and_displays_observation(self):
         result = create_coach_assessment_observation(
             player=self.player,
@@ -688,6 +727,43 @@ class CoachAssessmentWorkflowTests(TestCase):
         self.assertContains(list_response, self.player.display_name)
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, result.observation.evaluator.username)
+
+    def test_staff_review_search_uses_single_q_filter(self):
+        result = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+            responses={question: 4 for question in self.setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5)},
+        )
+        submit_observation(result.observation)
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("analytics:observation-review-list"), {"q": self.coach.username})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.player.display_name)
+
+    def test_invalid_cycle_parameter_does_not_crash_staff_review_list(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("analytics:observation-review-list"), {"cycle": "bad"})
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_staff_review_detail_back_link_returns_to_review_list(self):
+        result = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+            responses={question: 4 for question in self.setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5)},
+        )
+        submit_observation(result.observation)
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("analytics:observation-review-detail", kwargs={"observation_id": result.observation.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'href="{reverse("analytics:observation-review-list")}"')
 
     def test_staff_can_reopen_submitted_observation(self):
         result = create_coach_assessment_observation(

@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.views.generic import FormView, ListView, TemplateView, View
 
 from analytics.assessment_forms import CoachAssessmentForm
@@ -17,7 +19,7 @@ from analytics.services.coach_assessment_service import (
     reopen_observation,
 )
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
-from analytics.services.permissions import can_edit_observation, can_reopen_observation, can_view_observation
+from analytics.services.permissions import can_edit_observation, can_reopen_observation, can_submit_coach_assessment, can_view_observation
 from players.models import PlayerImportBatch
 from players.models import Player
 from players.services.import_service import (
@@ -26,6 +28,15 @@ from players.services.import_service import (
     create_import_batch,
     current_preview,
 )
+
+
+def normalize_cycle_id(value):
+    if not value:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 class AnalyticsStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -132,7 +143,7 @@ class CoachAssessmentListView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        cycle = get_active_coach_assessment_cycle(self.request.GET.get("cycle") or None)
+        cycle = get_active_coach_assessment_cycle(normalize_cycle_id(self.request.GET.get("cycle")))
         query = self.request.GET.get("q", "").strip()
         division = self.request.GET.get("division", "").strip()
         team = self.request.GET.get("team", "").strip()
@@ -159,6 +170,8 @@ class CoachAssessmentEditView(LoginRequiredMixin, TemplateView):
     observation = None
 
     def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not can_submit_coach_assessment(request.user):
+            raise PermissionDenied("You cannot submit coach assessments.")
         if "observation_id" in kwargs:
             self.observation = get_object_or_404(
                 Observation.objects.select_related("player", "evaluation_cycle", "question_set", "evaluator"),
@@ -170,7 +183,7 @@ class CoachAssessmentEditView(LoginRequiredMixin, TemplateView):
                     return redirect("analytics:assessment-detail", observation_id=self.observation.pk)
                 raise PermissionDenied("You cannot edit this assessment.")
         else:
-            cycle = get_active_coach_assessment_cycle(request.GET.get("cycle") or None)
+            cycle = get_active_coach_assessment_cycle(normalize_cycle_id(request.GET.get("cycle")))
             if not cycle:
                 messages.error(request, "No active coach assessment cycle is available.")
                 return redirect("analytics:assessment-list")
@@ -246,7 +259,14 @@ class CoachAssessmentDetailView(LoginRequiredMixin, TemplateView):
                     "questions": [{"question": question, "response": responses.get(question.id)} for question in group["questions"]],
                 }
             )
-        context.update({"observation": observation, "question_groups": question_groups})
+        context.update(
+            {
+                "observation": observation,
+                "question_groups": question_groups,
+                "can_edit": can_edit_observation(self.request.user, observation),
+                "back_url": reverse("analytics:assessment-list"),
+            }
+        )
         return context
 
 
@@ -260,14 +280,18 @@ class StaffObservationReviewListView(AnalyticsStaffRequiredMixin, ListView):
             observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT
         )
         status = self.request.GET.get("status", "").strip()
-        cycle = self.request.GET.get("cycle", "").strip()
+        cycle = normalize_cycle_id(self.request.GET.get("cycle"))
         q = self.request.GET.get("q", "").strip()
         if status:
             queryset = queryset.filter(status=status)
         if cycle:
             queryset = queryset.filter(evaluation_cycle_id=cycle)
         if q:
-            queryset = queryset.filter(player__first_name__icontains=q) | queryset.filter(player__last_name__icontains=q) | queryset.filter(evaluator__username__icontains=q)
+            queryset = queryset.filter(
+                Q(player__first_name__icontains=q)
+                | Q(player__last_name__icontains=q)
+                | Q(evaluator__username__icontains=q)
+            )
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -278,6 +302,11 @@ class StaffObservationReviewListView(AnalyticsStaffRequiredMixin, ListView):
 
 class StaffObservationReviewDetailView(AnalyticsStaffRequiredMixin, CoachAssessmentDetailView):
     template_name = "analytics/assessment_review.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["back_url"] = reverse("analytics:observation-review-list")
+        return context
 
     def post(self, request, *args, **kwargs):
         self.observation = get_object_or_404(Observation, pk=kwargs["observation_id"], observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT)

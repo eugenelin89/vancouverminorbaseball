@@ -27,9 +27,9 @@
             {% endfor %}
         </section>
     {% endfor %}
-    {% if observation.evaluator_id == request.user.id and observation.status == "draft" or observation.evaluator_id == request.user.id and observation.status == "reopened" %}
+    {% if can_edit %}
         <a class="button button--primary" href="{% url 'analytics:assessment-edit' observation_id=observation.id %}">Edit</a>
     {% endif %}
-    <a class="button button--ghost" href="{% url 'analytics:assessment-list' %}">Back</a>
+    <a class="button button--ghost" href="{{ back_url }}">Back</a>
 </article>
 {% endblock %}
