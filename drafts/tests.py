@@ -3,6 +3,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
+from analytics.models import RESPONSE_TYPE_RATING_1_5, EvaluationCycle
+from analytics.services.observation_service import create_coach_assessment_observation, submit_observation
+from analytics.services.question_service import ensure_default_coach_assessment_setup
+from players.models import Player
+
 from .models import Draft, DraftActionType, DraftPlayer, DraftStatus
 from .services import (
     change_draft_status,
@@ -126,11 +131,55 @@ class DraftViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Live rosters")
 
+    def test_command_center_requires_staff_access(self):
+        user = get_user_model().objects.create_user(username="coach", password="secret123")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("drafts:command-center", kwargs={"slug": self.draft.slug}))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_command_center_renders_read_only_analytics_draft_context(self):
+        coach = get_user_model().objects.create_user(username="context-coach", password="secret123")
+        player = Player.objects.create(first_name="Ava", last_name="Lopez", birth_year=2012, division="13U")
+        setup_result = ensure_default_coach_assessment_setup()
+        cycle = EvaluationCycle.objects.create(
+            name="2026 13U Coach Assessment",
+            cycle_type="Coach Assessment",
+            coach_assessment_question_set=setup_result.question_set,
+        )
+        draft_player = DraftPlayer.objects.create(
+            draft=self.draft,
+            first_name="Ava",
+            last_name="Lopez",
+            full_name="Ava Lopez",
+            extra_data={"Birth Year": "2012"},
+        )
+        observation = create_coach_assessment_observation(
+            player=player,
+            evaluation_cycle=cycle,
+            evaluator=coach,
+            responses={
+                question: 4
+                for question in setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5)
+            },
+        ).observation
+        submit_observation(observation, actor=coach)
+
+        response = self.client.get(reverse("drafts:command-center", kwargs={"slug": self.draft.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, draft_player.full_name)
+        self.assertContains(response, "Analytics match: Ava Lopez")
+        self.assertContains(response, "1 submitted assessment")
+        self.assertContains(response, "Avg rating 4.0")
+
     def test_public_live_board_renders_without_login(self):
         self.client.logout()
         response = self.client.get(reverse("drafts:public-live", kwargs={"slug": self.draft.slug}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Public live board")
+        self.assertNotContains(response, "Analytics match:")
 
     def test_import_flow_via_view(self):
         upload = SimpleUploadedFile(

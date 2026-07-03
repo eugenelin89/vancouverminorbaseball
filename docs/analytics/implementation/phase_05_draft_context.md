@@ -37,11 +37,11 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 ## Deliverables
 
-- [ ] `analytics/services/draft_service.py`.
-- [ ] Draft matching helper functions.
-- [ ] Draft context summary objects for templates/services.
-- [ ] Basic draft-context display on relevant assessment/profile views.
-- [ ] Tests for draft matching and unmatched states.
+- [x] `analytics/services/draft_service.py`.
+- [x] Draft matching helper functions.
+- [x] Draft context summary objects for templates/services.
+- [x] Basic draft-context display in the existing draft command center workflow.
+- [x] Tests for draft matching and unmatched states.
 
 ## Models
 
@@ -98,12 +98,12 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 This phase is complete when:
 
-- [ ] All deliverables are complete.
-- [ ] Acceptance criteria are satisfied.
-- [ ] Tests for the phase pass.
-- [ ] Documentation is updated if implementation details changed.
-- [ ] Phase Review is completed.
-- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+- [x] All deliverables are complete.
+- [x] Acceptance criteria are satisfied.
+- [x] Tests for the phase pass.
+- [x] Documentation is updated if implementation details changed.
+- [x] Phase Review is completed.
+- [x] `docs/analytics/implementation/STATUS.md` is updated.
 
 ## Risks / Open Questions
 
@@ -113,15 +113,30 @@ This phase is complete when:
 
 ## Implementation Notes
 
+Implemented `analytics.services.draft_service` as the Phase 5 service boundary for read-only draft context.
+
+The existing draft command center consumes the service and renders a reusable Analytics template partial for matched draft players. No draft actions, coach assessment workflows, observation mutation paths, URLs, models, or migrations were changed.
+
+Because the Phase 5 engineering plan file was not present, implementation followed the architecture handbook, this phase tracking document, and the existing Phase 5 prompt notes.
 
 ## Phase Review
 
 ### What went well
 
+The existing `drafts` command center already had a clear staff-only workflow, so Draft Context could be added as read-only context without adding new routes or modifying draft action behavior.
+
 ### Challenges
+
+Matching `drafts.DraftPlayer` to `players.Player` is necessarily conservative because existing draft rows do not store a canonical player foreign key.
 
 ### Technical debt
 
+Draft context currently matches by name, birth year, and division through the existing player matching service. Future phases may need stronger source identifiers or explicit bridge data if draft imports and player imports remain separate.
+
 ### Architecture changes
 
+None.
+
 ### Recommendations for the next phase
+
+Keep Phase 6 focused on player experience surfaces and reuse `analytics.services.draft_service` rather than duplicating draft context queries.

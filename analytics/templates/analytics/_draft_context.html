@@ -1,0 +1,30 @@
+{% if draft_context %}
+    <div class="draft-table__meta">
+        {% if draft_context.is_matched %}
+            <span>Analytics match: {{ draft_context.matched_player.display_name }}</span>
+            {% if draft_context.birth_year %}<span> · Birth year {{ draft_context.birth_year }}</span>{% endif %}
+            {% if draft_context.pick_number %}
+                <span> · Pick #{{ draft_context.pick_number }}</span>
+                {% if draft_context.selected_round %}<span> · Round {{ draft_context.selected_round }}</span>{% endif %}
+                {% if draft_context.selected_team %}<span> · Selected by {{ draft_context.selected_team.name }}</span>{% endif %}
+            {% endif %}
+            {% if draft_context.has_submitted_observations %}
+                <br>
+                <span>{{ draft_context.submitted_observation_count }} submitted assessment{{ draft_context.submitted_observation_count|pluralize }}</span>
+                {% if draft_context.average_rating %}
+                    <span> · Avg rating {{ draft_context.average_rating|floatformat:1 }}</span>
+                {% endif %}
+                {% if draft_context.latest_observation %}
+                    <span> · Latest {{ draft_context.latest_observation.submitted_at|date:"M j" }} by {{ draft_context.latest_observation.evaluator_name }}</span>
+                    {% if draft_context.latest_observation.expected_draft_round %}
+                        <span> · Expected round {{ draft_context.latest_observation.expected_draft_round }}</span>
+                    {% endif %}
+                {% endif %}
+            {% else %}
+                <br><span>No submitted assessments yet.</span>
+            {% endif %}
+        {% else %}
+            <span>Analytics context unmatched.</span>
+        {% endif %}
+    </div>
+{% endif %}

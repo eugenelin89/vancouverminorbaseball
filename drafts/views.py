@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import FormView, ListView, TemplateView, View
 
+from analytics.services.draft_service import get_draft_contexts_for_draft
+
 from .forms import (
     AssignPlayerForm,
     CSVUploadForm,
@@ -139,6 +141,7 @@ class DraftCommandCenterView(DraftBaseMixin, TemplateView):
         context["search"] = search
         context["sort"] = sort
         context["status_choices"] = DraftStatus.choices
+        context["draft_contexts_by_player_id"] = get_draft_contexts_for_draft(self.draft)
         return context
 
 

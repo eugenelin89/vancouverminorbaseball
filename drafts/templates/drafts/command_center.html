@@ -77,6 +77,9 @@
                                                         <td class="team-table__index">{{ forloop.counter }}</td>
                                                         <td>
                                                             <strong>{{ player.full_name }}</strong>
+                                                            {% with draft_context=draft_contexts_by_player_id|get_item:player.id %}
+                                                                {% include "analytics/_draft_context.html" with draft_context=draft_context only %}
+                                                            {% endwith %}
                                                         </td>
                                                         {% if selected_extra_columns %}
                                                             <td class="team-table__notes">
@@ -238,6 +241,9 @@
                                             <td>
                                                 <strong>{{ player.full_name }}</strong>
                                                 <div class="draft-table__meta">{{ player.first_name }} {{ player.last_name }}</div>
+                                                {% with draft_context=draft_contexts_by_player_id|get_item:player.id %}
+                                                    {% include "analytics/_draft_context.html" with draft_context=draft_context only %}
+                                                {% endwith %}
                                             </td>
                                             {% for key in selected_extra_columns %}
                                                 <td>{{ player.extra_data|get_item:key|default:"-" }}</td>
