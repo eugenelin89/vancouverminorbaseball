@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.text import slugify
 
@@ -144,7 +145,7 @@ def ensure_default_coach_assessment_setup() -> DefaultCoachAssessmentSetup:
             "min_numeric_value": 1 if response_type == RESPONSE_TYPE_RATING_1_5 else None,
             "max_numeric_value": 5 if response_type == RESPONSE_TYPE_RATING_1_5 else None,
         }
-        _, created = ObservationQuestion.objects.update_or_create(
+        _, created = ObservationQuestion.objects.get_or_create(
             question_set=question_set,
             key=question_key(category, prompt),
             defaults=defaults,
@@ -178,6 +179,8 @@ def get_default_coach_assessment_question_set() -> ObservationQuestionSet:
 def get_question_set_for_cycle(cycle: EvaluationCycle, observation_type: ObservationType | None = None) -> ObservationQuestionSet:
     """Return the cycle-specific question set or the active default for the observation type."""
     if cycle.coach_assessment_question_set_id:
+        if cycle.coach_assessment_question_set.observation_type.key != OBSERVATION_TYPE_COACH_ASSESSMENT:
+            raise ValidationError("Cycle coach assessment question set must belong to the coach_assessment observation type.")
         return cycle.coach_assessment_question_set
     if observation_type and observation_type.key != OBSERVATION_TYPE_COACH_ASSESSMENT:
         return (

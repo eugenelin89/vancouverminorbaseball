@@ -75,9 +75,19 @@ def _coerce_rating(value) -> Decimal:
         numeric = Decimal(str(value))
     except (InvalidOperation, TypeError, ValueError):
         raise ValidationError("Rating responses must be numeric.") from None
-    if numeric < Decimal("1") or numeric > Decimal("5"):
-        raise ValidationError("Rating responses must be between 1 and 5.")
+    if (
+        not numeric.is_finite()
+        or numeric != numeric.to_integral_value()
+        or numeric < Decimal("1")
+        or numeric > Decimal("5")
+    ):
+        raise ValidationError("Rating responses must be one of 1, 2, 3, 4, or 5.")
     return numeric
+
+
+def _validate_question_set_for_type(question_set: ObservationQuestionSet, observation_type: ObservationType) -> None:
+    if question_set.observation_type_id != observation_type.id:
+        raise ValidationError("Question set must belong to the selected observation type.")
 
 
 def _response_defaults(question: ObservationQuestion, value, extra: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -118,6 +128,7 @@ def create_observation(
     metadata: dict[str, Any] | None = None,
 ) -> Observation:
     """Create an observation with role snapshot and duplicate validation."""
+    _validate_question_set_for_type(question_set, observation_type)
     _validate_unique_coach_assessment(
         player=player,
         evaluation_cycle=evaluation_cycle,
@@ -163,6 +174,8 @@ def create_coach_assessment_observation(
     metadata: dict[str, Any] | None = None,
 ) -> ObservationCreateResult:
     """Create a coach assessment observation and optional responses."""
+    if evaluator is None:
+        raise ValidationError("Coach assessments require an evaluator.")
     observation_type = get_coach_assessment_type()
     question_set = question_set or get_question_set_for_cycle(evaluation_cycle, observation_type)
     source = source or ObservationSource.objects.get(key=SOURCE_COACH)
@@ -226,10 +239,24 @@ def save_observation_responses(observation: Observation, responses: dict[Any, An
     return created_count, updated_count
 
 
+def validate_required_responses(observation: Observation) -> None:
+    """Ensure submitted coach assessments include all active required question responses."""
+    if observation.observation_type_key != OBSERVATION_TYPE_COACH_ASSESSMENT:
+        return
+    required_question_ids = set(
+        observation.question_set.questions.filter(is_active=True, is_required=True).values_list("id", flat=True)
+    )
+    answered_question_ids = set(observation.responses.filter(question_id__in=required_question_ids).values_list("question_id", flat=True))
+    missing_count = len(required_question_ids - answered_question_ids)
+    if missing_count:
+        raise ValidationError(f"Coach assessment is missing {missing_count} required response(s).")
+
+
 @transaction.atomic
 def submit_observation(observation: Observation, actor=None) -> Observation:
     """Mark an observation submitted."""
     locked_observation = Observation.objects.select_for_update().get(pk=observation.pk)
+    validate_required_responses(locked_observation)
     locked_observation.status = OBSERVATION_STATUS_SUBMITTED
     locked_observation.submitted_at = timezone.now()
     locked_observation.save(update_fields=["status", "submitted_at", "updated_at"])

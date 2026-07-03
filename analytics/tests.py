@@ -24,10 +24,12 @@ from analytics.models import (
 )
 from analytics.services.observation_service import (
     create_coach_assessment_observation,
+    create_observation,
     default_coach_assessment_question_set,
     get_observation_detail,
     save_observation_responses,
     submit_observation,
+    validate_required_responses,
 )
 from analytics.services.question_service import (
     COACH_ASSESSMENT_RUBRIC,
@@ -208,6 +210,16 @@ class AnalyticsObservationFoundationTests(TestCase):
             coach_assessment_question_set=self.setup_result.question_set,
         )
 
+    def required_response_payload(self):
+        return {
+            question: 4
+            for question in self.setup_result.question_set.questions.filter(
+                response_type=RESPONSE_TYPE_RATING_1_5,
+                is_required=True,
+                is_active=True,
+            )
+        }
+
     def test_default_setup_creates_coach_assessment_configuration(self):
         self.assertTrue(ObservationType.objects.filter(key=OBSERVATION_TYPE_COACH_ASSESSMENT).exists())
         self.assertEqual(ObservationSource.objects.count(), len(DEFAULT_OBSERVATION_SOURCES))
@@ -230,6 +242,20 @@ class AnalyticsObservationFoundationTests(TestCase):
 
         self.assertEqual(ObservationQuestion.objects.count(), first_question_count)
         self.assertEqual(second_result.questions_created, 0)
+
+    def test_default_setup_does_not_overwrite_existing_questions(self):
+        question = self.setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5).first()
+        question.prompt = "Edited prompt"
+        question.display_order = 99
+        question.is_required = False
+        question.save()
+
+        ensure_default_coach_assessment_setup()
+
+        question.refresh_from_db()
+        self.assertEqual(question.prompt, "Edited prompt")
+        self.assertEqual(question.display_order, 99)
+        self.assertFalse(question.is_required)
 
     def test_cycle_slug_generation_creates_unique_slugs(self):
         second_cycle = EvaluationCycle.objects.create(name=self.cycle.name, cycle_type="Coach Assessment")
@@ -266,6 +292,17 @@ class AnalyticsObservationFoundationTests(TestCase):
         fallback_cycle = EvaluationCycle.objects.create(name="Fallback Cycle", cycle_type="Coach Assessment")
         self.assertEqual(get_question_set_for_cycle(fallback_cycle), self.setup_result.question_set)
 
+    def test_cycle_rejects_non_coach_assessment_question_set(self):
+        other_type = ObservationType.objects.create(key="tryout", name="Tryout")
+        other_question_set = ObservationQuestionSet.objects.create(observation_type=other_type, name="Tryout", version=1)
+
+        with self.assertRaises(ValidationError):
+            EvaluationCycle.objects.create(
+                name="Invalid Cycle",
+                cycle_type="Coach Assessment",
+                coach_assessment_question_set=other_question_set,
+            )
+
     def test_create_coach_assessment_references_players_player_and_snapshots_role(self):
         result = create_coach_assessment_observation(
             player=self.player,
@@ -286,10 +323,34 @@ class AnalyticsObservationFoundationTests(TestCase):
             player=self.player,
             evaluation_cycle=self.cycle,
             evaluator=self.evaluator,
-            status=OBSERVATION_STATUS_SUBMITTED,
+            responses=self.required_response_payload(),
         )
+        submitted = submit_observation(result.observation)
 
-        self.assertIsNotNone(result.observation.submitted_at)
+        self.assertIsNotNone(submitted.submitted_at)
+
+    def test_coach_assessment_requires_evaluator(self):
+        with self.assertRaises(ValidationError):
+            create_coach_assessment_observation(
+                player=self.player,
+                evaluation_cycle=self.cycle,
+                evaluator=None,
+            )
+
+    def test_create_observation_rejects_mismatched_question_set_type(self):
+        other_type = ObservationType.objects.create(key="tryout", name="Tryout")
+        other_question_set = ObservationQuestionSet.objects.create(observation_type=other_type, name="Tryout", version=1)
+
+        with self.assertRaises(ValidationError):
+            create_observation(
+                player=self.player,
+                evaluation_cycle=self.cycle,
+                observation_type=self.setup_result.observation_type,
+                question_set=other_question_set,
+                source=self.source,
+                evaluator=self.evaluator,
+                evaluator_role=self.role,
+            )
 
     def test_save_numeric_text_and_payload_responses(self):
         observation = create_coach_assessment_observation(
@@ -342,6 +403,19 @@ class AnalyticsObservationFoundationTests(TestCase):
 
         with self.assertRaises(ValidationError):
             save_observation_responses(observation, {question: 6})
+
+    def test_decimal_and_non_finite_ratings_are_rejected(self):
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.evaluator,
+        ).observation
+        question = self.setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5).first()
+
+        for value in ["3.5", "NaN", "Infinity"]:
+            with self.subTest(value=value):
+                with self.assertRaises(ValidationError):
+                    save_observation_responses(observation, {question: value})
 
     def test_question_from_different_question_set_is_rejected(self):
         observation = create_coach_assessment_observation(
@@ -420,6 +494,7 @@ class AnalyticsObservationFoundationTests(TestCase):
             evaluation_cycle=self.cycle,
             evaluator=self.evaluator,
         ).observation
+        save_observation_responses(observation, self.required_response_payload())
 
         submitted = submit_observation(observation, actor=self.evaluator)
         detail = get_observation_detail(submitted.id)
@@ -427,6 +502,18 @@ class AnalyticsObservationFoundationTests(TestCase):
         self.assertEqual(submitted.status, OBSERVATION_STATUS_SUBMITTED)
         self.assertIsNotNone(submitted.submitted_at)
         self.assertEqual(detail.player, self.player)
+
+    def test_submit_observation_requires_required_responses(self):
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.evaluator,
+        ).observation
+
+        with self.assertRaises(ValidationError):
+            validate_required_responses(observation)
+        with self.assertRaises(ValidationError):
+            submit_observation(observation, actor=self.evaluator)
 
     def test_default_question_set_wrapper(self):
         self.assertEqual(default_coach_assessment_question_set(), self.setup_result.question_set)

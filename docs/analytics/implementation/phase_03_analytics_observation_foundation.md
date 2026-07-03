@@ -189,6 +189,23 @@ Verification completed:
 - `python manage.py test players`
 - `python manage.py test`
 
+Review fixes applied on 2026-07-02:
+
+- Required an evaluator when creating coach assessment observations.
+- Added `validate_required_responses(observation)` and blocked submitted coach assessments when required active questions are unanswered.
+- Validated that observation question sets belong to the selected observation type.
+- Tightened `rating_1_5` validation to accept only integer values 1, 2, 3, 4, or 5.
+- Made default question setup non-destructive for existing default questions.
+- Validated that `EvaluationCycle.coach_assessment_question_set` points to a coach-assessment question set.
+- Added a read-only `ObservationResponse` inline under `ObservationAdmin`.
+
+Review-fix verification completed:
+
+- `python manage.py makemigrations analytics --check`
+- `python manage.py test analytics`
+- `python manage.py test players`
+- `python manage.py test`
+
 ## Phase Review
 
 ### What went well
@@ -205,11 +222,15 @@ The duplicate coach-assessment constraint needed an `observation_type_key` snaps
 
 The default seed migration intentionally mirrors the setup service with migration-safe model access instead of importing runtime service code.
 
+The review fixes added service-level validation for the Phase 4 submission path without requiring schema changes.
+
 ### Technical debt
 
 Question-set lifecycle management is intentionally minimal. Future phases may need explicit workflows for creating a new question-set version, retiring an old version, and assigning a version to an evaluation cycle.
 
 The coach/staff permission model is still future work for Phase 4. Phase 3 stores evaluator role snapshots but does not introduce a full role-permission system.
+
+Default seed data is intentionally duplicated between migration and service code. This keeps migrations safe, but future question changes should be handled as explicit versioned changes rather than edits in both places.
 
 ### Architecture changes
 

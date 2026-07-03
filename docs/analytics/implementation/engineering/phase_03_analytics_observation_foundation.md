@@ -861,6 +861,12 @@ If using a data migration, verify that re-running tests creates defaults determi
 - Kept Version 1 response handling limited to `rating_1_5` and `text` in `observation_service`, while the model remains future-ready with fields such as boolean, selected choice, raw value, unit, payload, and metadata.
 - Registered `ObservationQuestion` both inline under `ObservationQuestionSet` and directly in admin because the Phase 3 tracker explicitly calls for registering questions.
 - Did not add any Phase 3 views, templates, URLs, reporting, timeline, draft integration, measurements, attachments, AI, or coach-facing UI.
+- Required coach assessments to have an evaluator before creation so every coach assessment can record who submitted it.
+- Added required-response validation before submission so submitted coach assessments cannot omit active required rating questions.
+- Added question-set/observation-type validation in the observation service and coach-assessment question-set validation on `EvaluationCycle`.
+- Restricted `rating_1_5` responses to integer choices 1 through 5.
+- Changed default question setup to create missing default questions without overwriting existing question prompt, order, or required flags.
+- Added a read-only `ObservationResponse` inline under `ObservationAdmin` for staff inspection.
 
 ## Implementation Notes
 
@@ -891,11 +897,17 @@ Verification completed:
 - `python manage.py test players`
 - `python manage.py test`
 
+Review-fix verification completed:
+
+- `python manage.py makemigrations analytics --check`
+- `python manage.py test analytics`
+- `python manage.py test players`
+- `python manage.py test`
+
 Test results:
 
-- `analytics`: 25 tests passing.
-- `players`: 39 tests passing.
-- full suite: 98 tests passing.
+- Initial implementation: `analytics` 25 tests passing, `players` 39 tests passing, full suite 98 tests passing.
+- Review fixes: `analytics` 31 tests passing, `players` 39 tests passing, full suite 104 tests passing.
 
 ## Phase Review
 
@@ -913,11 +925,15 @@ Django cannot enforce a conditional unique constraint through `ObservationType.k
 
 The default seed data is duplicated between the runtime setup service and the migration to keep the migration safe and historical.
 
+The review fixes tightened Phase 4-facing service validation without requiring new migrations.
+
 ### Technical debt
 
 Question-set version lifecycle operations are intentionally minimal. Phase 4 or a later staff admin phase may need explicit workflows for copying, retiring, and assigning question sets.
 
 Observation editing/reopen rules are not implemented yet. Phase 4 should define the user-facing policy.
+
+Default seed data remains duplicated in the migration and runtime setup service. Future question-set changes should be introduced as explicit new versions rather than silent edits to existing defaults.
 
 ### Architecture changes
 

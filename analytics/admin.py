@@ -66,6 +66,30 @@ class ObservationQuestionSetAdmin(TimeStampedAdmin):
     inlines = [ObservationQuestionInline]
 
 
+class ObservationResponseInline(admin.TabularInline):
+    model = ObservationResponse
+    extra = 0
+    can_delete = False
+    readonly_fields = (
+        "question",
+        "response_type",
+        "numeric_value",
+        "text_value",
+        "boolean_value",
+        "selected_choice",
+        "raw_value",
+        "unit",
+        "payload",
+        "metadata",
+        "created_at",
+        "updated_at",
+    )
+    fields = readonly_fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Observation)
 class ObservationAdmin(TimeStampedAdmin):
     list_display = (
@@ -85,6 +109,7 @@ class ObservationAdmin(TimeStampedAdmin):
         "evaluator_role_key",
         "evaluator_role_name",
     )
+    inlines = [ObservationResponseInline]
 
 
 @admin.register(ObservationResponse)

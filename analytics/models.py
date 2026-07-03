@@ -168,7 +168,17 @@ class EvaluationCycle(TimeStampedModel):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = unique_slug_for_model(self, self.name)
+        self.full_clean()
         super().save(*args, **kwargs)
+
+    def clean(self):
+        if (
+            self.coach_assessment_question_set_id
+            and self.coach_assessment_question_set.observation_type.key != OBSERVATION_TYPE_COACH_ASSESSMENT
+        ):
+            raise ValidationError(
+                {"coach_assessment_question_set": "Coach assessment cycles must use a coach-assessment question set."}
+            )
 
     def __str__(self) -> str:
         return self.name
@@ -293,8 +303,13 @@ class ObservationResponse(TimeStampedModel):
         if self.response_type == RESPONSE_TYPE_RATING_1_5:
             if self.numeric_value is None:
                 raise ValidationError({"numeric_value": "A 1-5 rating response requires a numeric value."})
-            if self.numeric_value < Decimal("1") or self.numeric_value > Decimal("5"):
-                raise ValidationError({"numeric_value": "Rating responses must be between 1 and 5."})
+            if (
+                not self.numeric_value.is_finite()
+                or self.numeric_value != self.numeric_value.to_integral_value()
+                or self.numeric_value < Decimal("1")
+                or self.numeric_value > Decimal("5")
+            ):
+                raise ValidationError({"numeric_value": "Rating responses must be one of 1, 2, 3, 4, or 5."})
 
     def save(self, *args, **kwargs):
         if not self.response_type and self.question_id:
