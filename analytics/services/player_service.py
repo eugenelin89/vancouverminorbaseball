@@ -93,6 +93,11 @@ def staff_player_queryset():
     return Player.objects.prefetch_related("tags", "source_rows").order_by("last_name", "first_name", "id")
 
 
+def selected_player_queryset():
+    """Return the reusable queryset for selected player lists and comparisons."""
+    return Player.objects.prefetch_related("tags")
+
+
 def _evaluation_filtered_player_ids(evaluation: str) -> set[int] | None:
     if not evaluation:
         return None
@@ -199,5 +204,5 @@ def selected_players_from_ids(player_ids: Iterable[int]) -> list[Player]:
             clean_ids.append(player_id)
         if len(clean_ids) >= MAX_COMPARE_PLAYERS:
             break
-    players_by_id = Player.objects.in_bulk(clean_ids)
+    players_by_id = selected_player_queryset().in_bulk(clean_ids)
     return [players_by_id[player_id] for player_id in clean_ids if player_id in players_by_id]

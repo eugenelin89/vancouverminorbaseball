@@ -31,6 +31,7 @@ from analytics.services.player_service import (
 from analytics.services.draft_service import get_draft_contexts_for_player
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
 from analytics.services.permissions import can_edit_observation, can_reopen_observation, can_submit_coach_assessment, can_view_observation
+from analytics.services.metrics_service import normalize_cycle_id
 from analytics.services.reporting_service import get_command_center_context
 from analytics.services.timeline_service import get_player_timeline
 from players.models import PlayerImportBatch
@@ -41,15 +42,6 @@ from players.services.import_service import (
     create_import_batch,
     current_preview,
 )
-
-
-def normalize_cycle_id(value):
-    if not value:
-        return None
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
 
 
 class AnalyticsStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):

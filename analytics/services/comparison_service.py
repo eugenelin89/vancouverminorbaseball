@@ -67,6 +67,16 @@ def _submitted_observations(player: Player):
     )
 
 
+def _active_tags_for_player(player: Player) -> list[PlayerTag]:
+    prefetched = getattr(player, "_prefetched_objects_cache", {})
+    if "tags" in prefetched:
+        return sorted(
+            [tag for tag in prefetched["tags"] if tag.is_active],
+            key=lambda tag: tag.name,
+        )
+    return list(player.tags.filter(is_active=True).order_by("name"))
+
+
 def get_player_score_summary(player: Player) -> PlayerScoreSummary:
     """Return a read-only score summary for one player using submitted coach assessments."""
     observations = list(_submitted_observations(player))
@@ -98,7 +108,7 @@ def get_player_score_summary(player: Player) -> PlayerScoreSummary:
         evaluator_count=len(evaluator_ids),
         category_scores=category_scores,
         notes=notes,
-        tags=list(player.tags.filter(is_active=True).order_by("name")),
+        tags=_active_tags_for_player(player),
         draft_contexts=get_draft_contexts_for_player(player),
     )
 

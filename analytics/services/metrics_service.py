@@ -16,7 +16,7 @@ from analytics.models import (
     ObservationResponse,
 )
 from analytics.services.coach_assessment_service import get_active_coach_assessment_cycle
-from analytics.services.draft_service import get_draft_contexts_for_draft, get_draft_contexts_for_players
+from analytics.services.draft_service import DraftContext, get_draft_contexts_for_draft
 from analytics.services.player_service import active_player_queryset, draft_status_for_contexts
 from drafts.models import Draft
 from players.models import Player, PlayerImportBatch, PlayerImportStatus
@@ -108,6 +108,8 @@ class DraftMatchingMetrics:
 
 
 def normalize_cycle_id(value) -> int | None:
+    if not value:
+        return None
     try:
         return int(value)
     except (TypeError, ValueError):
@@ -142,6 +144,10 @@ def completion_metrics(cycle: EvaluationCycle | None = None, division: str = "",
 
     player_ids = set(players.values_list("id", flat=True))
     observations = _observation_queryset(cycle=cycle, division=division, team=team)
+    counts_by_status = {
+        row["status"]: row["count"]
+        for row in observations.values("status").annotate(count=Count("id"))
+    }
     submitted_player_ids = set(observations.filter(status=OBSERVATION_STATUS_SUBMITTED).values_list("player_id", flat=True))
     completed = len(player_ids & submitted_player_ids)
     rate = Decimal("0")
@@ -152,9 +158,9 @@ def completion_metrics(cycle: EvaluationCycle | None = None, division: str = "",
         total_active_players=total_players,
         players_with_submitted_assessment=completed,
         players_without_submitted_assessment=max(total_players - completed, 0),
-        submitted_observation_count=observations.filter(status=OBSERVATION_STATUS_SUBMITTED).count(),
-        draft_observation_count=observations.filter(status=OBSERVATION_STATUS_DRAFT).count(),
-        reopened_observation_count=observations.filter(status=OBSERVATION_STATUS_REOPENED).count(),
+        submitted_observation_count=counts_by_status.get(OBSERVATION_STATUS_SUBMITTED, 0),
+        draft_observation_count=counts_by_status.get(OBSERVATION_STATUS_DRAFT, 0),
+        reopened_observation_count=counts_by_status.get(OBSERVATION_STATUS_REOPENED, 0),
         completion_rate=rate,
     )
 
@@ -294,7 +300,7 @@ def import_metrics(limit: int = 5) -> ImportMetrics:
         rows_conflicted=Sum("rows_conflicted"),
     )
     return ImportMetrics(
-        total_batches=PlayerImportBatch.objects.count(),
+        total_batches=sum(counts_by_status.values()),
         uploaded_count=counts_by_status.get(PlayerImportStatus.UPLOADED, 0),
         previewed_count=counts_by_status.get(PlayerImportStatus.PREVIEWED, 0),
         needs_review_count=counts_by_status.get(PlayerImportStatus.NEEDS_REVIEW, 0),
@@ -319,10 +325,28 @@ def _normalize_round(value: object) -> str:
         return value.casefold()
 
 
+def _draft_contexts_by_player_from_contexts(
+    contexts: list[DraftContext],
+    player_ids: set[int],
+) -> dict[int, list[DraftContext]]:
+    contexts_by_player = {player_id: [] for player_id in player_ids}
+    for context in contexts:
+        matched_player_id = getattr(context.matched_player, "id", None)
+        if matched_player_id in contexts_by_player:
+            contexts_by_player[matched_player_id].append(context)
+    return contexts_by_player
+
+
 def draft_matching_metrics(division: str = "", team: str = "", mismatch_limit: int = 10, no_context_limit: int = 10) -> DraftMatchingMetrics:
     """Return draft matching summaries using draft_service read models."""
     players = list(active_player_queryset(division=division, team=team))
-    contexts_by_player = get_draft_contexts_for_players(players)
+    player_ids = {player.id for player in players}
+    all_contexts = [
+        context
+        for draft in Draft.objects.all()
+        for context in get_draft_contexts_for_draft(draft).values()
+    ]
+    contexts_by_player = _draft_contexts_by_player_from_contexts(all_contexts, player_ids)
     matched_count = drafted_count = available_count = no_context_count = 0
     mismatches = []
     players_without_context = []
@@ -356,11 +380,7 @@ def draft_matching_metrics(division: str = "", team: str = "", mismatch_limit: i
                     )
                     break
 
-    unmatched_draft_players = 0
-    for draft in Draft.objects.all():
-        for context in get_draft_contexts_for_draft(draft).values():
-            if not context.is_matched:
-                unmatched_draft_players += 1
+    unmatched_draft_players = sum(1 for context in all_contexts if not context.is_matched)
 
     mismatches = sorted(
         mismatches,
