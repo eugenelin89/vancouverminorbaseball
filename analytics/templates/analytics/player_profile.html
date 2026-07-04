@@ -1,0 +1,108 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}{{ player.display_name }}{% endblock %}
+{% block analytics_subtitle %}{{ player.division }}{% if player.team_name %} · {{ player.team_name }}{% endif %}{% if player.birth_year %} · {{ player.birth_year }}{% endif %}{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Player Profile</h2>
+    <p>
+        <a class="button button--ghost" href="{% url 'analytics:player-search' %}">Back to Players</a>
+        <a class="button button--primary" href="{% url 'analytics:player-compare' %}?players={{ player.id }}">Compare</a>
+    </p>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <tbody>
+                <tr><th>First name</th><td>{{ player.first_name }}</td></tr>
+                <tr><th>Last name</th><td>{{ player.last_name }}</td></tr>
+                <tr><th>Preferred name</th><td>{{ player.preferred_name|default:"-" }}</td></tr>
+                <tr><th>Birthdate</th><td>{{ player.birthdate|default:"-" }}</td></tr>
+                <tr><th>Birth year</th><td>{{ player.birth_year|default:"-" }}</td></tr>
+                <tr><th>Division</th><td>{{ player.division|default:"-" }}</td></tr>
+                <tr><th>Team</th><td>{{ player.team_name|default:"-" }}</td></tr>
+                <tr><th>Bats / Throws</th><td>{{ player.bats|default:"-" }} / {{ player.throws|default:"-" }}</td></tr>
+                <tr><th>Positions</th><td>{{ player.primary_positions|default:"-" }}</td></tr>
+                <tr><th>School</th><td>{{ player.school|default:"-" }}</td></tr>
+                <tr><th>Graduation year</th><td>{{ player.graduation_year|default:"-" }}</td></tr>
+                <tr><th>Status</th><td>{% if player.is_active %}Active{% else %}Inactive{% endif %}</td></tr>
+            </tbody>
+        </table>
+    </div>
+</article>
+
+<article class="pdp-card">
+    <h2>Tags</h2>
+    {% for tag in tags %}
+        <span class="status-badge">{{ tag.name }}</span>
+    {% empty %}
+        <p>No tags assigned.</p>
+    {% endfor %}
+</article>
+
+<article class="pdp-card">
+    <h2>Imported Context</h2>
+    {% if source_rows %}
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead><tr><th>Source</th><th>File</th><th>Row</th><th>Imported</th></tr></thead>
+                <tbody>
+                    {% for row in source_rows %}
+                        <tr>
+                            <td>{{ row.source }}</td>
+                            <td>{{ row.source_filename|default:"-" }}</td>
+                            <td>{{ row.row_number|default:"-" }}</td>
+                            <td>{{ row.imported_at }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No imported source rows.</p>
+    {% endif %}
+</article>
+
+<article class="pdp-card">
+    <h2>Draft Context</h2>
+    {% if draft_contexts %}
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead><tr><th>Draft</th><th>Status</th><th>Team</th><th>Pick</th><th>Round</th></tr></thead>
+                <tbody>
+                    {% for context in draft_contexts %}
+                        <tr>
+                            <td>{{ context.draft_player.draft.name }}</td>
+                            <td>{{ context.match_status }}</td>
+                            <td>{% if context.selected_team %}{{ context.selected_team.name }}{% elif context.current_team %}{{ context.current_team.name }}{% else %}-{% endif %}</td>
+                            <td>{{ context.pick_number|default:"-" }}</td>
+                            <td>{{ context.selected_round|default:"-" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No draft context found.</p>
+    {% endif %}
+</article>
+
+<article class="pdp-card">
+    <h2>Coach Assessments</h2>
+    {% if score_summary.submitted_observation_count %}
+        <p>{{ score_summary.submitted_observation_count }} submitted assessment{{ score_summary.submitted_observation_count|pluralize }} from {{ score_summary.evaluator_count }} evaluator{{ score_summary.evaluator_count|pluralize }}.</p>
+        {% if score_summary.average_rating %}<p>Average rating: {{ score_summary.average_rating|floatformat:1 }}</p>{% endif %}
+        {% if score_summary.notes %}
+            <h3>Notes</h3>
+            <ul>
+                {% for note in score_summary.notes %}
+                    <li>{{ note }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% else %}
+        <p>No submitted coach assessments yet.</p>
+    {% endif %}
+</article>
+
+{% include "analytics/_player_timeline.html" with timeline=timeline %}
+{% endblock %}

@@ -18,8 +18,17 @@ from analytics.services.coach_assessment_service import (
     list_players_for_assessment,
     reopen_observation,
 )
+from analytics.services.comparison_service import (
+    get_player_comparison,
+    get_player_score_summary,
+    parse_player_search_filters,
+    search_players,
+    selected_players_from_ids,
+)
+from analytics.services.draft_service import get_draft_contexts_for_player
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
 from analytics.services.permissions import can_edit_observation, can_reopen_observation, can_submit_coach_assessment, can_view_observation
+from analytics.services.timeline_service import get_player_timeline
 from players.models import PlayerImportBatch
 from players.models import Player
 from players.services.import_service import (
@@ -136,6 +145,81 @@ class PlayerImportConfirmView(ImportBatchMixin, View):
 
 class PlayerImportDetailView(ImportBatchMixin, TemplateView):
     template_name = "analytics/import_detail.html"
+
+
+class PlayerSearchView(AnalyticsStaffRequiredMixin, TemplateView):
+    template_name = "analytics/player_search.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        filters = parse_player_search_filters(self.request.GET)
+        search_result = search_players(filters)
+        context.update(
+            {
+                "search_result": search_result,
+                "players": search_result.players,
+                "filters": filters,
+                "active_tags": search_result.active_tags,
+                "source_choices": search_result.source_choices,
+                "result_count": search_result.result_count,
+            }
+        )
+        return context
+
+
+class PlayerProfileView(AnalyticsStaffRequiredMixin, TemplateView):
+    template_name = "analytics/player_profile.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.player = get_object_or_404(
+            Player.objects.prefetch_related("tags", "source_rows"),
+            pk=kwargs["player_id"],
+        )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        timeline = get_player_timeline(self.player)
+        score_summary = get_player_score_summary(self.player)
+        context.update(
+            {
+                "player": self.player,
+                "tags": self.player.tags.filter(is_active=True).order_by("name"),
+                "source_rows": self.player.source_rows.select_related("import_batch").order_by("-imported_at", "-id"),
+                "draft_contexts": get_draft_contexts_for_player(self.player),
+                "score_summary": score_summary,
+                "timeline": timeline,
+            }
+        )
+        return context
+
+
+class PlayerComparisonView(AnalyticsStaffRequiredMixin, TemplateView):
+    template_name = "analytics/player_compare.html"
+
+    def selected_player_ids(self):
+        ids = list(self.request.GET.getlist("players"))
+        player_ids = (self.request.GET.get("player_ids") or "").strip()
+        if player_ids:
+            ids.extend([value.strip() for value in player_ids.split(",") if value.strip()])
+        return ids
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        players = selected_players_from_ids(self.selected_player_ids())
+        comparison = get_player_comparison(players)
+        search_result = search_players(parse_player_search_filters(self.request.GET))
+        context.update(
+            {
+                "comparison": comparison,
+                "selected_players": players,
+                "players": search_result.players,
+                "filters": search_result.filters,
+                "active_tags": search_result.active_tags,
+                "source_choices": search_result.source_choices,
+            }
+        )
+        return context
 
 
 class CoachAssessmentListView(LoginRequiredMixin, TemplateView):

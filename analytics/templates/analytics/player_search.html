@@ -1,0 +1,105 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Players{% endblock %}
+{% block analytics_subtitle %}Search and filter canonical player records.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Player Search</h2>
+    <form method="get" class="pdp-form">
+        <label>
+            Search
+            <input type="search" name="q" value="{{ filters.q }}">
+        </label>
+        <label>
+            Team
+            <input type="text" name="team" value="{{ filters.team }}">
+        </label>
+        <label>
+            Division
+            <input type="text" name="division" value="{{ filters.division }}">
+        </label>
+        <label>
+            Birth year
+            <input type="text" name="birth_year" value="{{ filters.birth_year_raw }}">
+        </label>
+        <label>
+            Tag
+            <select name="tag">
+                <option value="">All tags</option>
+                {% for tag in active_tags %}
+                    <option value="{{ tag.slug }}" {% if filters.tag == tag.slug %}selected{% endif %}>{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Imported source
+            <select name="source">
+                <option value="">All sources</option>
+                {% for source in source_choices %}
+                    <option value="{{ source }}" {% if filters.source == source %}selected{% endif %}>{{ source }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Evaluation
+            <select name="evaluation">
+                <option value="">All</option>
+                <option value="has_submitted" {% if filters.evaluation == "has_submitted" %}selected{% endif %}>Has submitted assessment</option>
+                <option value="no_submitted" {% if filters.evaluation == "no_submitted" %}selected{% endif %}>No submitted assessment</option>
+                <option value="has_any" {% if filters.evaluation == "has_any" %}selected{% endif %}>Has any assessment</option>
+                <option value="not_started" {% if filters.evaluation == "not_started" %}selected{% endif %}>Not started</option>
+            </select>
+        </label>
+        <label>
+            Draft status
+            <select name="draft_status">
+                <option value="">All</option>
+                <option value="drafted" {% if filters.draft_status == "drafted" %}selected{% endif %}>Drafted</option>
+                <option value="available" {% if filters.draft_status == "available" %}selected{% endif %}>Available</option>
+                <option value="no_draft_context" {% if filters.draft_status == "no_draft_context" %}selected{% endif %}>No draft context</option>
+            </select>
+        </label>
+        <label>
+            <input type="checkbox" name="include_inactive" value="1" {% if filters.include_inactive %}checked{% endif %}>
+            Include inactive
+        </label>
+        <button class="button button--primary" type="submit">Filter</button>
+    </form>
+</article>
+
+<article class="pdp-card">
+    <h2>{{ result_count }} player{{ result_count|pluralize }}</h2>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Division</th>
+                    <th>Team</th>
+                    <th>Birth year</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players %}
+                    <tr>
+                        <td>{{ player.display_name }}</td>
+                        <td>{{ player.division }}</td>
+                        <td>{{ player.team_name }}</td>
+                        <td>{{ player.birth_year|default:"" }}</td>
+                        <td>{% if player.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td>
+                            <a class="button button--ghost" href="{% url 'analytics:player-profile' player_id=player.id %}">Profile</a>
+                            <a class="button button--ghost" href="{% url 'analytics:player-compare' %}?players={{ player.id }}">Compare</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No players match this search.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

@@ -42,13 +42,13 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 ## Deliverables
 
-- [ ] Player search page.
-- [ ] Player Profile page with timeline.
-- [ ] Player Comparison page.
-- [ ] `analytics/services/timeline_service.py`.
-- [ ] `analytics/services/comparison_service.py`.
-- [ ] Search/filter helpers using `players` services/models.
-- [ ] Tests for search, timeline, and comparison behavior.
+- [x] Player search page.
+- [x] Player Profile page with timeline.
+- [x] Player Comparison page.
+- [x] `analytics/services/timeline_service.py`.
+- [x] `analytics/services/comparison_service.py`.
+- [x] Search/filter helpers using `players` services/models.
+- [x] Tests for search, timeline, and comparison behavior.
 
 ## Models
 
@@ -126,12 +126,12 @@ Exact route names can follow project conventions.
 
 This phase is complete when:
 
-- [ ] All deliverables are complete.
-- [ ] Acceptance criteria are satisfied.
-- [ ] Tests for the phase pass.
-- [ ] Documentation is updated if implementation details changed.
-- [ ] Phase Review is completed.
-- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+- [x] All deliverables are complete.
+- [x] Acceptance criteria are satisfied.
+- [x] Tests for the phase pass.
+- [x] Documentation is updated if implementation details changed.
+- [x] Phase Review is completed.
+- [x] `docs/analytics/implementation/STATUS.md` is updated.
 
 ## Risks / Open Questions
 
@@ -141,15 +141,30 @@ This phase is complete when:
 
 ## Implementation Notes
 
+Implemented Phase 6 as staff-only, read-only player experience pages under `/analytics/players/`.
+
+Timeline and comparison behavior use dataclasses/read models only. No timeline database model, reporting engine, charts, exports, AI summaries, player-facing views, parent portal views, new models, or migrations were added.
+
+Draft context lookup from canonical `players.Player` was added to the existing Phase 5 draft context service so profile, timeline, comparison, and search filters can reuse the same read-only draft context behavior.
 
 ## Phase Review
 
 ### What went well
 
+The existing service boundaries made it straightforward to assemble profile, timeline, comparison, import, tag, observation, and draft context data without changing underlying workflows.
+
 ### Challenges
+
+Draft status filtering is limited by the absence of a persistent relationship between `drafts.DraftPlayer` and `players.Player`, so the implementation uses conservative read-only matching through the draft context service.
 
 ### Technical debt
 
+Player-oriented draft context lookup scans draft rooms and should be revisited if draft data grows large. A persistent bridge should not be introduced without an architecture update.
+
 ### Architecture changes
 
+None.
+
 ### Recommendations for the next phase
+
+Keep Phase 7 focused on command center and reporting summaries. Reuse the Phase 6 timeline/comparison services and avoid duplicating player search or draft-context matching logic.

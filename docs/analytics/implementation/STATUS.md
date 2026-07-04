@@ -8,18 +8,18 @@
 - [x] Phase 3 - Analytics Observation Foundation
 - [x] Phase 4 - Coach Assessment Workflow
 - [x] Phase 5 - Draft Context
-- [ ] Phase 6 - Player Experience
+- [x] Phase 6 - Player Experience
 - [ ] Phase 7 - Command Center & Reporting
 
 ## Current Phase
 
 Phase 6 - Player Experience
 
-Status: Planning
+Status: Complete
 
-Started: Not Started
+Started: 2026-07-04
 
-Completed: —
+Completed: 2026-07-04
 
 ## Architecture Reference
 
@@ -38,3 +38,5 @@ Phase 3 implemented the Analytics observation foundation models, admin, question
 Phase 4 implemented the server-rendered coach assessment workflow with dynamic question rendering, draft save, submit, read-only detail, staff review, and staff reopen behavior.
 
 Phase 5 implemented read-only draft context in existing draft workflows by matching `drafts.DraftPlayer` rows to canonical `players.Player` records and exposing submitted coach assessment summaries from Analytics.
+
+Phase 6 implemented the staff-only player experience with player search/filtering, Player Profile, read-only timeline, simple Player Comparison, and read-model services for timeline and comparison behavior.

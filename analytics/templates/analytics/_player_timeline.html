@@ -1,0 +1,22 @@
+<section class="pdp-card">
+    <h2>Timeline</h2>
+    {% if timeline.items %}
+        <div class="pdp-list">
+            {% for item in timeline.items %}
+                <article class="pdp-list__item pdp-list__item--stack">
+                    <div>
+                        <strong>{{ item.title }}</strong>
+                        {% if item.occurred_at %}
+                            <span class="field-help">{{ item.occurred_at|date:"M j, Y g:i A" }}</span>
+                        {% endif %}
+                    </div>
+                    {% if item.subtitle %}<p>{{ item.subtitle }}</p>{% endif %}
+                    {% if item.description %}<p>{{ item.description }}</p>{% endif %}
+                    {% if item.url %}<a class="button button--ghost" href="{{ item.url }}">Open</a>{% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No timeline entries yet.</p>
+    {% endif %}
+</section>

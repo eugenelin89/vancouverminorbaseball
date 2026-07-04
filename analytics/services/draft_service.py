@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
+from typing import Iterable
 
 from django.db.models import Prefetch
 
@@ -48,6 +49,7 @@ class DraftContext:
     pick_number: int | None = None
     selected_round: int | None = None
     selection_order: int | None = None
+    selected_at: object | None = None
     observations: list[DraftObservationSummary] = field(default_factory=list)
 
     @property
@@ -224,6 +226,7 @@ def get_draft_contexts_for_draft(draft: Draft) -> dict[int, DraftContext]:
             pick_number=pick_number,
             selected_round=_selection_round(pick_number, team_count),
             selection_order=pick_number,
+            selected_at=selected_action.created_at if selected_action else None,
             observations=observations_by_player.get(matched_player.id, []) if matched_player else [],
         )
     return contexts
@@ -232,3 +235,23 @@ def get_draft_contexts_for_draft(draft: Draft) -> dict[int, DraftContext]:
 def get_draft_context_for_draft_player(draft_player: DraftPlayer) -> DraftContext:
     """Return read-only analytics draft context for one draft player."""
     return get_draft_contexts_for_draft(draft_player.draft).get(draft_player.id)
+
+
+def get_draft_contexts_for_players(players: Iterable[Player]) -> dict[int, list[DraftContext]]:
+    """Return read-only draft contexts keyed by canonical Player id."""
+    player_ids = {player.id for player in players}
+    contexts_by_player = {player_id: [] for player_id in player_ids}
+    if not player_ids:
+        return contexts_by_player
+
+    for draft in Draft.objects.all():
+        for context in get_draft_contexts_for_draft(draft).values():
+            matched_player_id = getattr(context.matched_player, "id", None)
+            if matched_player_id in contexts_by_player:
+                contexts_by_player[matched_player_id].append(context)
+    return contexts_by_player
+
+
+def get_draft_contexts_for_player(player: Player) -> list[DraftContext]:
+    """Return read-only draft contexts confidently matched to a canonical Player."""
+    return get_draft_contexts_for_players([player]).get(player.id, [])

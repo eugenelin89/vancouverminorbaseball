@@ -4,12 +4,15 @@ from analytics.views import (
     CoachAssessmentDetailView,
     CoachAssessmentEditView,
     CoachAssessmentListView,
+    PlayerComparisonView,
+    PlayerProfileView,
     PlayerImportConfirmView,
     PlayerImportConflictView,
     PlayerImportDetailView,
     PlayerImportListView,
     PlayerImportPreviewView,
     PlayerImportUploadView,
+    PlayerSearchView,
     StaffObservationReviewDetailView,
     StaffObservationReviewListView,
 )
@@ -18,6 +21,9 @@ from analytics.views import (
 app_name = "analytics"
 
 urlpatterns = [
+    path("players/", PlayerSearchView.as_view(), name="player-search"),
+    path("players/compare/", PlayerComparisonView.as_view(), name="player-compare"),
+    path("players/<int:player_id>/", PlayerProfileView.as_view(), name="player-profile"),
     path("assessments/", CoachAssessmentListView.as_view(), name="assessment-list"),
     path("assessments/players/<int:player_id>/", CoachAssessmentEditView.as_view(), name="assessment-player"),
     path("assessments/<int:observation_id>/", CoachAssessmentDetailView.as_view(), name="assessment-detail"),
