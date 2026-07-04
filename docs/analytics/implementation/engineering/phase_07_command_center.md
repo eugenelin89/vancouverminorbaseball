@@ -21,6 +21,7 @@ This phase should not create a reporting platform. It should expose practical, r
 Implement only:
 
 - Staff-only Analytics Command Center at `/analytics/`.
+- `analytics/services/player_service.py`.
 - `analytics/services/metrics_service.py`.
 - `analytics/services/reporting_service.py`.
 - Read-model/dataclass summaries for command center cards and tables.
@@ -58,6 +59,7 @@ Do not implement:
 
 ## Files To Create
 
+- `analytics/services/player_service.py`
 - `analytics/services/metrics_service.py`
 - `analytics/services/reporting_service.py`
 - `analytics/templates/analytics/command_center.html`
@@ -69,15 +71,19 @@ Do not implement:
 - `analytics/views.py`
   - Add the command center view.
   - Keep the view thin.
+  - Update existing Phase 6 player search/profile/comparison views to consume `analytics.services.player_service` for player lookup/search helpers where applicable.
 - `analytics/urls.py`
   - Add `/analytics/` route before more specific paths if needed.
 - `analytics/tests.py`
   - Add Phase 7 service and view tests.
+  - Add or adjust tests proving player search/filter behavior is preserved after moving search logic to `player_service`.
 - `docs/analytics/implementation/STATUS.md`
   - Mark Phase 7 active/in progress during implementation.
   - Mark complete only after implementation and tests pass.
 - `docs/analytics/implementation/phase_07_command_center_reporting.md`
   - Update checklist and Phase Review after implementation.
+
+The Phase 7 tracking document exists at `docs/analytics/implementation/phase_07_command_center_reporting.md`.
 
 No changes are expected in:
 
@@ -129,6 +135,34 @@ Example context keys:
 
 ## Service Responsibilities
 
+## `analytics/services/player_service.py`
+
+Owns reusable Analytics-facing player search/filter logic and player lists used by staff pages and reports.
+
+Responsibilities:
+
+- parse/normalize player filter inputs when a plain dictionary or request-like query object is supplied
+- search/filter canonical `players.Player` records
+- expose active player querysets/lists for metrics and reporting
+- expose reusable source/tag filter choices for staff pages
+- provide helper functions for player ID sets used by metrics
+
+Phase 7 should move player search/filtering out of `analytics.services.comparison_service` into this dedicated service boundary. During implementation, update Phase 6 player search/profile/comparison views to consume `player_service` rather than keeping search logic in `comparison_service`.
+
+Consumers:
+
+- Player Search should use `player_service`.
+- Player Profile should use `player_service` for reusable player/profile lookup helpers if needed.
+- Player Comparison should use `player_service` for selected-player lookup and search candidate lists.
+- Command Center and Reporting should use `player_service` for player filters and active player populations.
+
+Boundaries:
+
+- `player_service` may call `players` models/services because `players` owns canonical identity.
+- `player_service` should not compute score summaries, draft metrics, timeline entries, or command center cards.
+- Reporting must not duplicate player search/filtering logic.
+- `comparison_service` should focus only on comparison and score summaries.
+
 ## `analytics/services/metrics_service.py`
 
 Owns reusable metric calculations. It should not know about template layout.
@@ -153,6 +187,7 @@ Responsibilities:
 
 Reuse existing services:
 
+- Use `analytics.services.player_service` for player populations and filters.
 - Use `analytics.services.comparison_service.get_player_score_summary()` where per-player scoring summaries are needed.
 - Use `analytics.services.draft_service.get_draft_contexts_for_players()` and existing `DraftContext` read models for draft matching summaries.
 - Use `analytics.services.coach_assessment_service.get_active_coach_assessment_cycle()` for active-cycle defaults.
@@ -161,10 +196,12 @@ Reuse existing services:
 
 Do not duplicate:
 
-- player search logic from `analytics.services.comparison_service.search_players()`
+- player search/filtering logic from `analytics.services.player_service`
 - draft matching logic from `analytics.services.draft_service`
 - timeline assembly from `analytics.services.timeline_service`
 - comparison score summary logic from `analytics.services.comparison_service`
+
+Draft matching remains owned by `analytics.services.draft_service`. `metrics_service.py` may call `draft_service` for `DraftContext` read models, but it must not duplicate draft matching rules, pick/round calculation rules, or canonical-player matching rules.
 
 ## `analytics/services/reporting_service.py`
 
@@ -180,6 +217,12 @@ Responsibilities:
 - return template-ready dataclasses/read models
 
 It should not run raw aggregation logic that belongs in `metrics_service.py`.
+
+Separation rule:
+
+- `metrics_service.py` computes counts, averages, summaries, and metric rows.
+- `reporting_service.py` assembles command center read models, cards, navigation links, and grouped sections from metrics service results.
+- `reporting_service.py` should not contain ORM aggregation logic or duplicate player/draft/timeline/comparison logic.
 
 ## Read Models / Dataclasses
 
@@ -262,6 +305,8 @@ Recommended dataclasses:
 - `recent_observations`
 - `navigation_links`
 - `generated_at`
+
+Keep `CommandCenterContext` as a small top-level object containing grouped dataclasses. Do not add many flat metric fields directly to `CommandCenterContext`; put detailed data inside the grouped summary dataclasses above.
 
 ## Dashboard Layout
 
@@ -435,6 +480,16 @@ Recent batches:
 
 Use existing `analytics.services.draft_service` read models.
 
+Draft matching responsibility stays in `analytics.services.draft_service`.
+
+`metrics_service.py` may call draft service helpers such as `get_draft_contexts_for_players()` to receive `DraftContext` read models. It must not reimplement:
+
+- draft player to canonical player matching
+- ambiguous match handling
+- pick number lookup
+- selected round calculation
+- expected-round extraction from observation responses
+
 Canonical players:
 
 - active players only by default.
@@ -599,6 +654,7 @@ If metrics become slow, document the issue as technical debt after implementatio
 
 ### Metrics Service Tests
 
+- player population/filter helpers come from `player_service`, not reporting or comparison code.
 - observation status counts include only coach assessments.
 - completion metrics use active cycle by default.
 - completion metrics respect cycle filter.
@@ -614,6 +670,7 @@ If metrics become slow, document the issue as technical debt after implementatio
 
 ### Reporting Service Tests
 
+- command center context is a small grouped object and does not expose many flat metric fields.
 - command center context includes summary cards.
 - command center context includes completion summary.
 - command center context includes observation summary.
@@ -645,24 +702,28 @@ If metrics become slow, document the issue as technical debt after implementatio
 
 ## Implementation Sequence
 
-1. Add `analytics/services/metrics_service.py` with dataclasses and metric functions.
-2. Add `analytics/services/reporting_service.py` with command center read models.
-3. Add `AnalyticsCommandCenterView` to `analytics/views.py`.
-4. Add `/analytics/` route to `analytics/urls.py`.
-5. Add `analytics/templates/analytics/command_center.html`.
-6. Add small partials only if they reduce duplication.
-7. Add metrics service tests.
-8. Add reporting service tests.
-9. Add command center view tests.
-10. Add regression tests for existing Phase 1-6 pages.
-11. Run:
+1. Add `analytics/services/player_service.py` and move reusable player search/filter helpers out of `comparison_service.py`.
+2. Update Phase 6 player search/profile/comparison views to consume `player_service` for player search, selected-player lookup, source choices, active tags, and player populations.
+3. Keep `comparison_service.py` focused on comparison and score summaries.
+4. Add `analytics/services/metrics_service.py` with dataclasses and metric functions.
+5. Add `analytics/services/reporting_service.py` with command center read models.
+6. Add `AnalyticsCommandCenterView` to `analytics/views.py`.
+7. Add `/analytics/` route to `analytics/urls.py`.
+8. Add `analytics/templates/analytics/command_center.html`.
+9. Add small partials only if they reduce duplication.
+10. Add player service regression tests.
+11. Add metrics service tests.
+12. Add reporting service tests.
+13. Add command center view tests.
+14. Add regression tests for existing Phase 1-6 pages.
+15. Run:
     - `python manage.py makemigrations analytics --check`
     - `python manage.py test analytics`
     - `python manage.py test players`
     - `python manage.py test drafts`
     - `python manage.py test`
-12. Update `docs/analytics/implementation/phase_07_command_center_reporting.md`.
-13. Update `docs/analytics/implementation/STATUS.md`.
+16. Update `docs/analytics/implementation/phase_07_command_center_reporting.md`.
+17. Update `docs/analytics/implementation/STATUS.md`.
 
 ## Risks / Open Questions
 
@@ -690,6 +751,10 @@ Phase 7 is done when:
 - Templates remain presentation-only.
 - No new models or migrations are introduced.
 - No dashboards, charts, exports, saved reports, report definitions, AI summaries, or reporting engine are introduced.
+- Player search/filter logic lives in `analytics.services.player_service`.
+- `comparison_service.py` contains comparison/score summary logic only.
+- Draft matching remains in `analytics.services.draft_service`.
+- `reporting_service.py` assembles grouped read models and does not contain raw aggregation logic.
 - Required Phase 7 tests pass.
 - Existing Phase 1-6 tests continue to pass.
 - `docs/analytics/implementation/phase_07_command_center_reporting.md` is updated.
