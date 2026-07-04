@@ -21,13 +21,17 @@ from analytics.services.coach_assessment_service import (
 from analytics.services.comparison_service import (
     get_player_comparison,
     get_player_score_summary,
+)
+from analytics.services.player_service import (
     parse_player_search_filters,
     search_players,
     selected_players_from_ids,
+    staff_player_queryset,
 )
 from analytics.services.draft_service import get_draft_contexts_for_player
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
 from analytics.services.permissions import can_edit_observation, can_reopen_observation, can_submit_coach_assessment, can_view_observation
+from analytics.services.reporting_service import get_command_center_context
 from analytics.services.timeline_service import get_player_timeline
 from players.models import PlayerImportBatch
 from players.models import Player
@@ -51,6 +55,31 @@ def normalize_cycle_id(value):
 class AnalyticsStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_staff or self.request.user.is_superuser
+
+
+class AnalyticsCommandCenterView(AnalyticsStaffRequiredMixin, TemplateView):
+    template_name = "analytics/command_center.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cycle_id = normalize_cycle_id(self.request.GET.get("cycle"))
+        division = self.request.GET.get("division", "").strip()
+        team = self.request.GET.get("team", "").strip()
+        command_center = get_command_center_context(cycle_id=cycle_id, division=division, team=team)
+        context.update(
+            {
+                "command_center": command_center,
+                "summary_cards": command_center.summary_cards,
+                "completion_summary": command_center.completion_summary,
+                "observation_summary": command_center.observation_summary,
+                "import_summary": command_center.import_summary,
+                "draft_summary": command_center.draft_summary,
+                "recent_observations": command_center.recent_observations,
+                "navigation_links": command_center.navigation_links,
+                "filters": command_center.filters,
+            }
+        )
+        return context
 
 
 class PlayerImportListView(AnalyticsStaffRequiredMixin, ListView):
@@ -171,10 +200,7 @@ class PlayerProfileView(AnalyticsStaffRequiredMixin, TemplateView):
     template_name = "analytics/player_profile.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.player = get_object_or_404(
-            Player.objects.prefetch_related("tags", "source_rows"),
-            pk=kwargs["player_id"],
-        )
+        self.player = get_object_or_404(staff_player_queryset(), pk=kwargs["player_id"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

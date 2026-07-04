@@ -1,0 +1,275 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Analytics Command Center{% endblock %}
+{% block analytics_subtitle %}Read-only overview for staff and administrators.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Quick Actions</h2>
+    <div class="pdp-actions">
+        {% for link in navigation_links %}
+            <a class="button button--ghost" href="{{ link.url }}">{{ link.label }}</a>
+        {% endfor %}
+    </div>
+</article>
+
+<article class="pdp-card">
+    <h2>Filters</h2>
+    <form method="get" class="pdp-form">
+        <label>
+            Cycle ID
+            <input type="text" name="cycle" value="{{ filters.cycle }}">
+        </label>
+        <label>
+            Division
+            <input type="text" name="division" value="{{ filters.division }}">
+        </label>
+        <label>
+            Team
+            <input type="text" name="team" value="{{ filters.team }}">
+        </label>
+        <button class="button button--primary" type="submit">Update</button>
+    </form>
+</article>
+
+<article class="pdp-card">
+    <h2>Summary</h2>
+    <div class="pdp-grid">
+        {% for card in summary_cards %}
+            <section>
+                <h3>{{ card.label }}</h3>
+                <p><strong>{{ card.value }}</strong></p>
+                <p>{{ card.help_text }}</p>
+                {% if card.url %}<a class="button button--ghost" href="{{ card.url }}">Open</a>{% endif %}
+            </section>
+        {% endfor %}
+    </div>
+</article>
+
+<article class="pdp-card">
+    <h2>Coach Completion</h2>
+    {% if completion_summary.active_cycle %}
+        <p>Active cycle: {{ completion_summary.active_cycle.name }}</p>
+    {% else %}
+        <p>No active coach assessment cycle is available.</p>
+    {% endif %}
+    {% if completion_summary.total_active_players %}
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <tbody>
+                    <tr><th>Total active players</th><td>{{ completion_summary.total_active_players }}</td></tr>
+                    <tr><th>Players with submitted assessment</th><td>{{ completion_summary.players_with_submitted_assessment }}</td></tr>
+                    <tr><th>Players without submitted assessment</th><td>{{ completion_summary.players_without_submitted_assessment }}</td></tr>
+                    <tr><th>Submitted observations</th><td>{{ completion_summary.submitted_observation_count }}</td></tr>
+                    <tr><th>Draft observations</th><td>{{ completion_summary.draft_observation_count }}</td></tr>
+                    <tr><th>Reopened observations</th><td>{{ completion_summary.reopened_observation_count }}</td></tr>
+                    <tr><th>Completion rate</th><td>{{ completion_summary.completion_rate|floatformat:0 }}%</td></tr>
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No active players found.</p>
+    {% endif %}
+</article>
+
+<article class="pdp-card">
+    <h2>Observation Summary</h2>
+    {% if observation_summary.total_observations %}
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <tbody>
+                    <tr><th>Total observations</th><td>{{ observation_summary.total_observations }}</td></tr>
+                    <tr><th>Submitted</th><td>{{ observation_summary.submitted_count }}</td></tr>
+                    <tr><th>Draft</th><td>{{ observation_summary.draft_count }}</td></tr>
+                    <tr><th>Reopened</th><td>{{ observation_summary.reopened_count }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No coach assessment observations yet.</p>
+    {% endif %}
+
+    <h3>Evaluator Roles</h3>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead><tr><th>Role</th><th>Observations</th></tr></thead>
+            <tbody>
+                {% for row in observation_summary.by_evaluator_role %}
+                    <tr><td>{{ row.role }}</td><td>{{ row.count }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="2">No evaluator role summaries yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Average Score By Category</h3>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead><tr><th>Category</th><th>Average</th><th>Ratings</th></tr></thead>
+            <tbody>
+                {% for row in observation_summary.by_category_average %}
+                    <tr><td>{{ row.label }}</td><td>{{ row.average|floatformat:1 }}</td><td>{{ row.count }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="3">No category score averages yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Average Score By Role</h3>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead><tr><th>Role</th><th>Average</th><th>Ratings</th></tr></thead>
+            <tbody>
+                {% for row in observation_summary.by_role_average %}
+                    <tr><td>{{ row.label }}</td><td>{{ row.average|floatformat:1 }}</td><td>{{ row.count }}</td></tr>
+                {% empty %}
+                    <tr><td colspan="3">No role score averages yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Coach-To-Coach Spread</h3>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead><tr><th>Player</th><th>Category</th><th>Min</th><th>Max</th><th>Spread</th></tr></thead>
+            <tbody>
+                {% for row in observation_summary.variance_rows %}
+                    <tr>
+                        <td><a href="{% url 'analytics:player-profile' player_id=row.player.id %}">{{ row.player.display_name }}</a></td>
+                        <td>{{ row.category }}</td>
+                        <td>{{ row.min_average|floatformat:1 }}</td>
+                        <td>{{ row.max_average|floatformat:1 }}</td>
+                        <td>{{ row.spread|floatformat:1 }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No coach-to-coach spread rows yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+
+<article class="pdp-card">
+    <h2>Import Summary</h2>
+    {% if import_summary.total_batches %}
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <tbody>
+                    <tr><th>Total batches</th><td>{{ import_summary.total_batches }}</td></tr>
+                    <tr><th>Uploaded</th><td>{{ import_summary.uploaded_count }}</td></tr>
+                    <tr><th>Previewed</th><td>{{ import_summary.previewed_count }}</td></tr>
+                    <tr><th>Needs review</th><td>{{ import_summary.needs_review_count }}</td></tr>
+                    <tr><th>Committed</th><td>{{ import_summary.committed_count }}</td></tr>
+                    <tr><th>Failed</th><td>{{ import_summary.failed_count }}</td></tr>
+                    <tr><th>Rows created / updated / skipped / conflicted</th><td>{{ import_summary.rows_created }} / {{ import_summary.rows_updated }} / {{ import_summary.rows_skipped }} / {{ import_summary.rows_conflicted }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <h3>Recent Batches</h3>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead><tr><th>File</th><th>Status</th><th>Rows</th><th></th></tr></thead>
+                <tbody>
+                    {% for batch in import_summary.recent_batches %}
+                        <tr>
+                            <td>{{ batch.original_filename }}</td>
+                            <td>{{ batch.get_status_display }}</td>
+                            <td>{{ batch.rows_processed }}</td>
+                            <td><a class="button button--ghost" href="{% url 'analytics:import-detail' pk=batch.id %}">Open</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No player imports yet.</p>
+    {% endif %}
+    {% if not import_summary.needs_review_count %}
+        <p>No imports currently need review.</p>
+    {% endif %}
+</article>
+
+<article class="pdp-card">
+    <h2>Draft Matching Summary</h2>
+    {% if draft_summary.matched_player_count or draft_summary.no_context_player_count or draft_summary.unmatched_draft_player_count %}
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <tbody>
+                    <tr><th>Matched players</th><td>{{ draft_summary.matched_player_count }}</td></tr>
+                    <tr><th>Drafted players</th><td>{{ draft_summary.drafted_player_count }}</td></tr>
+                    <tr><th>Available players</th><td>{{ draft_summary.available_player_count }}</td></tr>
+                    <tr><th>No draft context</th><td>{{ draft_summary.no_context_player_count }}</td></tr>
+                    <tr><th>Unmatched draft players</th><td>{{ draft_summary.unmatched_draft_player_count }}</td></tr>
+                    <tr><th>Expected-vs-actual mismatches</th><td>{{ draft_summary.expected_round_mismatch_count }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No draft context found.</p>
+    {% endif %}
+
+    <h3>Expected-vs-Actual Draft Round Mismatches</h3>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead><tr><th>Player</th><th>Expected</th><th>Actual</th><th>Pick</th><th>Draft</th></tr></thead>
+            <tbody>
+                {% for row in draft_summary.mismatches %}
+                    <tr>
+                        <td><a href="{% url 'analytics:player-profile' player_id=row.player.id %}">{{ row.player.display_name }}</a></td>
+                        <td>{{ row.expected_round }}</td>
+                        <td>{{ row.actual_round }}</td>
+                        <td>{{ row.pick_number|default:"-" }}</td>
+                        <td>{{ row.draft_name }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No expected-vs-actual draft round mismatches found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Players Without Draft Context</h3>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead><tr><th>Player</th><th>Division</th><th>Team</th></tr></thead>
+            <tbody>
+                {% for player in draft_summary.players_without_draft_context %}
+                    <tr>
+                        <td><a href="{% url 'analytics:player-profile' player_id=player.id %}">{{ player.display_name }}</a></td>
+                        <td>{{ player.division }}</td>
+                        <td>{{ player.team_name }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3">No draft context gaps found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+
+<article class="pdp-card">
+    <h2>Recent Observations</h2>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead><tr><th>Player</th><th>Evaluator</th><th>Role</th><th>Cycle</th><th>Submitted</th><th></th></tr></thead>
+            <tbody>
+                {% for row in recent_observations %}
+                    <tr>
+                        <td><a href="{{ row.player_profile_url }}">{{ row.player.display_name }}</a></td>
+                        <td>{{ row.evaluator_name }}</td>
+                        <td>{{ row.evaluator_role }}</td>
+                        <td>{{ row.cycle_name }}</td>
+                        <td>{{ row.submitted_at|date:"M j, Y g:i A" }}</td>
+                        <td><a class="button button--ghost" href="{{ row.detail_url }}">Review</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No submitted observations yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

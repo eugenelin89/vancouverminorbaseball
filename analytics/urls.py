@@ -1,6 +1,7 @@
 from django.urls import path
 
 from analytics.views import (
+    AnalyticsCommandCenterView,
     CoachAssessmentDetailView,
     CoachAssessmentEditView,
     CoachAssessmentListView,
@@ -21,6 +22,7 @@ from analytics.views import (
 app_name = "analytics"
 
 urlpatterns = [
+    path("", AnalyticsCommandCenterView.as_view(), name="command-center"),
     path("players/", PlayerSearchView.as_view(), name="player-search"),
     path("players/compare/", PlayerComparisonView.as_view(), name="player-compare"),
     path("players/<int:player_id>/", PlayerProfileView.as_view(), name="player-profile"),

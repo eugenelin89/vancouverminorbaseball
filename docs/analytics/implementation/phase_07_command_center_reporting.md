@@ -46,14 +46,14 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 ## Deliverables
 
-- [ ] Analytics Command Center page.
-- [ ] Metrics service summaries.
-- [ ] Reporting service summaries.
-- [ ] Completion status cards/tables.
-- [ ] Import status summaries.
-- [ ] Draft matching summaries.
-- [ ] Recent observations list.
-- [ ] Tests for metrics and permissions.
+- [x] Analytics Command Center page.
+- [x] Metrics service summaries.
+- [x] Reporting service summaries.
+- [x] Completion status cards/tables.
+- [x] Import status summaries.
+- [x] Draft matching summaries.
+- [x] Recent observations list.
+- [x] Tests for metrics and permissions.
 
 ## Models
 
@@ -124,12 +124,12 @@ Before implementing this phase, inspect relevant existing project conventions, i
 
 This phase is complete when:
 
-- [ ] All deliverables are complete.
-- [ ] Acceptance criteria are satisfied.
-- [ ] Tests for the phase pass.
-- [ ] Documentation is updated if implementation details changed.
-- [ ] Phase Review is completed.
-- [ ] `docs/analytics/implementation/STATUS.md` is updated.
+- [x] All deliverables are complete.
+- [x] Acceptance criteria are satisfied.
+- [x] Tests for the phase pass.
+- [x] Documentation is updated if implementation details changed.
+- [x] Phase Review is completed.
+- [x] `docs/analytics/implementation/STATUS.md` is updated.
 
 ## Risks / Open Questions
 
@@ -139,15 +139,36 @@ This phase is complete when:
 
 ## Implementation Notes
 
+Phase 7 added the staff-only command center at `/analytics/` using read-only service dataclasses and server-rendered tables.
+
+Implementation followed the approved service boundaries:
+
+- `analytics.services.player_service` owns reusable player search/filter/queryset helpers.
+- `analytics.services.comparison_service` remains focused on comparison and score summaries.
+- `analytics.services.metrics_service` owns counts, averages, completion metrics, import metrics, draft matching summaries, variance rows, and recent-observation queries.
+- `analytics.services.reporting_service` assembles the grouped command center read model and navigation metadata from metrics service results.
+- `analytics.services.draft_service` remains the owner of draft matching and `DraftContext` read models.
+
+No models or migrations were added.
 
 ## Phase Review
 
 ### What went well
 
+The existing Phase 5 and Phase 6 service boundaries made the command center straightforward to assemble without duplicating timeline, comparison, or draft matching logic.
+
 ### Challenges
+
+The Phase 6 player search helpers originally lived in `comparison_service`, so Phase 7 moved that reusable search/filter logic into a dedicated `player_service` before adding reporting.
 
 ### Technical debt
 
+Draft matching summaries currently call read-time draft context matching across drafts. This is acceptable for Version 1 but may need caching or denormalized reporting infrastructure if draft/player volume grows.
+
 ### Architecture changes
 
+No architecture handbook changes were required. The implementation applied the approved Phase 7 engineering-plan clarification that Analytics-facing player search/filter logic belongs in `analytics.services.player_service`.
+
 ### Recommendations for the next phase
+
+Before starting any future reporting expansion, decide whether the simple command center summaries are sufficient or whether a separate architecture phase is needed for saved reports, exports, charts, or cached metrics.
