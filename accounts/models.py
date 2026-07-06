@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 
 class TimeStampedModel(models.Model):
@@ -17,6 +18,14 @@ class AccountRole(models.TextChoices):
     PLAYER = "player", "Player"
     PARENT = "parent", "Parent"
     GUEST_EVALUATOR = "guest_evaluator", "Guest Evaluator"
+
+
+class UserPlayerRelationship(models.TextChoices):
+    SELF = "self", "Self"
+    PARENT = "parent", "Parent"
+    GUARDIAN = "guardian", "Guardian"
+    COACH = "coach", "Coach"
+    STAFF = "staff", "Staff"
 
 
 class AccountProfile(TimeStampedModel):
@@ -51,3 +60,59 @@ class AccountProfile(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.user} ({self.get_role_display()})"
+
+
+class UserPlayerLink(TimeStampedModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="player_links",
+    )
+    player = models.ForeignKey(
+        "players.Player",
+        on_delete=models.CASCADE,
+        related_name="user_links",
+    )
+    relationship = models.CharField(max_length=40, choices=UserPlayerRelationship.choices)
+    is_primary = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_from_import = models.BooleanField(default=False)
+    import_batch = models.ForeignKey(
+        "players.PlayerImportBatch",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="user_player_links",
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["user__username", "relationship", "player__last_name", "player__first_name", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "player", "relationship"],
+                condition=Q(is_active=True),
+                name="accounts_unique_active_user_player_relationship",
+            ),
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=Q(is_active=True, is_primary=True, relationship=UserPlayerRelationship.SELF),
+                name="accounts_unique_primary_self_link_per_user",
+            ),
+            models.UniqueConstraint(
+                fields=["player"],
+                condition=Q(is_active=True, is_primary=True, relationship=UserPlayerRelationship.SELF),
+                name="accounts_unique_primary_self_link_per_player",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "is_active"]),
+            models.Index(fields=["player", "is_active"]),
+            models.Index(fields=["relationship", "is_active"]),
+            models.Index(fields=["created_from_import"]),
+            models.Index(fields=["import_batch"]),
+        ]
+
+    def __str__(self) -> str:
+        inactive = " inactive" if not self.is_active else ""
+        return f"{self.user} {self.get_relationship_display()} -> {self.player}{inactive}"
