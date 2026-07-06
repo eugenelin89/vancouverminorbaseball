@@ -6,4 +6,6 @@ Version 1 remains intentionally focused on replacing the current spreadsheet-bas
 
 The authoritative architecture handbook lives in [architecture/README.md](architecture/README.md).
 
+Local setup and smoke testing instructions live in [local_development.md](local_development.md).
+
 Future implementation prompts should reference the relevant handbook documents instead of embedding or restating the full architecture.
