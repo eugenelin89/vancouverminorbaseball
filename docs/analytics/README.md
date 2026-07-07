@@ -12,13 +12,13 @@ Future implementation prompts should reference the relevant handbook documents i
 
 ## Reusable Prompts
 
-Reusable Codex prompts for planning, implementing, reviewing, and fixing Analytics implementation phases should live in [prompts/](prompts/).
+Reusable Codex prompts for planning, implementing, reviewing, and fixing implementation phases live in [../prompts/](../prompts/).
 
 Prompts should reference the Architecture Handbook and the relevant Implementation Handbook phase document instead of restating architecture.
 
-Prompt files are Markdown files. Existing prompt filenames use a stable `prompt_[id]_[description].md` pattern, where `id` is zero-padded or otherwise kept in historical sequence. When adding a new prompt, use the next unused prompt number and do not rename existing prompt files after they are created.
+Prompt files are Markdown files. Existing prompt filenames use a stable `prompt_[ID]_[app_name].md` pattern, where `ID` is zero-padded or otherwise kept in historical sequence. When adding a new prompt, use the next unused prompt number and do not rename existing prompt files after they are created.
 
-The old root-level `prompts/analytics_prompt_0.md` file has been consolidated here. The authoritative Analytics source remains [architecture/README.md](architecture/README.md), and implementation prompts should reference only the architecture documents needed for the current task.
+The old root-level `prompts/analytics_prompt_0.md` file has been consolidated into this documentation set. The authoritative Analytics source remains [architecture/README.md](architecture/README.md), and implementation prompts should reference only the architecture documents needed for the current task.
 
 Recommended prompt workflow:
 
