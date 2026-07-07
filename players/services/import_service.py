@@ -435,7 +435,7 @@ def create_import_batch(
     source: str,
     uploaded_by,
     provision_player_accounts: bool = False,
-    activate_player_accounts: bool = False,
+    activate_player_accounts: bool = True,
 ) -> PlayerImportBatch:
     """Create a persisted player import batch from a CSV upload."""
     _ensure_staff(uploaded_by)
@@ -443,7 +443,7 @@ def create_import_batch(
     normalized_source = _normalize_source(source or detect_source_from_filename(parsed.file_name))
     mapping_config = suggest_mapping(parsed.headers, source=normalized_source)
     mapping_config[MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS] = bool(provision_player_accounts)
-    mapping_config[MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS] = bool(activate_player_accounts)
+    mapping_config[MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS] = bool(provision_player_accounts) and bool(activate_player_accounts)
     batch = PlayerImportBatch.objects.create(
         source=normalized_source,
         original_filename=parsed.file_name,
@@ -585,7 +585,7 @@ def build_import_preview(*, import_batch: PlayerImportBatch, mapping_config: dic
         "mapping_config": mapping_config,
         "account_provisioning": {
             "enabled": bool(mapping_config.get(MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS)),
-            "activate_users": bool(mapping_config.get(MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS)),
+            "activate_users": bool(mapping_config.get(MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS)),
             "email_column": mapping_config.get("account_email", ""),
         },
         "rows": rows,
@@ -814,7 +814,7 @@ def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: 
             actor=actor,
             options=ProvisioningOptions(
                 enabled=True,
-                activate_users=bool(locked_batch.mapping_config.get(MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS)),
+                activate_users=True,
                 email_column=locked_batch.mapping_config.get("account_email", ""),
             ),
         )

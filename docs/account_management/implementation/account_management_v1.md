@@ -304,8 +304,8 @@ Missing birthdate fallback:
 
 Activation decision:
 
-- Recommended v1 default: imported player accounts are inactive until staff activates them or confirms the onboarding batch.
-- If operational simplicity is preferred, allow staff to select "activate immediately" during import, but keep default conservative.
+- Current V1 decision: imported player accounts are activated immediately when account provisioning is enabled.
+- Provisioned users must still change their temporary password before normal platform access.
 
 Username behavior:
 
@@ -675,7 +675,7 @@ Do not create player links automatically without an explicit matching/migration 
 
 - Birthdate passwords are weak and must be temporary only.
 - Force password change on first login.
-- Consider imported accounts inactive by default.
+- Imported accounts are activated immediately when account provisioning is enabled.
 - Do not expose temporary passwords after creation.
 - Do not log plaintext passwords.
 - Do not store plaintext passwords in JSON metadata, import summaries, source rows, sessions, or logs.
@@ -766,7 +766,7 @@ Do not implement multiple phases in one Codex task unless explicitly instructed.
 
 ## Risks / Open Questions
 
-- Should imported player accounts be active immediately or require staff activation? Recommendation: inactive by default.
+- Should imported player accounts be active immediately or require staff activation? Current V1 decision: active immediately when account provisioning is enabled.
 - Should email be required for login accounts? Recommendation: no for v1, but prefer email username when available and unique.
 - Should staff see a one-time temporary password report? Recommendation: avoid if possible; use staff reset/setup workflow instead.
 - What should the default landing page be for player/parent accounts before portals exist?

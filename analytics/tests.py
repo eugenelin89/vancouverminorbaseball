@@ -142,7 +142,7 @@ class AnalyticsImportViewTests(TestCase):
         batch = PlayerImportBatch.objects.get()
         self.assertEqual(response.status_code, 302)
         self.assertTrue(batch.mapping_config["_provision_player_accounts"])
-        self.assertFalse(batch.mapping_config["_activate_player_accounts"])
+        self.assertTrue(batch.mapping_config["_activate_player_accounts"])
 
     def test_preview_can_map_account_email_and_preserves_provisioning_options(self):
         self.client.force_login(self.staff)
@@ -177,6 +177,7 @@ class AnalyticsImportViewTests(TestCase):
         self.assertTrue(batch.mapping_config["_provision_player_accounts"])
         self.assertEqual(batch.mapping_config["account_email"], "Email")
         self.assertTrue(batch.preview_snapshot["preview"]["account_provisioning"]["enabled"])
+        self.assertTrue(batch.preview_snapshot["preview"]["account_provisioning"]["activate_users"])
 
     def test_preview_refresh_and_confirm_import(self):
         self.client.force_login(self.staff)

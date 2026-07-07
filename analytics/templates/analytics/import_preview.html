@@ -18,7 +18,7 @@
     <p>{{ import_batch.source }} · {{ import_batch.get_status_display }}</p>
     {% if preview.account_provisioning.enabled %}
         <p>
-            Account provisioning enabled{% if preview.account_provisioning.activate_users %}; new accounts will be activated immediately{% else %}; new accounts will be inactive by default{% endif %}.
+            Account provisioning enabled; new accounts will be activated immediately and must change password on first login.
             {% if preview.account_provisioning.email_column %}Email column: {{ preview.account_provisioning.email_column }}.{% endif %}
         </p>
     {% endif %}

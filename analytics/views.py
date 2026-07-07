@@ -93,7 +93,6 @@ class PlayerImportUploadView(AnalyticsStaffRequiredMixin, FormView):
             source=form.cleaned_data["source"],
             uploaded_by=self.request.user,
             provision_player_accounts=form.cleaned_data.get("provision_player_accounts", False),
-            activate_player_accounts=form.cleaned_data.get("activate_player_accounts", False),
         )
         messages.success(self.request, "CSV uploaded. Review the import preview before committing.")
         return redirect("analytics:import-preview", pk=batch.pk)

@@ -514,7 +514,7 @@ class AccountProvisioningServiceTests(TestCase):
             uploaded_by=self.staff,
         )
 
-    def test_provision_player_account_creates_inactive_player_account_profile_and_link(self):
+    def test_provision_player_account_creates_active_player_account_profile_and_link(self):
         result = provision_player_account(
             self.player,
             import_batch=self.import_batch,
@@ -528,7 +528,7 @@ class AccountProvisioningServiceTests(TestCase):
         link = UserPlayerLink.objects.get(user=user, player=self.player)
         self.assertEqual(result.status, STATUS_CREATED)
         self.assertEqual(result.username, "jose.garcia")
-        self.assertFalse(user.is_active)
+        self.assertTrue(user.is_active)
         self.assertEqual(user.email, "player@example.com")
         self.assertTrue(user.check_password("20120501"))
         self.assertEqual(profile.role, AccountRole.PLAYER)

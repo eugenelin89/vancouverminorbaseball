@@ -527,7 +527,7 @@ class PlayerImportWorkflowTests(TestCase):
         user = User.objects.get(username="eugene.lin")
         player = Player.objects.get(first_name="Eugene", last_name="Lin")
         batch.refresh_from_db()
-        self.assertFalse(user.is_active)
+        self.assertTrue(user.is_active)
         self.assertEqual(user.email, "eugene@example.com")
         self.assertTrue(user.check_password("20120501"))
         self.assertTrue(UserPlayerLink.objects.filter(user=user, player=player, relationship="self").exists())

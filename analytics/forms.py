@@ -7,7 +7,6 @@ class PlayerImportUploadForm(forms.Form):
     csv_file = forms.FileField(help_text="Upload a player member-list or roster-detail CSV.")
     source = forms.ChoiceField(choices=SOURCE_CHOICES)
     provision_player_accounts = forms.BooleanField(required=False, initial=False)
-    activate_player_accounts = forms.BooleanField(required=False, initial=False)
 
     def clean_csv_file(self):
         csv_file = self.cleaned_data["csv_file"]

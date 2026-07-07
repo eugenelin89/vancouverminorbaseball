@@ -38,7 +38,7 @@ Completed Account Management phases:
 
 - Phase 1: `AccountProfile`, `AccountRole`, profile/role/permission services.
 - Phase 2: `UserPlayerLink`, `UserPlayerRelationship`, `link_service`.
-- Phase 3: optional player import account provisioning, username/email/password/provisioning services, inactive imported users by default, hashed temporary birthdate passwords, `AccountProfile.must_change_password=True`.
+- Phase 3: optional player import account provisioning, username/email/password/provisioning services, imported users activated immediately, hashed temporary birthdate passwords, `AccountProfile.must_change_password=True`.
 
 Current project auth state:
 
@@ -259,15 +259,15 @@ After successful password change:
 
 Do not display, log, or store plaintext temporary passwords.
 
-## Interaction With Inactive Imported Accounts
+## Interaction With Imported Account Activation
 
-Phase 3 creates imported users with `User.is_active=False` by default unless staff explicitly activates them during import.
+Phase 3 creates imported users with `User.is_active=True` when account provisioning is enabled.
 
 Phase 4 rules:
 
 - `User.is_active=False` users cannot log in through Django authentication.
-- Phase 4 must not auto-activate imported users.
-- Activation remains future staff account management scope.
+- Imported users with temporary passwords must change password before normal platform access.
+- Phase 4 must not bypass forced password change.
 - Tests should prove inactive users cannot authenticate.
 
 ## Interaction With PDP Legacy Auth
@@ -417,7 +417,7 @@ Do not change `AUTH_USER_MODEL`.
 - Updating global `LOGIN_URL` from PDP to accounts may change unauthenticated redirects across the project. Recommendation: do it in Phase 4 only after account login tests cover Analytics and PDP coexistence.
 - PDP and account forced-password middleware can both apply to users with both profile types. Recommendation: keep PDP middleware first for now.
 - Non-staff users do not yet have a portal. Recommendation: add minimal `/accounts/profile/` only.
-- Imported accounts default inactive from Phase 3. Staff activation remains unavailable until Phase 6 unless users were explicitly activated during import.
+- Imported accounts are activated immediately from Phase 3. Staff account-management UI remains unavailable until a future phase.
 - If the project needs PDP users to continue landing in PDP after PDP login, PDP-specific login view can keep its own success URL even if global `LOGIN_URL` changes.
 
 ## Definition of Done

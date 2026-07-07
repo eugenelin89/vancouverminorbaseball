@@ -112,7 +112,7 @@ Use dataclasses/read models in `accounts.services.provisioning_service` for exec
 Recommended `ProvisioningOptions` fields:
 
 - `enabled: bool`
-- `activate_users: bool = False`
+- `activate_users: bool = True`
 - `email_column: str = ""`
 
 Recommended `ProvisioningResult` fields:
@@ -492,8 +492,7 @@ If updating an existing linked user:
 
 Activation:
 
-- Default `User.is_active=False` for newly provisioned imported accounts.
-- If staff explicitly selects activate immediately, create users with `is_active=True`.
+- Create provisioned imported users with `is_active=True`.
 - `AccountProfile` does not currently have an `is_active` field; Django `User.is_active` remains authoritative.
 
 ## Import Summary / Provenance
@@ -537,7 +536,7 @@ Rules:
 
 - Birthdate passwords are weak and temporary only.
 - Phase 4 must enforce password change before these accounts are allowed normal use.
-- New imported users should be inactive by default in Phase 3 unless staff explicitly chooses activation.
+- New imported users should be active immediately when account provisioning is enabled.
 - No plaintext password storage.
 - No plaintext password logging.
 - No plaintext passwords in JSON fields.
@@ -640,7 +639,7 @@ Rules:
 - Current import mapping has no account email field. Recommendation: add optional `account_email` mapping without adding email to `players.Player`.
 - Existing raw source rows may contain email if the CSV contains it. This is already part of import provenance; Phase 3 should avoid duplicating email into account metadata unless needed.
 - Inactive-by-default accounts may require staff activation later. This is intentional for Phase 3; Phase 6 can add staff account-management UI.
-- If staff enables provisioning before Phase 4 password-change enforcement exists, active accounts could log in with birthdate passwords. Recommendation: default inactive and make activation explicit.
+- Phase 4 password-change enforcement is now in place. Imported accounts are active immediately, but users with temporary passwords are forced to change password before normal access.
 - There is no email invitation/reset infrastructure. Phase 3 should not attempt to notify users.
 - Reusing existing users requires conservative matching. Email alone should not link to a different player.
 
@@ -658,7 +657,7 @@ Rules:
 - [ ] New users receive deterministic usernames.
 - [ ] New users receive hashed temporary birthdate passwords when birthdate exists.
 - [ ] Missing birthdate does not create active login accounts automatically.
-- [ ] New imported accounts default to inactive.
+- [ ] New imported accounts are active immediately when account provisioning is enabled.
 - [ ] `AccountProfile.role=player` for created player accounts.
 - [ ] `AccountProfile.must_change_password=True`.
 - [ ] `UserPlayerLink.relationship=self`.

@@ -28,7 +28,7 @@ STATUS_CONFLICT = "conflict"
 @dataclass
 class ProvisioningOptions:
     enabled: bool = False
-    activate_users: bool = False
+    activate_users: bool = True
     email_column: str = ""
 
 
@@ -48,7 +48,7 @@ class ProvisioningResult:
 @dataclass
 class ProvisioningSummary:
     enabled: bool = False
-    activate_users: bool = False
+    activate_users: bool = True
     users_created: int = 0
     users_linked: int = 0
     already_linked: int = 0
@@ -193,7 +193,7 @@ def provision_player_account(
     import_batch=None,
     actor=None,
     email="",
-    activate_user=False,
+    activate_user=True,
     row_number=None,
 ) -> ProvisioningResult:
     """Create or reuse an imported player login account without exposing passwords."""

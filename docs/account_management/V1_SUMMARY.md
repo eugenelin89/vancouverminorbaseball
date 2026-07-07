@@ -42,7 +42,7 @@ Relationship to other subsystems:
 - Explicit services are preferred over signals. Account profiles, links, and provisioning are created through service calls so behavior remains intentional and testable.
 - Middleware is used only for authentication enforcement. It should redirect forced-password users and avoid wider account orchestration.
 - Provisioning is idempotent. Re-running import provisioning should not create duplicate users, profiles, or player links.
-- Account provisioning is conservative. Imported player accounts are inactive by default and must change temporary passwords.
+- Account provisioning activates imported player accounts immediately, while still requiring temporary-password users to change passwords before normal access.
 
 ## Architecture Overview
 
@@ -169,7 +169,7 @@ Provisioning behavior:
 - Existing safe self-linked users are reused.
 - Existing unrelated email users produce conflicts.
 - Missing birthdate skips account creation.
-- New player accounts are inactive by default unless staff explicitly activates them during import.
+- New player accounts are active immediately after import provisioning.
 - Temporary passwords are generated from player birthdate as `YYYYMMDD`.
 - Passwords are set through Django password hashing.
 - Plaintext passwords are never stored in summaries, metadata, source rows, or import snapshots.
@@ -351,7 +351,7 @@ players.services.import_service
 accounts.services.provisioning_service
     |
     v
-inactive Django User + AccountProfile + UserPlayerLink
+active Django User + AccountProfile + UserPlayerLink
     |
     v
 staff activation (future workflow unless activation was explicitly selected at import)
@@ -384,11 +384,11 @@ Temporary passwords:
 - Used only as a bootstrap password.
 - Must be changed before normal access.
 
-Inactive imported users:
+Imported users:
 
-- Imported player accounts are inactive by default.
-- Inactive users cannot authenticate through Django auth.
-- Staff activation is deferred to a future workflow unless activation is explicitly selected during import.
+- Imported player accounts are active immediately after provisioning.
+- Provisioned users must change the temporary password before normal app access.
+- Inactive users still cannot authenticate through Django auth if an administrator later deactivates an account.
 
 Password hashing:
 
@@ -466,11 +466,11 @@ Why provisioning is idempotent:
 - Duplicate users, profiles, or self-links would create security and operational risks.
 - Idempotent services allow safe retries.
 
-Why imported users are inactive by default:
+Why imported users are activated immediately:
 
-- Birthdate temporary passwords are weak.
-- Inactive-by-default reduces exposure until staff intentionally activates users.
-- The activation workflow can be improved later without weakening V1.
+- The operational workflow expects imported player accounts to be usable immediately.
+- Forced password change reduces the risk of temporary birthdate passwords being used for normal access.
+- Staff can still deactivate accounts manually through Django admin if needed.
 
 Why birthdate temporary passwords are used:
 
