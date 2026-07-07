@@ -1,0 +1,17 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Account Login{% endblock %}
+{% block pdp_subtitle %}Sign in to the VCB platform.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card pdp-card--form">
+        <h2>Sign in</h2>
+        <form method="post" class="pdp-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="button button--primary" type="submit">Sign In</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

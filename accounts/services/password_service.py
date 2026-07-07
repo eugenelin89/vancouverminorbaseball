@@ -32,3 +32,8 @@ def mark_password_change_required(user, value=True):
     profile.must_change_password = value
     profile.save(update_fields=["must_change_password", "updated_at"])
     return profile
+
+
+def clear_password_change_required(user):
+    """Clear the account profile password-change requirement."""
+    return mark_password_change_required(user, False)

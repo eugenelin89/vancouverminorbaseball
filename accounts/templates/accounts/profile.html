@@ -1,0 +1,30 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Account Profile{% endblock %}
+{% block pdp_subtitle %}Basic account information.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+        <dl class="pdp-definition-list">
+            <dt>Username</dt>
+            <dd>{{ request.user.username }}</dd>
+            {% if request.user.email %}
+                <dt>Email</dt>
+                <dd>{{ request.user.email }}</dd>
+            {% endif %}
+            <dt>Role</dt>
+            <dd>{{ account_role_label }}</dd>
+        </dl>
+        {% if linked_players %}
+            <h3>Linked players</h3>
+            <ul>
+                {% for player in linked_players %}
+                    <li>{{ player.display_name }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}
