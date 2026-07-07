@@ -1,0 +1,70 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Account Operations{% endblock %}
+{% block pdp_subtitle %}Read-only staff dashboard for account health and account lookup.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>Summary</h2>
+        <div class="pdp-grid">
+            {% for card in summary_cards %}
+                <section>
+                    <h3>{{ card.label }}</h3>
+                    <p><strong>{{ card.value }}</strong></p>
+                    <p>{{ card.help_text }}</p>
+                    {% if card.url %}
+                        <a class="button button--ghost" href="{{ card.url }}">Open</a>
+                    {% endif %}
+                </section>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="pdp-card">
+        <h2>Accounts Requiring Password Change</h2>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr><th>Username</th><th>Name</th><th>Role</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for row in users_requiring_password_change %}
+                        <tr>
+                            <td>{{ row.user.username }}</td>
+                            <td>{{ row.user.get_full_name|default:"-" }}</td>
+                            <td>{{ row.role_label }}</td>
+                            <td><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4">No accounts currently require password change.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="pdp-card">
+        <h2>Users Without Player Links</h2>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr><th>Username</th><th>Name</th><th>Role</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for row in unlinked_users %}
+                        <tr>
+                            <td>{{ row.user.username }}</td>
+                            <td>{{ row.user.get_full_name|default:"-" }}</td>
+                            <td>{{ row.role_label }}</td>
+                            <td><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4">No unlinked users found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Account Detail{% endblock %}
+{% block pdp_subtitle %}Read-only account and linked player context.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>{{ target_user.get_full_name|default:target_user.username }}</h2>
+        <dl class="pdp-definition-list">
+            <dt>Username</dt>
+            <dd>{{ target_user.username }}</dd>
+            <dt>Email</dt>
+            <dd>{{ target_user.email|default:"-" }}</dd>
+            <dt>First name</dt>
+            <dd>{{ target_user.first_name|default:"-" }}</dd>
+            <dt>Last name</dt>
+            <dd>{{ target_user.last_name|default:"-" }}</dd>
+            <dt>Role</dt>
+            <dd>{{ account_detail.role_label }}</dd>
+            <dt>Active</dt>
+            <dd>{% if target_user.is_active %}Yes{% else %}No{% endif %}</dd>
+            <dt>Staff</dt>
+            <dd>{% if target_user.is_staff %}Yes{% else %}No{% endif %}</dd>
+            <dt>Superuser</dt>
+            <dd>{% if target_user.is_superuser %}Yes{% else %}No{% endif %}</dd>
+            <dt>Password change required</dt>
+            <dd>
+                {% if target_user.account_profile.must_change_password %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
+            </dd>
+            <dt>Created from import</dt>
+            <dd>
+                {% if target_user.account_profile.created_from_import %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
+            </dd>
+            {% if target_user.account_profile.import_batch %}
+                <dt>Import batch</dt>
+                <dd>{{ target_user.account_profile.import_batch.original_filename }}</dd>
+            {% endif %}
+            <dt>Date joined</dt>
+            <dd>{{ target_user.date_joined }}</dd>
+            <dt>Last login</dt>
+            <dd>{{ target_user.last_login|default:"-" }}</dd>
+        </dl>
+        <p><a class="button button--ghost" href="{% url 'accounts:user-list' %}">Back to users</a></p>
+    </article>
+
+    <article class="pdp-card">
+        <h2>Linked Players</h2>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Relationship</th>
+                        <th>Primary</th>
+                        <th>Active</th>
+                        <th>Imported</th>
+                        <th>Import Batch</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in linked_players %}
+                        <tr>
+                            <td>{{ row.player.display_name }}</td>
+                            <td>{{ row.relationship }}</td>
+                            <td>{% if row.is_primary %}Yes{% else %}No{% endif %}</td>
+                            <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                            <td>{% if row.created_from_import %}Yes{% else %}No{% endif %}</td>
+                            <td>{{ row.import_label|default:"-" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6">No linked players found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}

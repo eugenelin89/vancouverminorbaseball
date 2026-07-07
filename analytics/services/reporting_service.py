@@ -85,6 +85,7 @@ def _navigation_links() -> list[NavigationLink]:
         NavigationLink("Import Players", reverse("analytics:import-list"), "Review player import batches."),
         NavigationLink("Coach Assessments", reverse("analytics:assessment-list"), "Open the coach assessment workflow."),
         NavigationLink("Observation Review", reverse("analytics:observation-review-list"), "Review submitted and draft observations."),
+        NavigationLink("Account Operations", reverse("accounts:operations-dashboard"), "Review account status and player links."),
     ]
 
 

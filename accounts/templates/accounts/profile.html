@@ -25,6 +25,9 @@
                 {% endfor %}
             </ul>
         {% endif %}
+        {% if request.user.is_staff or request.user.is_superuser %}
+            <p><a class="button button--ghost" href="{% url 'accounts:operations-dashboard' %}">Account Operations</a></p>
+        {% endif %}
     </article>
 </section>
 {% endblock %}

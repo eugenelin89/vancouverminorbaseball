@@ -1,0 +1,132 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Account Users{% endblock %}
+{% block pdp_subtitle %}Search and filter platform accounts.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>Filters</h2>
+        <form method="get" class="pdp-form">
+            <label>
+                Search
+                <input type="text" name="q" value="{{ filters.search }}" placeholder="Username, email, first, or last name">
+            </label>
+            <label>
+                Role
+                <select name="role">
+                    <option value="">Any role</option>
+                    {% for value, label in role_choices %}
+                        <option value="{{ value }}"{% if filters.role == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Active
+                <select name="active">
+                    <option value="">Any</option>
+                    <option value="yes"{% if filters.active_status == "yes" %} selected{% endif %}>Active</option>
+                    <option value="no"{% if filters.active_status == "no" %} selected{% endif %}>Inactive</option>
+                </select>
+            </label>
+            <label>
+                Staff
+                <select name="staff">
+                    <option value="">Any</option>
+                    <option value="yes"{% if filters.staff_status == "yes" %} selected{% endif %}>Staff</option>
+                    <option value="no"{% if filters.staff_status == "no" %} selected{% endif %}>Not staff</option>
+                </select>
+            </label>
+            <label>
+                Superuser
+                <select name="superuser">
+                    <option value="">Any</option>
+                    <option value="yes"{% if filters.superuser_status == "yes" %} selected{% endif %}>Superuser</option>
+                    <option value="no"{% if filters.superuser_status == "no" %} selected{% endif %}>Not superuser</option>
+                </select>
+            </label>
+            <label>
+                Imported
+                <select name="imported">
+                    <option value="">Any</option>
+                    <option value="yes"{% if filters.imported_status == "yes" %} selected{% endif %}>Imported</option>
+                    <option value="no"{% if filters.imported_status == "no" %} selected{% endif %}>Not imported</option>
+                </select>
+            </label>
+            <label>
+                Password
+                <select name="must_change_password">
+                    <option value="">Any</option>
+                    <option value="yes"{% if filters.must_change_password == "yes" %} selected{% endif %}>Change required</option>
+                    <option value="no"{% if filters.must_change_password == "no" %} selected{% endif %}>No change required</option>
+                </select>
+            </label>
+            <label>
+                Player Links
+                <select name="linked">
+                    <option value="">Any</option>
+                    <option value="linked"{% if filters.linked_status == "linked" %} selected{% endif %}>Linked</option>
+                    <option value="unlinked"{% if filters.linked_status == "unlinked" %} selected{% endif %}>Unlinked</option>
+                </select>
+            </label>
+            <button class="button button--primary" type="submit">Apply</button>
+            <a class="button button--ghost" href="{% url 'accounts:user-list' %}">Reset</a>
+        </form>
+    </article>
+
+    <article class="pdp-card">
+        <h2>Results</h2>
+        <p>{{ total_count }} account{{ total_count|pluralize }} found.</p>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Active</th>
+                        <th>Staff</th>
+                        <th>Superuser</th>
+                        <th>Password Change</th>
+                        <th>Player Links</th>
+                        <th>Imported</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>{{ row.user.username }}</td>
+                            <td>{{ row.user.get_full_name|default:"-" }}</td>
+                            <td>{{ row.user.email|default:"-" }}</td>
+                            <td>{{ row.role_label }}</td>
+                            <td>{% if row.user.is_active %}Active{% else %}Inactive{% endif %}</td>
+                            <td>{% if row.user.is_staff %}Yes{% else %}No{% endif %}</td>
+                            <td>{% if row.user.is_superuser %}Yes{% else %}No{% endif %}</td>
+                            <td>
+                                {% if row.user.account_profile.must_change_password %}
+                                    Required
+                                {% else %}
+                                    No
+                                {% endif %}
+                            </td>
+                            <td>{{ row.linked_player_count }}</td>
+                            <td>
+                                {% if row.user.account_profile.created_from_import %}
+                                    Yes
+                                {% else %}
+                                    No
+                                {% endif %}
+                            </td>
+                            <td><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="11">No accounts match these filters.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}

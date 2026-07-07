@@ -4,10 +4,16 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
-from django.urls import NoReverseMatch, reverse
+from django.urls import reverse
 from django.contrib.auth import SESSION_KEY
 
 from accounts.models import AccountProfile, AccountRole, UserPlayerLink, UserPlayerRelationship
+from accounts.services.account_operations_service import (
+    get_account_detail,
+    get_account_list,
+    get_account_operations_dashboard,
+)
+from accounts.services.account_query_service import AccountListFilters, count_players_without_self_link, filter_account_users
 from accounts.services.auth_redirect_service import (
     ACCOUNT_LOGIN_PATH,
     ACCOUNT_LOGOUT_PATH,
@@ -20,9 +26,14 @@ from accounts.services.auth_redirect_service import (
 )
 from accounts.services.email_service import emails_equal, find_existing_email_user, normalize_email
 from accounts.services.permissions import (
+    can_access_account_operations,
     can_change_account_role,
     can_manage_accounts,
+    can_manage_privileged_accounts,
     can_submit_evaluations,
+    can_view_account_detail,
+    can_view_account_list,
+    can_view_account_operations_dashboard,
     can_view_account_profile,
 )
 from accounts.services.link_service import (
@@ -111,6 +122,7 @@ class AccountPermissionTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="user", password="testpass")
         self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
+        self.superuser = User.objects.create_superuser(username="admin", password="testpass")
         self.profile = get_or_create_account_profile(self.user)
 
     def test_staff_admin_permissions_use_django_flags(self):
@@ -118,6 +130,25 @@ class AccountPermissionTests(TestCase):
         self.assertFalse(can_change_account_role(self.user))
         self.assertTrue(can_manage_accounts(self.staff))
         self.assertTrue(can_change_account_role(self.staff))
+
+    def test_account_operations_permissions_use_django_staff_flags(self):
+        self.profile.role = AccountRole.STAFF
+        self.profile.save(update_fields=["role", "updated_at"])
+
+        self.assertFalse(can_access_account_operations(self.user))
+        self.assertFalse(can_view_account_operations_dashboard(self.user))
+        self.assertFalse(can_view_account_list(self.user))
+        self.assertFalse(can_view_account_detail(self.user, self.staff))
+        self.assertTrue(can_access_account_operations(self.staff))
+        self.assertTrue(can_view_account_operations_dashboard(self.staff))
+        self.assertTrue(can_view_account_list(self.staff))
+        self.assertTrue(can_view_account_detail(self.staff, self.user))
+        self.assertTrue(can_access_account_operations(self.superuser))
+
+    def test_privileged_account_management_is_superuser_only(self):
+        self.assertFalse(can_manage_privileged_accounts(self.user))
+        self.assertFalse(can_manage_privileged_accounts(self.staff))
+        self.assertTrue(can_manage_privileged_accounts(self.superuser))
 
     def test_regular_user_can_view_own_profile_but_not_manage_accounts(self):
         other = User.objects.create_user(username="other", password="testpass")
@@ -145,6 +176,120 @@ class AccountAdminTests(TestCase):
         self.assertIn("relationship", link_admin.list_display)
         self.assertIn("created_at", link_admin.readonly_fields)
         self.assertIn("updated_at", link_admin.readonly_fields)
+
+
+class AccountOperationsServiceTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
+        self.coach = User.objects.create_user(
+            username="coach.one",
+            password="testpass",
+            first_name="Coach",
+            last_name="One",
+            email="coach@example.com",
+        )
+        self.player_user = User.objects.create_user(
+            username="alex.player",
+            password="testpass",
+            first_name="Alex",
+            last_name="Player",
+            email="alex@example.com",
+        )
+        self.inactive_user = User.objects.create_user(username="inactive", password="testpass", is_active=False)
+        self.import_batch = PlayerImportBatch.objects.create(
+            source="manual_staff_csv",
+            original_filename="players.csv",
+            uploaded_by=self.staff,
+        )
+        set_account_role(self.coach, AccountRole.COACH)
+        player_profile = set_account_role(self.player_user, AccountRole.PLAYER)
+        player_profile.created_from_import = True
+        player_profile.import_batch = self.import_batch
+        player_profile.must_change_password = True
+        player_profile.save(
+            update_fields=["created_from_import", "import_batch", "must_change_password", "updated_at"]
+        )
+        get_or_create_account_profile(self.inactive_user)
+        self.player = Player.objects.create(first_name="Alex", last_name="Player", birthdate="2012-05-01")
+        self.unlinked_player = Player.objects.create(first_name="No", last_name="Account")
+        link_user_to_player(
+            self.player_user,
+            self.player,
+            relationship=UserPlayerRelationship.SELF,
+            created_from_import=True,
+            import_batch=self.import_batch,
+        )
+
+    def usernames_for_filters(self, **kwargs):
+        return [user.username for user in filter_account_users(AccountListFilters(**kwargs))]
+
+    def test_account_query_filters_by_search_text(self):
+        self.assertEqual(self.usernames_for_filters(search="coach@example.com"), ["coach.one"])
+        self.assertEqual(self.usernames_for_filters(search="Alex"), ["alex.player"])
+
+    def test_account_query_filters_by_role(self):
+        self.assertEqual(self.usernames_for_filters(role=AccountRole.COACH), ["coach.one"])
+        self.assertEqual(self.usernames_for_filters(role=AccountRole.PLAYER), ["alex.player"])
+
+    def test_account_query_filters_by_active_status(self):
+        self.assertEqual(self.usernames_for_filters(active_status="no"), ["inactive"])
+
+    def test_account_query_filters_by_staff_and_superuser_status(self):
+        admin_user = User.objects.create_superuser(username="admin", password="testpass")
+        get_or_create_account_profile(admin_user)
+
+        self.assertEqual(self.usernames_for_filters(staff_status="yes"), ["admin", "staff"])
+        self.assertEqual(self.usernames_for_filters(superuser_status="yes"), ["admin"])
+
+    def test_account_query_filters_by_imported_and_password_status(self):
+        self.assertEqual(self.usernames_for_filters(imported_status="yes"), ["alex.player"])
+        self.assertEqual(self.usernames_for_filters(must_change_password="yes"), ["alex.player"])
+
+    def test_account_query_filters_by_linked_status(self):
+        self.assertEqual(self.usernames_for_filters(linked_status="linked"), ["alex.player"])
+        self.assertCountEqual(
+            self.usernames_for_filters(linked_status="unlinked"),
+            ["coach.one", "inactive", "staff"],
+        )
+
+    def test_dashboard_counts_include_account_health_metrics(self):
+        dashboard = get_account_operations_dashboard()
+        cards = {card.label: card.value for card in dashboard.summary_cards}
+
+        self.assertEqual(cards["Total accounts"], 4)
+        self.assertEqual(cards["Active accounts"], 3)
+        self.assertEqual(cards["Inactive accounts"], 1)
+        self.assertEqual(cards["Imported accounts"], 1)
+        self.assertEqual(cards["Password change required"], 1)
+        self.assertEqual(cards["Users without player links"], 3)
+        self.assertEqual(cards["Players without self-linked accounts"], 1)
+        self.assertEqual(dashboard.users_requiring_password_change[0].user, self.player_user)
+
+    def test_account_list_context_returns_rows_and_choices(self):
+        context = get_account_list(AccountListFilters(role=AccountRole.COACH))
+
+        self.assertEqual(context.total_count, 1)
+        self.assertEqual(context.rows[0].user, self.coach)
+        self.assertEqual(context.rows[0].role_label, "Coach")
+        self.assertIn((AccountRole.COACH, "Coach"), context.role_choices)
+
+    def test_account_detail_context_includes_profile_and_linked_players(self):
+        context = get_account_detail(self.player_user.id)
+
+        self.assertEqual(context.user, self.player_user)
+        self.assertEqual(context.role, AccountRole.PLAYER)
+        self.assertEqual(context.role_label, "Player")
+        self.assertEqual(len(context.linked_players), 1)
+        linked = context.linked_players[0]
+        self.assertEqual(linked.player, self.player)
+        self.assertEqual(linked.relationship, "Self")
+        self.assertTrue(linked.is_primary)
+        self.assertTrue(linked.is_active)
+        self.assertTrue(linked.created_from_import)
+        self.assertEqual(linked.import_label, "players.csv")
+
+    def test_players_without_self_link_count(self):
+        self.assertEqual(count_players_without_self_link(), 1)
 
 
 class UserPlayerLinkModelTests(TestCase):
@@ -862,6 +1007,106 @@ class AccountAuthViewTests(TestCase):
         self.assertContains(response, "Guest Evaluator")
 
 
+class AccountOperationsViewTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
+        self.superuser = User.objects.create_superuser(username="admin", password="testpass")
+        self.regular = User.objects.create_user(username="regular", password="testpass")
+        self.coach = User.objects.create_user(
+            username="coach.one",
+            password="testpass",
+            first_name="Coach",
+            last_name="One",
+            email="coach@example.com",
+        )
+        set_account_role(self.coach, AccountRole.COACH)
+        profile = get_or_create_account_profile(self.regular)
+        profile.role = AccountRole.STAFF
+        profile.save(update_fields=["role", "updated_at"])
+        self.player = Player.objects.create(first_name="Alex", last_name="Player")
+        link_user_to_player(self.coach, self.player, relationship=UserPlayerRelationship.COACH, is_primary=False)
+
+    def test_dashboard_requires_staff(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.get(reverse("accounts:operations-dashboard"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_superuser_can_access_dashboard(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(reverse("accounts:operations-dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Account Operations")
+
+    def test_dashboard_renders_expected_summary_cards(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("accounts:operations-dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Total accounts")
+        self.assertContains(response, "Active accounts")
+        self.assertContains(response, "Inactive accounts")
+        self.assertContains(response, "Password change required")
+        self.assertContains(response, "Users without player links")
+        self.assertContains(response, "Players without self-linked accounts")
+
+    def test_user_list_requires_staff(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.get(reverse("accounts:user-list"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_list_renders_users_and_filters(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("accounts:user-list"), {"q": "coach", "role": AccountRole.COACH})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Account Users")
+        self.assertContains(response, "coach.one")
+        self.assertContains(response, "Coach")
+        self.assertNotContains(response, "regular")
+
+    def test_user_detail_requires_staff(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": self.coach.id}))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_detail_renders_profile_and_linked_players(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": self.coach.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "coach.one")
+        self.assertContains(response, "coach@example.com")
+        self.assertContains(response, "Coach")
+        self.assertContains(response, "Alex Player")
+
+    def test_profile_page_links_staff_to_account_operations(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("accounts:profile"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("accounts:operations-dashboard"))
+
+    def test_profile_page_does_not_link_regular_user_to_account_operations(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.get(reverse("accounts:profile"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, reverse("accounts:operations-dashboard"))
+
+
 class AccountPasswordMiddlewareTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="user", password="testpass")
@@ -967,6 +1212,6 @@ class AccountPdpCoexistenceTests(TestCase):
         self.assertEqual(settings.LOGIN_URL, ACCOUNT_LOGIN_PATH)
         self.assertEqual(settings.LOGIN_REDIRECT_URL, ACCOUNT_PROFILE_PATH)
 
-    def test_no_staff_account_management_routes_exist_yet(self):
-        with self.assertRaises(NoReverseMatch):
-            reverse("accounts:account-list")
+    def test_account_operations_routes_are_platform_account_routes(self):
+        self.assertEqual(reverse("accounts:operations-dashboard"), "/accounts/")
+        self.assertEqual(reverse("accounts:user-list"), "/accounts/users/")
