@@ -21,6 +21,28 @@ These instructions apply to the entire repository.
   - binary files represented only by metadata and a short description.
 - Do not embed binary file contents in the snapshot.
 - Exclude `.git`, `.venv`, `__pycache__`, `node_modules`, `dist`, `build`, and the snapshot file itself.
+- Exclude unrelated untracked scratch files unless the user explicitly asks to include them or they were intentionally created as part of the current task.
+
+## Prompt Archive And Commit Policy
+
+When a user prompt causes any file to be created, modified, moved, or deleted:
+
+- Create a prompt record in `docs/prompts/`.
+- Use this filename format:
+
+  ```text
+  prompt_[ID]_[app_name].md
+  ```
+
+- Use the next unused integer ID, zero-padded to two digits.
+- Choose the app/subsystem name that the prompt primarily affects. Use `platform` for cross-subsystem or repository-wide prompts.
+- Paste the user's prompt into the prompt record.
+- Commit the implementation/documentation changes first, using a concise commit message based on the resulting work summary.
+- Generate the diff for that commit against its previous commit.
+- Paste that diff into the prompt record.
+- Commit the prompt record and regenerated `project_flat_file.txt` separately.
+- Do not include unrelated user changes in either commit.
+- If a task cannot be committed safely because the worktree contains unrelated staged changes or an instruction explicitly forbids committing, explain the blocker.
 
 ## Architecture Boundaries
 
