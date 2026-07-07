@@ -6,6 +6,14 @@
 {% block pdp_content %}
 <section class="pdp-grid pdp-grid--single">
     <article class="pdp-card">
+        <h2>Actions</h2>
+        <div class="pdp-actions">
+            <a class="button button--primary" href="{% url 'accounts:account-create' %}">Create Account</a>
+            <a class="button button--ghost" href="{% url 'accounts:player-account-create' %}">Create Player Account</a>
+        </div>
+    </article>
+
+    <article class="pdp-card">
         <h2>Summary</h2>
         <div class="pdp-grid">
             {% for card in summary_cards %}

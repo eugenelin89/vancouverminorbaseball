@@ -1,0 +1,62 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Create Player Account{% endblock %}
+{% block pdp_subtitle %}Create a login account for an existing player record.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    {% if created_account %}
+        <article class="pdp-card">
+            <h2>Player Account Created</h2>
+            <dl class="pdp-definition-list">
+                <dt>Player</dt>
+                <dd>{{ created_account.player.display_name }}</dd>
+                <dt>Username</dt>
+                <dd>{{ created_account.username }}</dd>
+                <dt>Role</dt>
+                <dd>{{ created_account.role_label }}</dd>
+                <dt>Temporary password</dt>
+                <dd><strong>{{ created_account.temporary_password }}</strong></dd>
+            </dl>
+            <p>This password is shown once. The user must change it after signing in.</p>
+            <p><a class="button button--ghost" href="{% url 'accounts:user-detail' user_id=created_account.user.id %}">Open account</a></p>
+        </article>
+    {% endif %}
+
+    <article class="pdp-card">
+        <h2>Player Account Details</h2>
+        <form method="post" class="pdp-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label>
+                Existing player
+                {{ form.player }}
+                {{ form.player.errors }}
+            </label>
+            <label>
+                Username
+                {{ form.username }}
+                {{ form.username.help_text }}
+                {{ form.username.errors }}
+            </label>
+            <label>
+                Email
+                {{ form.email }}
+                {{ form.email.errors }}
+            </label>
+            <label>
+                Role
+                {{ form.role }}
+                {{ form.role.errors }}
+            </label>
+            <label>
+                {{ form.is_active }}
+                {{ form.is_active.label }}
+                {{ form.is_active.errors }}
+            </label>
+            <button class="button button--primary" type="submit">Create Player Account</button>
+            <a class="button button--ghost" href="{% url 'accounts:operations-dashboard' %}">Cancel</a>
+        </form>
+    </article>
+</section>
+{% endblock %}

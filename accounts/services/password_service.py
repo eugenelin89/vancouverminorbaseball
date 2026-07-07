@@ -1,4 +1,5 @@
 from datetime import date
+import secrets
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -23,6 +24,21 @@ def set_temporary_password(user, player) -> None:
     """Set a hashed temporary password without returning or storing plaintext."""
     user.set_password(generate_birthdate_password(player))
     user.save(update_fields=["password"])
+
+
+def generate_random_temporary_password(length: int = 18) -> str:
+    """Return a secure random temporary password for non-player accounts."""
+    if length < 12:
+        raise ValidationError("Temporary password length must be at least 12 characters.")
+    return secrets.token_urlsafe(length)[:length]
+
+
+def set_random_temporary_password(user, length: int = 18) -> str:
+    """Set and return a one-time random temporary password."""
+    password = generate_random_temporary_password(length=length)
+    user.set_password(password)
+    user.save(update_fields=["password"])
+    return password
 
 
 @transaction.atomic

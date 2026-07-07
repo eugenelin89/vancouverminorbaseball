@@ -36,3 +36,15 @@ def username_for_player(player) -> str:
         username = f"{base_username}{suffix}"
         suffix += 1
     return username
+
+
+def validate_available_username(username: str) -> str:
+    """Validate an explicitly supplied username and return the normalized value."""
+    cleaned = str(username or "").strip()
+    if not cleaned:
+        raise ValidationError("Username is required.")
+    if USERNAME_ALLOWED_PATTERN.search(cleaned.casefold()):
+        raise ValidationError("Username may contain only letters, numbers, dots, underscores, and hyphens.")
+    if User.objects.filter(username__iexact=cleaned).exists():
+        raise ValidationError("Username is already in use.")
+    return cleaned

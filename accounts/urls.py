@@ -1,6 +1,7 @@
 from django.urls import path
 
 from accounts.views import (
+    AccountOnlyCreateView,
     AccountLoginView,
     AccountLogoutView,
     AccountOperationsDashboardView,
@@ -8,6 +9,7 @@ from accounts.views import (
     AccountProfileView,
     AccountUserDetailView,
     AccountUserListView,
+    PlayerAccountCreateView,
 )
 
 
@@ -15,6 +17,8 @@ app_name = "accounts"
 
 urlpatterns = [
     path("", AccountOperationsDashboardView.as_view(), name="operations-dashboard"),
+    path("create/", AccountOnlyCreateView.as_view(), name="account-create"),
+    path("create/player/", PlayerAccountCreateView.as_view(), name="player-account-create"),
     path("login/", AccountLoginView.as_view(), name="login"),
     path("logout/", AccountLogoutView.as_view(), name="logout"),
     path("password/", AccountPasswordChangeView.as_view(), name="password-change"),

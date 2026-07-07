@@ -12,7 +12,7 @@ from accounts.services.email_service import find_existing_email_user, normalize_
 from accounts.services.link_service import activate_link, link_user_to_player
 from accounts.services.password_service import mark_password_change_required, set_temporary_password
 from accounts.services.profile_service import get_or_create_account_profile
-from accounts.services.username_service import username_for_player
+from accounts.services.username_service import validate_available_username, username_for_player
 from players.models import Player, PlayerImportBatch
 
 
@@ -195,6 +195,7 @@ def provision_player_account(
     email="",
     activate_user=True,
     row_number=None,
+    username="",
 ) -> ProvisioningResult:
     """Create or reuse an imported player login account without exposing passwords."""
     _validate_player(player)
@@ -246,7 +247,7 @@ def provision_player_account(
         )
 
     try:
-        username = username_for_player(player)
+        username = validate_available_username(username) if username else username_for_player(player)
     except ValidationError as exc:
         return ProvisioningResult(
             player_id=player.id,
@@ -257,7 +258,8 @@ def provision_player_account(
 
     user = User.objects.create(username=username, email=normalized_email, is_active=activate_user)
     set_temporary_password(user, player)
-    profile = _apply_import_profile_state(user, import_batch, set_player_role=True, created_from_import=True)
+    created_from_import = bool(import_batch)
+    profile = _apply_import_profile_state(user, import_batch, set_player_role=True, created_from_import=created_from_import)
     if not profile.must_change_password:
         mark_password_change_required(user, True)
     link_user_to_player(
@@ -265,7 +267,7 @@ def provision_player_account(
         player,
         relationship=UserPlayerRelationship.SELF,
         is_primary=True,
-        created_from_import=True,
+        created_from_import=created_from_import,
         import_batch=import_batch,
     )
     return ProvisioningResult(

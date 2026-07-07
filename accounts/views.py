@@ -2,11 +2,14 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import redirect
-from django.views.generic import TemplateView
+from django.views.generic import FormView, TemplateView
 
+from accounts.forms import AccountOnlyCreateForm, PlayerAccountCreateForm
 from accounts.services.account_operations_service import (
+    create_account_only,
+    create_player_account,
     get_account_detail,
     get_account_list,
     get_account_operations_dashboard,
@@ -134,3 +137,46 @@ class AccountUserDetailView(AccountOperationsStaffRequiredMixin, TemplateView):
         context["target_user"] = self.account_detail.user
         context["linked_players"] = self.account_detail.linked_players
         return context
+
+
+class AccountOnlyCreateView(AccountOperationsStaffRequiredMixin, FormView):
+    template_name = "accounts/account_create.html"
+    form_class = AccountOnlyCreateForm
+
+    def form_valid(self, form):
+        try:
+            result = create_account_only(
+                actor=self.request.user,
+                username=form.cleaned_data["username"],
+                first_name=form.cleaned_data.get("first_name", ""),
+                last_name=form.cleaned_data.get("last_name", ""),
+                email=form.cleaned_data.get("email", ""),
+                role=form.cleaned_data["role"],
+                is_active=form.cleaned_data.get("is_active", False),
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        messages.success(self.request, "Account created. Copy the temporary password now; it will not be shown again.")
+        return self.render_to_response(self.get_context_data(form=form, created_account=result))
+
+
+class PlayerAccountCreateView(AccountOperationsStaffRequiredMixin, FormView):
+    template_name = "accounts/player_account_create.html"
+    form_class = PlayerAccountCreateForm
+
+    def form_valid(self, form):
+        try:
+            result = create_player_account(
+                actor=self.request.user,
+                player=form.cleaned_data["player"],
+                username=form.cleaned_data.get("username", ""),
+                email=form.cleaned_data.get("email", ""),
+                role=form.cleaned_data["role"],
+                is_active=form.cleaned_data.get("is_active", False),
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        messages.success(self.request, "Player account created. Copy the temporary password now; it will not be shown again.")
+        return self.render_to_response(self.get_context_data(form=form, created_account=result))
