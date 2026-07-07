@@ -41,6 +41,7 @@ When a user prompt causes any file to be created, modified, moved, or deleted:
 - Generate the diff for that commit against its previous commit.
 - Paste that diff into the prompt record.
 - Commit the prompt record and regenerated `project_flat_file.txt` separately.
+- Push the resulting commits to the remote repository before finishing the workflow.
 - Do not include unrelated user changes in either commit.
 - If a task cannot be committed safely because the worktree contains unrelated staged changes or an instruction explicitly forbids committing, explain the blocker.
 
