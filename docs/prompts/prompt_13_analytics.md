@@ -1,12 +1,14 @@
 Implement Phase 5 only.
 
+Historical note: this prompt was superseded by `prompt_14_analytics.md` because it referenced files that did not exist at the time.
+
 Before writing any code:
 
 1. Read and follow:
-   - docs/analytics/architecture.md
+   - docs/analytics/architecture/README.md
    - docs/analytics/implementation/STATUS.md
    - docs/analytics/implementation/phase_05_draft_context.md
-   - docs/analytics/implementation/engineering/phase_05_draft_context.md
+   - docs/analytics/implementation/engineering/phase_05_draft_context.md, if present
 
 2. Follow the architecture exactly.
 3. Do NOT implement any Phase 6 or Phase 7 functionality.

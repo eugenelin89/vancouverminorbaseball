@@ -2,6 +2,8 @@
 
 This folder stores reusable and historical Codex prompts that were used to plan, implement, review, and document platform subsystems.
 
+Prompt bodies may mention paths or phase status that were true at the time the prompt was used. Treat them as historical execution records unless a current task explicitly says to reuse one.
+
 Prompts are stored directly in this folder using this filename format:
 
 ```text

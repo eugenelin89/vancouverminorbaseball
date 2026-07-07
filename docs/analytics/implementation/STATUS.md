@@ -11,9 +11,9 @@
 - [x] Phase 6 - Player Experience
 - [x] Phase 7 - Command Center & Reporting
 
-## Current Phase
+## Current Status
 
-Phase 7 - Command Center & Reporting
+Analytics V1
 
 Status: Complete
 

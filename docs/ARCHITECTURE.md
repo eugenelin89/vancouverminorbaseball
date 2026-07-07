@@ -327,6 +327,11 @@ Analytics:
 - [Analytics Implementation Status](analytics/implementation/STATUS.md)
 - [Analytics Local Development](analytics/local_development.md)
 
+Prompts and archives:
+
+- [Prompt Archive](prompts/README.md)
+- [Archived Legacy Prompts](archive/prompts/README.md)
+
 Drafts:
 
 - [Drafts README](../drafts/README.md)

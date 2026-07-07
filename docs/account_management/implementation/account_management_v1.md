@@ -1,5 +1,7 @@
 # Account Management v1 Engineering Plan
 
+This is the historical engineering plan for Account Management V1. The current accepted handoff and freeze status live in [../V1_SUMMARY.md](../V1_SUMMARY.md). Sections labeled "Current State" describe the repository state at the time this plan was written.
+
 ## Goals
 
 Account Management v1 prepares the VCB baseball platform for production use by separating login identity from player identity while connecting them where needed.
@@ -68,8 +70,8 @@ Do not implement these in Account Management v1:
 - `docs/analytics/architecture/04_imports.md`
 - `docs/analytics/implementation/repository_assessment.md`
 - `docs/pdp.md`
-- `docs/prompts/pdp_prompt.md`
-- `docs/prompts/scholarship.md`
+- `docs/archive/prompts/pdp_prompt.md`
+- `docs/archive/prompts/scholarship.md`
 
 These documents are useful context, but Account Management v1 should not depend on PDP because PDP is transitionary.
 

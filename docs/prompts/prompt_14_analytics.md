@@ -10,7 +10,7 @@ Important repo note:
 - Use the available Phase 5 tracking/planning docs instead:
   - `docs/analytics/implementation/STATUS.md`
   - `docs/analytics/implementation/phase_05_draft_context.md`
-  - any existing prompt/planning notes for Phase 5, such as `prompt_11_phase_5.md`, if present.
+  - any existing prompt/planning notes for Phase 5, such as `prompt_11_analytics.md`, if present.
 
 Before coding:
 1. Read the architecture handbook files listed above.
