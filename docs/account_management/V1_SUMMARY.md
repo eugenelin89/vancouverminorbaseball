@@ -1,8 +1,10 @@
 # Account Management V1
 
-Account Management V1 is the platform account foundation for the VCB baseball system.
+Account Management V1 is the platform account foundation for the VCB baseball system. It is the shared identity layer for current and future subsystems that need authenticated users, account metadata, or user-to-player relationships.
 
 It separates login identity from baseball player identity while still allowing the two to be connected when needed. The subsystem uses Django's built-in `User` model for authentication, adds account profile and role metadata in the `accounts` app, and links users to canonical `players.Player` records through explicit relationship records.
+
+Account Management centralizes authentication, account metadata, and user-player relationships while intentionally keeping those concerns out of `players`, `analytics`, and `drafts`. Those apps may consume Account Management services, but they should not own login-account business rules.
 
 Account Management V1 exists to solve these problems:
 
@@ -19,6 +21,16 @@ Relationship to other subsystems:
 - `analytics`: owns observations, reports, timelines, comparisons, and evaluator workflows. It may use account roles later, but Account Management does not own Analytics data.
 - `drafts`: owns draft workflows. Account Management does not change draft behavior.
 - `pdp`: legacy/transitionary. PDP remains installed and functional, but Account Management is the platform-forward account layer.
+
+## Guiding Principles
+
+- Player identity is independent from login identity because the same canonical player record must serve Analytics, drafts, future PDP, video, attendance, recruiting, awards, and portals.
+- Django `User` remains the authentication authority so the platform can rely on Django's mature password hashing, session handling, admin integration, and auth ecosystem.
+- Authentication and authorization are separate concerns. Logging in proves identity; staff/admin access is still controlled by Django staff/superuser flags.
+- Business rules belong in services because account creation, linking, provisioning, and role decisions need to be reusable, testable, and explicit.
+- Provisioning is explicit and idempotent because imports may be retried and must not create duplicate users, profiles, or links.
+- Middleware enforces authentication state only. It should redirect users who must change passwords, not orchestrate account workflows.
+- Future portals should consume Account Management services rather than owning account logic themselves.
 
 ## Design Principles
 
@@ -63,6 +75,21 @@ Ownership:
 - `analytics` owns observations, evaluator snapshots, metrics, reports, timelines, comparisons, and Analytics UI.
 - `drafts` owns draft process and selections.
 - `pdp` owns legacy PDP behavior until it is explicitly retired.
+
+Dependency direction:
+
+```text
+accounts -> players
+
+analytics -> players
+analytics -> accounts
+
+drafts -> players
+
+pdp (legacy, transitionary)
+```
+
+Cross-subsystem business rules should normally flow through services. For example, player import remains in `players.services.import_service`, account provisioning remains in `accounts.services.provisioning_service`, and Analytics should call those services instead of directly manipulating another subsystem's models.
 
 ## What V1 Implements
 
@@ -418,6 +445,15 @@ Why `Player` has no `user` field:
 - `players.Player` is canonical baseball identity shared across Analytics, drafts, future PDP, video, attendance, recruiting, awards, and portals.
 - Authentication is one consumer of player identity, not part of player identity itself.
 
+Why Django `User` was retained:
+
+- Django `User` already provides mature authentication behavior.
+- Password hashing, password validation, sessions, and login/logout integration are proven and maintained by Django.
+- Django admin and staff tooling work naturally with the built-in auth model.
+- The existing project already uses Django auth, so retaining it avoids a risky custom `AUTH_USER_MODEL` migration.
+- Django's permission ecosystem remains available for future account-management surfaces.
+- Account-specific metadata can live in `AccountProfile` without overloading or replacing the auth model.
+
 Why services are used instead of signals:
 
 - Account creation, linking, and provisioning have important safety rules.
@@ -476,6 +512,27 @@ Coverage includes:
 - ownership-boundary regressions
 
 Every phase concluded with implementation review and regression testing. The final release review accepted Account Management V1 for the Phase 1-4 scope.
+
+## Lessons Learned
+
+- Explicit services scaled better than signals because account behavior stayed visible and testable.
+- Idempotent provisioning simplified import retries and reduced duplicate-account risk.
+- Separating player identity from authentication reduced coupling across `players`, `analytics`, and future portals.
+- Thin views made refactoring easier because business rules stayed in service modules.
+- Review and fix passes after each phase improved architecture quality before the subsystem was frozen.
+
+## Platform Status
+
+```text
+Players             V1 Complete
+Analytics           V1 Complete
+Account Management  V1 Complete
+Drafts              Active
+LeagueHub           Planned
+Video               Planned
+```
+
+This status is a high-level orientation for engineers joining the repository. Account Management V1 should now be treated as stable platform infrastructure while future subsystem work builds on top of it.
 
 ## Version Status
 
