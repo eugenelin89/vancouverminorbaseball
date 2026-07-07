@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -84,7 +84,7 @@ class AccountDetailContext:
 class CreatedAccountResult:
     user: User
     username: str
-    temporary_password: str
+    temporary_password: str = field(repr=False)
     role: str
     role_label: str
     player: Player | None = None

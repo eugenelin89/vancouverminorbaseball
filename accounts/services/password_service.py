@@ -8,7 +8,7 @@ from accounts.services.profile_service import get_or_create_account_profile
 
 
 def generate_birthdate_password(player) -> str:
-    """Return the temporary birthdate password for a player."""
+    """Return the temporary birthdate password for player-account provisioning only."""
     birthdate = getattr(player, "birthdate", None)
     if not birthdate:
         raise ValidationError("Player birthdate is required for account provisioning.")

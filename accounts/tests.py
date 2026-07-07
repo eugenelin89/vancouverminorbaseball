@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.messages import get_messages
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -306,7 +307,7 @@ class AccountOperationsServiceTests(TestCase):
     def test_create_account_only_creates_user_profile_and_temporary_password(self):
         result = create_account_only(
             actor=self.staff,
-            username="new.coach",
+            username="New.Coach",
             first_name="New",
             last_name="Coach",
             email="New.Coach@example.com",
@@ -322,10 +323,12 @@ class AccountOperationsServiceTests(TestCase):
         self.assertEqual(result.role_label, "Coach")
         self.assertTrue(result.temporary_password)
         self.assertTrue(user.check_password(result.temporary_password))
+        self.assertNotIn(result.temporary_password, repr(result))
         self.assertEqual(user.email, "new.coach@example.com")
         self.assertEqual(profile.role, AccountRole.COACH)
         self.assertTrue(profile.must_change_password)
         self.assertFalse(profile.created_from_import)
+        self.assertIsNone(profile.import_batch)
         self.assertFalse(UserPlayerLink.objects.filter(user=user).exists())
 
     def test_create_account_only_can_create_inactive_account(self):
@@ -383,11 +386,14 @@ class AccountOperationsServiceTests(TestCase):
         self.assertEqual(link.relationship, UserPlayerRelationship.SELF)
         self.assertTrue(link.is_primary)
         self.assertFalse(profile.created_from_import)
+        self.assertIsNone(profile.import_batch)
+        self.assertFalse(link.created_from_import)
+        self.assertIsNone(link.import_batch)
 
     def test_create_player_account_accepts_optional_username_and_inactive_flag(self):
         player = Player.objects.create(first_name="Casey", last_name="Player", birthdate="2014-07-03")
 
-        result = create_player_account(actor=self.staff, player=player, username="custom.player", is_active=False)
+        result = create_player_account(actor=self.staff, player=player, username="Custom.Player", is_active=False)
 
         self.assertEqual(result.username, "custom.player")
         self.assertFalse(User.objects.get(username="custom.player").is_active)
@@ -740,6 +746,7 @@ class AccountUsernameServiceTests(TestCase):
         User.objects.create_user(username="coach.one")
 
         self.assertEqual(validate_available_username("new.user"), "new.user")
+        self.assertEqual(validate_available_username("  Coach.Two  "), "coach.two")
         with self.assertRaises(ValidationError):
             validate_available_username("coach.ONE")
         with self.assertRaises(ValidationError):
@@ -1273,9 +1280,17 @@ class AccountOperationsViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Account Created")
         self.assertContains(response, "Temporary password")
+        temporary_password = response.context["created_account"].temporary_password
+        self.assertIn(temporary_password, response.content.decode())
+        self.assertNotIn(temporary_password, " ".join(str(message) for message in get_messages(response.wsgi_request)))
         self.assertTrue(user.account_profile.must_change_password)
         self.assertEqual(user.account_profile.role, AccountRole.GUEST_EVALUATOR)
         self.assertFalse(UserPlayerLink.objects.filter(user=user).exists())
+
+        detail_response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": user.id}))
+        self.assertNotContains(detail_response, temporary_password)
+        get_response = self.client.get(reverse("accounts:account-create"))
+        self.assertNotContains(get_response, temporary_password)
 
     def test_staff_cannot_create_admin_account(self):
         self.client.force_login(self.staff)
@@ -1291,6 +1306,7 @@ class AccountOperationsViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Only superusers can create admin accounts")
+        self.assertNotContains(response, "Temporary password")
         self.assertFalse(User.objects.filter(username="admin.try").exists())
 
     def test_player_account_create_requires_staff(self):
@@ -1318,9 +1334,15 @@ class AccountOperationsViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Player Account Created")
         self.assertContains(response, "20130602")
+        self.assertNotIn("20130602", " ".join(str(message) for message in get_messages(response.wsgi_request)))
         self.assertTrue(user.check_password("20130602"))
         self.assertTrue(user.account_profile.must_change_password)
         self.assertEqual(UserPlayerLink.objects.get(user=user).player, player)
+
+        detail_response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": user.id}))
+        self.assertNotContains(detail_response, "20130602")
+        get_response = self.client.get(reverse("accounts:player-account-create"))
+        self.assertNotContains(get_response, "20130602")
 
     def test_player_account_create_rejects_duplicate_player_account(self):
         player = Player.objects.create(first_name="Blake", last_name="Player", birthdate="2013-06-02")

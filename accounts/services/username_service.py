@@ -40,10 +40,10 @@ def username_for_player(player) -> str:
 
 def validate_available_username(username: str) -> str:
     """Validate an explicitly supplied username and return the normalized value."""
-    cleaned = str(username or "").strip()
+    cleaned = str(username or "").strip().casefold()
     if not cleaned:
         raise ValidationError("Username is required.")
-    if USERNAME_ALLOWED_PATTERN.search(cleaned.casefold()):
+    if USERNAME_ALLOWED_PATTERN.search(cleaned):
         raise ValidationError("Username may contain only letters, numbers, dots, underscores, and hyphens.")
     if User.objects.filter(username__iexact=cleaned).exists():
         raise ValidationError("Username is already in use.")
