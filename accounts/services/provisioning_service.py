@@ -9,7 +9,7 @@ from django.db import transaction
 
 from accounts.models import AccountRole, UserPlayerLink, UserPlayerRelationship
 from accounts.services.email_service import find_existing_email_user, normalize_email
-from accounts.services.link_service import link_user_to_player
+from accounts.services.link_service import activate_link, link_user_to_player
 from accounts.services.password_service import mark_password_change_required, set_temporary_password
 from accounts.services.profile_service import get_or_create_account_profile
 from accounts.services.username_service import username_for_player
@@ -98,13 +98,26 @@ def _validate_import_batch(import_batch) -> None:
         raise ValidationError("A valid player import batch is required.")
 
 
-def _active_self_link_for_player(player: Player):
+def _find_existing_self_link(player: Player):
     return (
         UserPlayerLink.objects.select_related("user")
-        .filter(player=player, relationship=UserPlayerRelationship.SELF, is_active=True)
-        .order_by("-is_primary", "id")
+        .filter(player=player, relationship=UserPlayerRelationship.SELF)
+        .order_by("-is_active", "-is_primary", "id")
         .first()
     )
+
+
+def _find_safe_email_user(player: Player, email: str):
+    email_user = find_existing_email_user(email)
+    if not email_user:
+        return None, None
+    link = (
+        UserPlayerLink.objects.select_related("user", "player")
+        .filter(user=email_user, player=player, relationship=UserPlayerRelationship.SELF)
+        .order_by("-is_active", "-is_primary", "id")
+        .first()
+    )
+    return email_user, link
 
 
 def _apply_import_profile_state(user, import_batch, *, set_player_role: bool):
@@ -115,6 +128,16 @@ def _apply_import_profile_state(user, import_batch, *, set_player_role: bool):
     profile.import_batch = import_batch
     profile.save(update_fields=["role", "created_from_import", "import_batch", "updated_at"])
     return profile
+
+
+def _ensure_active_self_link(link, import_batch):
+    if link.is_active:
+        return link
+    link.is_primary = True
+    link.created_from_import = True
+    link.import_batch = import_batch
+    link.save(update_fields=["is_primary", "created_from_import", "import_batch", "updated_at"])
+    return activate_link(link)
 
 
 def _safe_linked_user_result(player, link, import_batch, email: str, row_number: int | None) -> ProvisioningResult:
@@ -128,6 +151,17 @@ def _safe_linked_user_result(player, link, import_batch, email: str, row_number:
             username=link.user.username,
             user_id=link.user_id,
             messages=[_row_message(row_number, "Email belongs to a different existing user; account not provisioned.")],
+        )
+    try:
+        link = _ensure_active_self_link(link, import_batch)
+    except ValidationError as exc:
+        return ProvisioningResult(
+            player_id=player.id,
+            row_number=row_number,
+            status=STATUS_CONFLICT,
+            username=link.user.username,
+            user_id=link.user_id,
+            messages=[_row_message(row_number, "; ".join(exc.messages))],
         )
     if normalized_email and not link.user.email:
         link.user.email = normalized_email
@@ -157,19 +191,24 @@ def provision_player_account(
     _validate_import_batch(import_batch)
     normalized_email = normalize_email(email)
 
-    existing_link = _active_self_link_for_player(player)
+    existing_link = _find_existing_self_link(player)
     if existing_link:
         return _safe_linked_user_result(player, existing_link, import_batch, normalized_email, row_number)
 
-    email_user = find_existing_email_user(normalized_email)
+    email_user, same_player_link = _find_safe_email_user(player, normalized_email)
     if email_user:
-        same_player_link = UserPlayerLink.objects.filter(
-            user=email_user,
-            player=player,
-            relationship=UserPlayerRelationship.SELF,
-            is_active=True,
-        ).first()
         if same_player_link:
+            try:
+                _ensure_active_self_link(same_player_link, import_batch)
+            except ValidationError as exc:
+                return ProvisioningResult(
+                    player_id=player.id,
+                    row_number=row_number,
+                    status=STATUS_CONFLICT,
+                    username=email_user.username,
+                    user_id=email_user.id,
+                    messages=[_row_message(row_number, "; ".join(exc.messages))],
+                )
             _apply_import_profile_state(email_user, import_batch, set_player_role=False)
             return ProvisioningResult(
                 player_id=player.id,

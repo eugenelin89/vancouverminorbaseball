@@ -550,6 +550,52 @@ class AccountProvisioningServiceTests(TestCase):
         self.assertEqual(UserPlayerLink.objects.filter(player=self.player).count(), 1)
         self.assertEqual(AccountProfile.objects.filter(user_id=first.user_id).count(), 1)
 
+    def test_provision_player_account_reuses_inactive_self_link_without_duplicates(self):
+        user = User.objects.create_user(username="existing.player", email="existing@example.com")
+        profile = get_or_create_account_profile(user)
+        link = link_user_to_player(
+            user,
+            self.player,
+            relationship=UserPlayerRelationship.SELF,
+            is_primary=True,
+            created_from_import=True,
+            import_batch=self.import_batch,
+        )
+        deactivate_link(link)
+
+        result = provision_player_account(
+            self.player,
+            import_batch=self.import_batch,
+            email="existing@example.com",
+            row_number=2,
+        )
+        link.refresh_from_db()
+        profile.refresh_from_db()
+
+        self.assertEqual(result.status, STATUS_ALREADY_LINKED)
+        self.assertEqual(result.user_id, user.id)
+        self.assertTrue(link.is_active)
+        self.assertTrue(link.is_primary)
+        self.assertEqual(User.objects.filter(username="existing.player").count(), 1)
+        self.assertEqual(AccountProfile.objects.filter(user=user).count(), 1)
+        self.assertEqual(UserPlayerLink.objects.filter(user=user, player=self.player).count(), 1)
+
+    def test_provision_player_account_remains_idempotent_after_link_deactivation_and_reactivation(self):
+        first = provision_player_account(self.player, import_batch=self.import_batch, row_number=2)
+        link = UserPlayerLink.objects.get(player=self.player, user_id=first.user_id)
+        deactivate_link(link)
+
+        second = provision_player_account(self.player, import_batch=self.import_batch, row_number=2)
+        third = provision_player_account(self.player, import_batch=self.import_batch, row_number=2)
+
+        link.refresh_from_db()
+        self.assertEqual(second.status, STATUS_ALREADY_LINKED)
+        self.assertEqual(third.status, STATUS_ALREADY_LINKED)
+        self.assertTrue(link.is_active)
+        self.assertEqual(User.objects.filter(username="jose.garcia").count(), 1)
+        self.assertEqual(AccountProfile.objects.filter(user_id=first.user_id).count(), 1)
+        self.assertEqual(UserPlayerLink.objects.filter(player=self.player, user_id=first.user_id).count(), 1)
+
     def test_provision_player_account_conflicts_on_unrelated_email(self):
         User.objects.create_user(username="other", email="player@example.com")
 
