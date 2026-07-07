@@ -22,6 +22,23 @@
             {% endfor %}
         </ul>
     {% endif %}
+    {% if import_batch.import_summary.account_provisioning.enabled %}
+        <h3>Account provisioning</h3>
+        <div class="pdp-stat-grid">
+            <div><strong>{{ import_batch.import_summary.account_provisioning.users_created }}</strong><span>Users Created</span></div>
+            <div><strong>{{ import_batch.import_summary.account_provisioning.users_linked }}</strong><span>Linked Existing</span></div>
+            <div><strong>{{ import_batch.import_summary.account_provisioning.already_linked }}</strong><span>Already Linked</span></div>
+            <div><strong>{{ import_batch.import_summary.account_provisioning.skipped }}</strong><span>Skipped</span></div>
+            <div><strong>{{ import_batch.import_summary.account_provisioning.conflicts }}</strong><span>Conflicts</span></div>
+        </div>
+        {% if import_batch.import_summary.account_provisioning.messages %}
+            <ul>
+                {% for message in import_batch.import_summary.account_provisioning.messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endif %}
     <a class="button button--ghost" href="{% url 'analytics:import-list' %}">Back to Imports</a>
 </article>
 {% endblock %}

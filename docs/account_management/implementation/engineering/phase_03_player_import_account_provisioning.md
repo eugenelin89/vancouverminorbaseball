@@ -16,7 +16,9 @@ CSV
           -> accounts.UserPlayerLink
 ```
 
-Provisioning must be optional, deterministic, conservative, and owned by `accounts` services. Phase 3 should not change Analytics evaluation behavior, login behavior, password-change enforcement, or portal access.
+Provisioning must be optional, deterministic, conservative, idempotent, and owned by `accounts` services. Phase 3 should not change Analytics evaluation behavior, login behavior, password-change enforcement, or portal access.
+
+Running the same import or provisioning workflow repeatedly must never create duplicate `User`, `AccountProfile`, or `UserPlayerLink` records. Provisioning results should distinguish `created`, `linked_existing`, `already_linked`, `skipped`, and `conflict`.
 
 ## Strict Scope
 
@@ -76,6 +78,21 @@ Existing import flow:
 - Current import preview rows include `identity`, `original_row`, `unmapped_fields`, row action, match status, candidate options, and field conflicts.
 - Current mapping does not include account-specific fields such as email.
 
+The existing Analytics import UI is a transitional integration point. Long-term ownership should become:
+
+```text
+players
+    player import
+
+accounts
+    account provisioning
+
+analytics
+    reporting and evaluations only
+```
+
+Phase 3 should continue using the existing Analytics import UI to minimize disruption, but Analytics must remain a thin orchestration/presentation layer.
+
 ## User Account Provisioning Model
 
 Do not add a new database model in Phase 3 unless implementation discovers a hard requirement. The existing models are sufficient:
@@ -89,8 +106,8 @@ Do not add a new database model in Phase 3 unless implementation discovers a har
 Use dataclasses/read models in `accounts.services.provisioning_service` for execution results:
 
 - `ProvisioningOptions`
-- `ProvisioningRowResult`
-- `ProvisioningBatchResult`
+- `ProvisioningResult`
+- `ProvisioningSummary`
 
 Recommended `ProvisioningOptions` fields:
 
@@ -98,16 +115,24 @@ Recommended `ProvisioningOptions` fields:
 - `activate_users: bool = False`
 - `email_column: str = ""`
 
-Recommended `ProvisioningRowResult` fields:
+Recommended `ProvisioningResult` fields:
 
 - `player_id`
 - `row_number`
-- `status`: `created`, `linked_existing`, `skipped`, `conflict`, `already_linked`
+- `status`: `created`, `linked_existing`, `already_linked`, `skipped`, `conflict`
 - `username`
 - `user_id`
 - `messages`
 
 Do not include plaintext passwords in any result object that may be serialized.
+
+Provisioning user resolution order:
+
+1. Existing active `UserPlayerLink` with `relationship=self` for the player.
+2. Existing email user only when that user is already safely self-linked to the same player.
+3. Create a new user.
+
+Never silently associate an unrelated existing user or email address with a different player.
 
 ## Username Generation Strategy
 
@@ -125,6 +150,7 @@ Rules:
 - Lowercase.
 - Strip leading/trailing spaces.
 - Collapse repeated whitespace.
+- Normalize Unicode accents, for example `José García` becomes `jose.garcia`.
 - Remove unsafe username characters.
 - Keep letters, numbers, dots, underscores, and hyphens.
 - Build the base username from player first and last name.
@@ -137,6 +163,12 @@ Missing name handling:
 - Player import already requires first and last name for committed rows.
 - If first or last name is unexpectedly missing at provisioning time, return a row-level provisioning conflict rather than inventing an unrelated username.
 
+Create:
+
+```text
+accounts/services/username_service.py
+```
+
 Recommended service functions:
 
 ```python
@@ -145,7 +177,7 @@ base_username_for_player(player: Player) -> str
 username_for_player(player: Player) -> str
 ```
 
-Implementation should keep username generation in `accounts.services.provisioning_service`, because username strategy is account behavior, not player identity behavior.
+Implementation should keep username generation in `accounts.services.username_service`, because username strategy is account behavior, not player identity behavior. `accounts.services.provisioning_service` should call `username_service` rather than implementing username normalization directly.
 
 ## Temporary Password Strategy
 
@@ -227,6 +259,20 @@ Keep incrementing until a unique username is found. Do not reuse usernames from 
 ### Email
 
 Email should be optional.
+
+Create:
+
+```text
+accounts/services/email_service.py
+```
+
+Recommended functions:
+
+```python
+normalize_email(value: str) -> str
+emails_equal(left: str, right: str) -> bool
+find_existing_email_user(email: str)
+```
 
 Phase 3 should add an optional account email mapping control without adding email to `players.Player`.
 
@@ -330,18 +376,14 @@ provision_player_account(
     email="",
     activate_user=False,
     row_number=None,
-) -> ProvisioningRowResult
+) -> ProvisioningResult
 
 provision_accounts_for_import(
     import_batch,
     committed_rows,
     actor=None,
     options=None,
-) -> ProvisioningBatchResult
-
-username_for_player(player) -> str
-base_username_for_player(player) -> str
-normalize_username_part(value) -> str
+) -> ProvisioningSummary
 ```
 
 `committed_rows` should be a list of simple dictionaries or dataclasses created by `players.services.import_service`, not `PlayerSourceRow` querysets that require re-parsing raw JSON.
@@ -353,6 +395,35 @@ Recommended provisioning statuses:
 - `already_linked`
 - `skipped`
 - `conflict`
+
+Create specialized services and keep responsibilities separated:
+
+```text
+accounts/services/username_service.py
+    normalize_username_part()
+    base_username_for_player()
+    username_for_player()
+
+accounts/services/email_service.py
+    normalize_email()
+    emails_equal()
+    find_existing_email_user()
+
+accounts/services/password_service.py
+    generate_birthdate_password()
+    set_temporary_password()
+    mark_password_change_required()
+
+accounts/services/provisioning_service.py
+    orchestration
+    create/reuse User
+    create/reuse AccountProfile
+    create/reuse UserPlayerLink
+    provisioning read models
+    import orchestration
+```
+
+Provisioning service should coordinate the workflow. Specialized services should perform username, email, and password work.
 
 `provision_player_account()` responsibilities:
 
@@ -491,6 +562,7 @@ Rules:
 
 - Username generation returns `firstname.lastname`.
 - Username collision suffixes are deterministic: `firstname.lastname2`, `firstname.lastname3`.
+- Unicode names are normalized, for example `José García` becomes `jose.garcia`.
 - Unsafe username characters are removed.
 - Missing first/last name produces a conflict/skipped result.
 - Missing birthdate skips provisioning.
@@ -530,25 +602,27 @@ Rules:
 ### Regression Tests
 
 - `players.Player` still has no direct user field.
-- `players.services.import_service` does not implement username/password logic directly.
+- `players.services.import_service` does not implement username/email/password logic directly.
 - Analytics evaluator permissions remain unchanged.
 - Phase 4 login/password middleware is not introduced.
 - Full `accounts`, `players`, and `analytics` test suites pass.
 
 ## Implementation Sequence
 
-1. Add `accounts/services/password_service.py`.
-2. Add password service tests.
-3. Add `accounts/services/provisioning_service.py` with dataclasses/read models.
-4. Add provisioning service tests for username, birthdate, duplicate email, profile, and link behavior.
-5. Add optional provisioning fields to `PlayerImportUploadForm`.
-6. Add optional `account_email` mapping to `PlayerImportMappingForm`.
-7. Update import upload/preview/detail templates with thin display-only controls.
-8. Extend `players.services.import_service.commit_import_batch()` to accept/pass provisioning options and call `accounts.services.provisioning_service` after player rows commit.
-9. Store safe provisioning counts under `PlayerImportBatch.import_summary["account_provisioning"]`.
-10. Add import integration tests in `players/tests.py`.
-11. Add Analytics import view tests in `analytics/tests.py`.
-12. Run:
+1. Add `accounts/services/username_service.py`.
+2. Add `accounts/services/email_service.py`.
+3. Add `accounts/services/password_service.py`.
+4. Add username, email, and password service tests.
+5. Add `accounts/services/provisioning_service.py` with `ProvisioningResult` and `ProvisioningSummary` dataclasses/read models.
+6. Add provisioning service tests for idempotency, username, birthdate, duplicate email, profile, and link behavior.
+7. Add optional provisioning fields to `PlayerImportUploadForm`.
+8. Add optional `account_email` mapping to `PlayerImportMappingForm`.
+9. Update import upload/preview/detail templates with thin display-only controls.
+10. Extend `players.services.import_service.commit_import_batch()` to accept/pass provisioning options and call `accounts.services.provisioning_service` after player rows commit.
+11. Store safe provisioning counts under `PlayerImportBatch.import_summary["account_provisioning"]`.
+12. Add import integration tests in `players/tests.py`.
+13. Add Analytics import view tests in `analytics/tests.py`.
+14. Run:
     - `python manage.py check`
     - `python manage.py makemigrations accounts --check`
     - `python manage.py makemigrations players --check`
@@ -575,6 +649,10 @@ Rules:
 - [ ] Account provisioning is optional during player import.
 - [ ] Provisioning business logic lives in `accounts.services.provisioning_service`.
 - [ ] Password temporary-state logic lives in `accounts.services.password_service`.
+- [ ] Username generation lives in `accounts.services.username_service`.
+- [ ] Email normalization lives in `accounts.services.email_service`.
+- [ ] Provisioning uses `ProvisioningResult` and `ProvisioningSummary` read-model dataclasses.
+- [ ] Provisioning is idempotent and does not create duplicate users, profiles, or links.
 - [ ] Player import business logic remains in `players.services.import_service`.
 - [ ] Analytics import views remain thin.
 - [ ] New users receive deterministic usernames.
@@ -585,6 +663,7 @@ Rules:
 - [ ] `AccountProfile.must_change_password=True`.
 - [ ] `UserPlayerLink.relationship=self`.
 - [ ] Safe provisioning counts are included in import summary.
+- [ ] `already_linked` is tracked separately in provisioning summary.
 - [ ] No plaintext passwords are stored or logged.
 - [ ] Import without provisioning remains unchanged.
 - [ ] Analytics evaluator behavior remains unchanged.

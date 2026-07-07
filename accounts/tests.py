@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 
 from accounts.models import AccountProfile, AccountRole, UserPlayerLink, UserPlayerRelationship
+from accounts.services.email_service import emails_equal, find_existing_email_user, normalize_email
 from accounts.services.permissions import (
     can_change_account_role,
     can_manage_accounts,
@@ -22,8 +23,20 @@ from accounts.services.link_service import (
     link_user_to_player,
     unlink_user_from_player,
 )
+from accounts.services.password_service import generate_birthdate_password, mark_password_change_required, set_temporary_password
+from accounts.services.provisioning_service import (
+    STATUS_ALREADY_LINKED,
+    STATUS_CONFLICT,
+    STATUS_CREATED,
+    STATUS_SKIPPED,
+    ProvisioningOptions,
+    ProvisioningSummary,
+    provision_accounts_for_import,
+    provision_player_account,
+)
 from accounts.services.profile_service import get_account_role, get_or_create_account_profile, set_account_role
 from accounts.services.role_service import default_role_for_user, role_for_user, role_label, validate_role
+from accounts.services.username_service import base_username_for_player, normalize_username_part, username_for_player
 from analytics.services.permissions import can_submit_coach_assessment
 from players.models import Player, PlayerImportBatch
 
@@ -423,6 +436,154 @@ class UserPlayerLinkServiceTests(TestCase):
 
         deactivate_link(parent_link)
         self.assertFalse(is_player_self(self.user, self.player))
+
+
+class AccountUsernameServiceTests(TestCase):
+    def test_username_parts_normalize_unicode_and_unsafe_characters(self):
+        self.assertEqual(normalize_username_part("  José   García!  "), "josegarcia")
+
+    def test_base_username_for_player_uses_first_dot_last(self):
+        player = Player.objects.create(first_name="José", last_name="García", birthdate="2012-05-01")
+
+        self.assertEqual(base_username_for_player(player), "jose.garcia")
+
+    def test_username_for_player_uses_deterministic_suffixes(self):
+        player = Player.objects.create(first_name="Alex", last_name="Player", birthdate="2012-05-01")
+        User.objects.create_user(username="alex.player")
+        User.objects.create_user(username="alex.player2")
+
+        self.assertEqual(username_for_player(player), "alex.player3")
+
+
+class AccountEmailServiceTests(TestCase):
+    def test_email_normalization_and_comparison(self):
+        self.assertEqual(normalize_email("  PLAYER@Example.COM "), "player@example.com")
+        self.assertTrue(emails_equal("PLAYER@example.com", "player@EXAMPLE.com"))
+
+    def test_find_existing_email_user_is_case_insensitive(self):
+        user = User.objects.create_user(username="user", email="Player@Example.com")
+
+        self.assertEqual(find_existing_email_user("player@example.COM"), user)
+
+
+class AccountPasswordServiceTests(TestCase):
+    def test_generate_birthdate_password_uses_yyyymmdd(self):
+        player = Player.objects.create(first_name="Alex", last_name="Player", birthdate="2012-05-01")
+
+        self.assertEqual(generate_birthdate_password(player), "20120501")
+
+    def test_generate_birthdate_password_requires_birthdate(self):
+        player = Player.objects.create(first_name="Alex", last_name="Player")
+
+        with self.assertRaises(ValidationError):
+            generate_birthdate_password(player)
+
+    def test_set_temporary_password_hashes_password_and_marks_profile(self):
+        user = User.objects.create_user(username="player")
+        player = Player.objects.create(first_name="Alex", last_name="Player", birthdate="2012-05-01")
+
+        set_temporary_password(user, player)
+        mark_password_change_required(user)
+        user.refresh_from_db()
+
+        self.assertNotEqual(user.password, "20120501")
+        self.assertTrue(user.check_password("20120501"))
+        self.assertTrue(user.account_profile.must_change_password)
+
+
+class AccountProvisioningServiceTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
+        self.player = Player.objects.create(first_name="José", last_name="García", birthdate="2012-05-01")
+        self.import_batch = PlayerImportBatch.objects.create(
+            source="manual_staff_csv",
+            original_filename="players.csv",
+            uploaded_by=self.staff,
+        )
+
+    def test_provision_player_account_creates_inactive_player_account_profile_and_link(self):
+        result = provision_player_account(
+            self.player,
+            import_batch=self.import_batch,
+            actor=self.staff,
+            email="Player@Example.com",
+            row_number=2,
+        )
+
+        user = User.objects.get(username="jose.garcia")
+        profile = user.account_profile
+        link = UserPlayerLink.objects.get(user=user, player=self.player)
+        self.assertEqual(result.status, STATUS_CREATED)
+        self.assertEqual(result.username, "jose.garcia")
+        self.assertFalse(user.is_active)
+        self.assertEqual(user.email, "player@example.com")
+        self.assertTrue(user.check_password("20120501"))
+        self.assertEqual(profile.role, AccountRole.PLAYER)
+        self.assertTrue(profile.must_change_password)
+        self.assertTrue(profile.created_from_import)
+        self.assertEqual(profile.import_batch, self.import_batch)
+        self.assertEqual(link.relationship, UserPlayerRelationship.SELF)
+        self.assertTrue(link.created_from_import)
+        self.assertEqual(link.import_batch, self.import_batch)
+
+    def test_provision_player_account_can_activate_user_when_explicit(self):
+        result = provision_player_account(self.player, import_batch=self.import_batch, activate_user=True)
+
+        self.assertEqual(result.status, STATUS_CREATED)
+        self.assertTrue(User.objects.get(pk=result.user_id).is_active)
+
+    def test_provision_player_account_skips_missing_birthdate(self):
+        player = Player.objects.create(first_name="No", last_name="Birthdate")
+
+        result = provision_player_account(player, import_batch=self.import_batch, row_number=3)
+
+        self.assertEqual(result.status, STATUS_SKIPPED)
+        self.assertFalse(User.objects.filter(username="no.birthdate").exists())
+
+    def test_provision_player_account_is_idempotent_for_existing_link(self):
+        first = provision_player_account(self.player, import_batch=self.import_batch, row_number=2)
+        second = provision_player_account(self.player, import_batch=self.import_batch, row_number=2)
+
+        self.assertEqual(first.status, STATUS_CREATED)
+        self.assertEqual(second.status, STATUS_ALREADY_LINKED)
+        self.assertEqual(User.objects.filter(username="jose.garcia").count(), 1)
+        self.assertEqual(UserPlayerLink.objects.filter(player=self.player).count(), 1)
+        self.assertEqual(AccountProfile.objects.filter(user_id=first.user_id).count(), 1)
+
+    def test_provision_player_account_conflicts_on_unrelated_email(self):
+        User.objects.create_user(username="other", email="player@example.com")
+
+        result = provision_player_account(self.player, import_batch=self.import_batch, email="PLAYER@example.com")
+
+        self.assertEqual(result.status, STATUS_CONFLICT)
+        self.assertFalse(UserPlayerLink.objects.filter(player=self.player).exists())
+
+    def test_provision_player_account_does_not_downgrade_existing_staff_link(self):
+        staff_profile = get_or_create_account_profile(self.staff)
+        staff_profile.role = AccountRole.STAFF
+        staff_profile.save(update_fields=["role", "updated_at"])
+        link_user_to_player(self.staff, self.player)
+
+        result = provision_player_account(self.player, import_batch=self.import_batch)
+        staff_profile.refresh_from_db()
+
+        self.assertEqual(result.status, STATUS_ALREADY_LINKED)
+        self.assertEqual(staff_profile.role, AccountRole.STAFF)
+
+    def test_provisioning_summary_serializes_safe_counts_without_plaintext_passwords(self):
+        summary = provision_accounts_for_import(
+            self.import_batch,
+            [{"player": self.player, "row_number": 2, "original_row": {"Email": "player@example.com"}}],
+            actor=self.staff,
+            options=ProvisioningOptions(enabled=True, activate_users=False, email_column="Email"),
+        )
+
+        serialized = summary.to_dict()
+        self.assertIsInstance(summary, ProvisioningSummary)
+        self.assertEqual(serialized["users_created"], 1)
+        self.assertEqual(serialized["already_linked"], 0)
+        self.assertNotIn("20120501", str(serialized))
+        self.assertNotIn("password", str(serialized).casefold())
 
 
 class AccountRegressionTests(TestCase):

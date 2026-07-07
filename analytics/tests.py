@@ -123,6 +123,61 @@ class AnalyticsImportViewTests(TestCase):
         batch = PlayerImportBatch.objects.get()
         self.assertEqual(response["Location"], reverse("analytics:import-preview", kwargs={"pk": batch.pk}))
 
+    def test_upload_can_enable_account_provisioning_options(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("analytics:import-new"),
+            {
+                "source": SOURCE_MEMBER_LIST,
+                "csv_file": SimpleUploadedFile(
+                    "member.csv",
+                    b"First,Last,DOB,Email\nEugene,Lin,2012-05-01,eugene@example.com\n",
+                    content_type="text/csv",
+                ),
+                "provision_player_accounts": "on",
+            },
+        )
+
+        batch = PlayerImportBatch.objects.get()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(batch.mapping_config["_provision_player_accounts"])
+        self.assertFalse(batch.mapping_config["_activate_player_accounts"])
+
+    def test_preview_can_map_account_email_and_preserves_provisioning_options(self):
+        self.client.force_login(self.staff)
+        batch = PlayerImportBatch.objects.create(
+            source=SOURCE_MEMBER_LIST,
+            original_filename="member.csv",
+            uploaded_by=self.staff,
+            mapping_config={"_provision_player_accounts": True, "_activate_player_accounts": False},
+            preview_snapshot={
+                "parsed_csv": {
+                    "file_name": "member.csv",
+                    "headers": ["First", "Last", "DOB", "Email"],
+                    "normalized_headers": {"first": "First", "last": "Last", "dob": "DOB", "email": "Email"},
+                    "rows": [
+                        {
+                            "row_number": 2,
+                            "original_row": {"First": "Eugene", "Last": "Lin", "DOB": "2012-05-01", "Email": "eugene@example.com"},
+                            "cleaned_row": {"First": "Eugene", "Last": "Lin", "DOB": "2012-05-01", "Email": "eugene@example.com"},
+                        }
+                    ],
+                }
+            },
+        )
+
+        response = self.client.post(
+            reverse("analytics:import-preview", kwargs={"pk": batch.pk}),
+            {"first_name": "First", "last_name": "Last", "birthdate": "DOB", "account_email": "Email"},
+        )
+
+        batch.refresh_from_db()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(batch.mapping_config["_provision_player_accounts"])
+        self.assertEqual(batch.mapping_config["account_email"], "Email")
+        self.assertTrue(batch.preview_snapshot["preview"]["account_provisioning"]["enabled"])
+
     def test_preview_refresh_and_confirm_import(self):
         self.client.force_login(self.staff)
         batch = PlayerImportBatch.objects.create(
@@ -156,6 +211,29 @@ class AnalyticsImportViewTests(TestCase):
         self.assertEqual(confirm_response.status_code, 200)
         self.assertTrue(Player.objects.filter(first_name="Eugene", last_name="Lin").exists())
         self.assertContains(confirm_response, "Import Result")
+
+    def test_import_detail_shows_safe_account_provisioning_summary(self):
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("analytics:import-new"),
+            {
+                "source": SOURCE_MEMBER_LIST,
+                "csv_file": SimpleUploadedFile(
+                    "member.csv",
+                    b"First,Last,DOB\nEugene,Lin,2012-05-01\n",
+                    content_type="text/csv",
+                ),
+                "provision_player_accounts": "on",
+            },
+        )
+        batch = PlayerImportBatch.objects.get()
+
+        response = self.client.post(reverse("analytics:import-confirm", kwargs={"pk": batch.pk}), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Account provisioning")
+        self.assertContains(response, "Users Created")
+        self.assertNotContains(response, "20120501")
 
     def test_conflict_page_displays_review_rows(self):
         self.client.force_login(self.staff)

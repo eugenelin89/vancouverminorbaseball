@@ -16,6 +16,12 @@
 <article class="pdp-card">
     <h2>{{ import_batch.original_filename }}</h2>
     <p>{{ import_batch.source }} · {{ import_batch.get_status_display }}</p>
+    {% if preview.account_provisioning.enabled %}
+        <p>
+            Account provisioning enabled{% if preview.account_provisioning.activate_users %}; new accounts will be activated immediately{% else %}; new accounts will be inactive by default{% endif %}.
+            {% if preview.account_provisioning.email_column %}Email column: {{ preview.account_provisioning.email_column }}.{% endif %}
+        </p>
+    {% endif %}
     {% if preview.summary %}
         <div class="pdp-stat-grid">
             <div><strong>{{ preview.summary.rows_processed }}</strong><span>Rows</span></div>

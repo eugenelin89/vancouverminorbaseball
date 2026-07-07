@@ -37,6 +37,8 @@ from analytics.services.timeline_service import get_player_timeline
 from players.models import PlayerImportBatch
 from players.models import Player
 from players.services.import_service import (
+    MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS,
+    MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS,
     build_import_preview,
     commit_import_batch,
     create_import_batch,
@@ -90,6 +92,8 @@ class PlayerImportUploadView(AnalyticsStaffRequiredMixin, FormView):
             file_obj=form.cleaned_data["csv_file"],
             source=form.cleaned_data["source"],
             uploaded_by=self.request.user,
+            provision_player_accounts=form.cleaned_data.get("provision_player_accounts", False),
+            activate_player_accounts=form.cleaned_data.get("activate_player_accounts", False),
         )
         messages.success(self.request, "CSV uploaded. Review the import preview before committing.")
         return redirect("analytics:import-preview", pk=batch.pk)
@@ -125,7 +129,10 @@ class PlayerImportPreviewView(ImportBatchMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         form = self.get_mapping_form(data=request.POST)
         if form.is_valid():
-            build_import_preview(import_batch=self.import_batch, mapping_config=form.mapping_config())
+            mapping_config = form.mapping_config()
+            for key in [MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS, MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS]:
+                mapping_config[key] = bool(self.import_batch.mapping_config.get(key))
+            build_import_preview(import_batch=self.import_batch, mapping_config=mapping_config)
             messages.success(request, "Import preview refreshed.")
             return redirect("analytics:import-preview", pk=self.import_batch.pk)
         return self.render_to_response(self.get_context_data(mapping_form=form))

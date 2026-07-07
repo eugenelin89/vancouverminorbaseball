@@ -41,6 +41,9 @@ SOURCE_CHOICES = [
 MAX_CSV_UPLOAD_BYTES = 5 * 1024 * 1024
 MAX_CSV_ROWS = 5000
 
+MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS = "_provision_player_accounts"
+MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS = "_activate_player_accounts"
+
 ACTION_CREATE = "create"
 ACTION_UPDATE = "update"
 ACTION_NEEDS_REVIEW = "needs_review"
@@ -174,6 +177,7 @@ class ImportCommitResult:
     skipped: int = 0
     conflicts: int = 0
     errors: list[str] = field(default_factory=list)
+    account_provisioning: dict[str, Any] = field(default_factory=dict)
 
 
 def clean_cell(value) -> str:
@@ -425,20 +429,31 @@ def _snapshot_to_parsed(snapshot: dict[str, Any]) -> ParsedCsvFile:
 
 
 @transaction.atomic
-def create_import_batch(*, file_obj, source: str, uploaded_by) -> PlayerImportBatch:
+def create_import_batch(
+    *,
+    file_obj,
+    source: str,
+    uploaded_by,
+    provision_player_accounts: bool = False,
+    activate_player_accounts: bool = False,
+) -> PlayerImportBatch:
     """Create a persisted player import batch from a CSV upload."""
     _ensure_staff(uploaded_by)
     parsed = parse_player_csv(file_obj)
     normalized_source = _normalize_source(source or detect_source_from_filename(parsed.file_name))
+    mapping_config = suggest_mapping(parsed.headers, source=normalized_source)
+    mapping_config[MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS] = bool(provision_player_accounts)
+    mapping_config[MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS] = bool(activate_player_accounts)
     batch = PlayerImportBatch.objects.create(
         source=normalized_source,
         original_filename=parsed.file_name,
         uploaded_by=uploaded_by,
         status=PlayerImportStatus.UPLOADED,
+        mapping_config=mapping_config,
         preview_snapshot={"parsed_csv": _parsed_to_snapshot(parsed)},
         rows_processed=len(parsed.rows),
     )
-    build_import_preview(import_batch=batch, mapping_config=suggest_mapping(parsed.headers, source=normalized_source))
+    build_import_preview(import_batch=batch, mapping_config=mapping_config)
     return batch
 
 
@@ -568,6 +583,11 @@ def build_import_preview(*, import_batch: PlayerImportBatch, mapping_config: dic
         "source": import_batch.source,
         "headers": parsed.headers,
         "mapping_config": mapping_config,
+        "account_provisioning": {
+            "enabled": bool(mapping_config.get(MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS)),
+            "activate_users": bool(mapping_config.get(MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS)),
+            "email_column": mapping_config.get("account_email", ""),
+        },
         "rows": rows,
         "summary": {
             "rows_processed": len(rows),
@@ -740,6 +760,7 @@ def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: 
         raise ValidationError("Resolve or explicitly skip review rows before committing this import.")
 
     result = ImportCommitResult(rows_processed=len(preview.get("rows", [])))
+    committed_rows = []
     for preview_row_data in preview.get("rows", []):
         row_number = preview_row_data["row_number"]
         row_action, field_resolutions = _resolutions_for_row(resolutions, row_number)
@@ -776,6 +797,28 @@ def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: 
         )
         result.errors.extend([f"Row {row_number}: {error}" for error in identifier_errors])
         record_import_source_row(player, locked_batch, preview_row_data, actor)
+        committed_rows.append(
+            {
+                "player": player,
+                "row_number": row_number,
+                "original_row": preview_row_data.get("original_row", {}),
+            }
+        )
+
+    if locked_batch.mapping_config.get(MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS):
+        from accounts.services.provisioning_service import ProvisioningOptions, provision_accounts_for_import
+
+        provisioning_summary = provision_accounts_for_import(
+            locked_batch,
+            committed_rows,
+            actor=actor,
+            options=ProvisioningOptions(
+                enabled=True,
+                activate_users=bool(locked_batch.mapping_config.get(MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS)),
+                email_column=locked_batch.mapping_config.get("account_email", ""),
+            ),
+        )
+        result.account_provisioning = provisioning_summary.to_dict()
 
     locked_batch.status = PlayerImportStatus.COMMITTED
     locked_batch.rows_created = result.created

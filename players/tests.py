@@ -8,6 +8,7 @@ from django.contrib import admin
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
+from accounts.models import AccountProfile, UserPlayerLink
 from players.models import Player, PlayerAlias, PlayerImportBatch, PlayerImportStatus, PlayerSourceIdentifier, PlayerSourceRow, PlayerTag
 from players.services import import_service
 from players.services.identity_service import add_source_identifier, create_player
@@ -496,3 +497,75 @@ class PlayerImportWorkflowTests(TestCase):
 
         with self.assertRaises(ValidationError):
             commit_import_batch(import_batch=batch, actor=self.staff)
+
+    def test_commit_without_provisioning_leaves_account_models_unchanged(self):
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"First,Last,DOB\nEugene,Lin,2012-05-01\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+        )
+
+        commit_import_batch(import_batch=batch, actor=self.staff)
+
+        self.assertFalse(User.objects.filter(username="eugene.lin").exists())
+        self.assertFalse(AccountProfile.objects.exists())
+        self.assertFalse(UserPlayerLink.objects.exists())
+
+    def test_commit_with_provisioning_creates_eligible_account_and_safe_summary(self):
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"First,Last,DOB,Email\nEugene,Lin,2012-05-01,eugene@example.com\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+            provision_player_accounts=True,
+        )
+        mapping = dict(batch.mapping_config)
+        mapping["account_email"] = "Email"
+        build_import_preview(import_batch=batch, mapping_config=mapping)
+
+        commit_import_batch(import_batch=batch, actor=self.staff)
+
+        user = User.objects.get(username="eugene.lin")
+        player = Player.objects.get(first_name="Eugene", last_name="Lin")
+        batch.refresh_from_db()
+        self.assertFalse(user.is_active)
+        self.assertEqual(user.email, "eugene@example.com")
+        self.assertTrue(user.check_password("20120501"))
+        self.assertTrue(UserPlayerLink.objects.filter(user=user, player=player, relationship="self").exists())
+        summary = batch.import_summary["account_provisioning"]
+        self.assertEqual(summary["users_created"], 1)
+        self.assertEqual(summary["already_linked"], 0)
+        self.assertNotIn("20120501", str(batch.import_summary))
+
+    def test_commit_with_provisioning_skips_missing_birthdate_without_rollback(self):
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"First,Last\nEugene,Lin\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+            provision_player_accounts=True,
+        )
+
+        commit_import_batch(import_batch=batch, actor=self.staff)
+
+        batch.refresh_from_db()
+        self.assertTrue(Player.objects.filter(first_name="Eugene", last_name="Lin").exists())
+        self.assertFalse(User.objects.filter(username="eugene.lin").exists())
+        self.assertEqual(batch.import_summary["account_provisioning"]["skipped"], 1)
+
+    def test_commit_with_provisioning_reports_duplicate_unrelated_email_conflict(self):
+        User.objects.create_user(username="existing", email="eugene@example.com")
+        batch = create_import_batch(
+            file_obj=self.upload(body=b"First,Last,DOB,Email\nEugene,Lin,2012-05-01,eugene@example.com\n"),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+            provision_player_accounts=True,
+        )
+        mapping = dict(batch.mapping_config)
+        mapping["account_email"] = "Email"
+        build_import_preview(import_batch=batch, mapping_config=mapping)
+
+        commit_import_batch(import_batch=batch, actor=self.staff)
+
+        batch.refresh_from_db()
+        self.assertTrue(Player.objects.filter(first_name="Eugene", last_name="Lin").exists())
+        self.assertFalse(User.objects.filter(username="eugene.lin").exists())
+        self.assertEqual(batch.import_summary["account_provisioning"]["conflicts"], 1)
