@@ -6,13 +6,18 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import redirect
 from django.views.generic import FormView, TemplateView
 
-from accounts.forms import AccountOnlyCreateForm, PlayerAccountCreateForm
+from accounts.forms import AccountEditForm, AccountOnlyCreateForm, PlayerAccountCreateForm, UserPlayerLinkForm
 from accounts.services.account_operations_service import (
     create_account_only,
     create_player_account,
+    create_user_player_link,
+    deactivate_user_player_link,
     get_account_detail,
     get_account_list,
     get_account_operations_dashboard,
+    reactivate_user_player_link,
+    set_primary_user_player_link,
+    update_account,
 )
 from accounts.services.account_query_service import parse_account_list_filters
 from accounts.services.auth_redirect_service import (
@@ -137,6 +142,113 @@ class AccountUserDetailView(AccountOperationsStaffRequiredMixin, TemplateView):
         context["target_user"] = self.account_detail.user
         context["linked_players"] = self.account_detail.linked_players
         return context
+
+
+class AccountUserEditView(AccountOperationsStaffRequiredMixin, FormView):
+    template_name = "accounts/user_edit.html"
+    form_class = AccountEditForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.account_detail = get_account_detail(kwargs["user_id"])
+        if not can_view_account_detail(request.user, self.account_detail.user):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        user = self.account_detail.user
+        return {
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "role": self.account_detail.role,
+            "is_active": user.is_active,
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["account_detail"] = self.account_detail
+        context["target_user"] = self.account_detail.user
+        return context
+
+    def form_valid(self, form):
+        try:
+            update_account(
+                actor=self.request.user,
+                user_id=self.account_detail.user.id,
+                username=form.cleaned_data["username"],
+                first_name=form.cleaned_data.get("first_name", ""),
+                last_name=form.cleaned_data.get("last_name", ""),
+                email=form.cleaned_data.get("email", ""),
+                role=form.cleaned_data["role"],
+                is_active=form.cleaned_data.get("is_active", False),
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        messages.success(self.request, "Account updated.")
+        return redirect("accounts:user-detail", user_id=self.account_detail.user.id)
+
+
+class AccountUserLinksView(AccountOperationsStaffRequiredMixin, FormView):
+    template_name = "accounts/user_links.html"
+    form_class = UserPlayerLinkForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.account_detail = get_account_detail(kwargs["user_id"])
+        if not can_view_account_detail(request.user, self.account_detail.user):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["account_detail"] = self.account_detail
+        context["target_user"] = self.account_detail.user
+        context["linked_players"] = self.account_detail.linked_players
+        return context
+
+    def form_valid(self, form):
+        action = self.request.POST.get("action", "create")
+        try:
+            if action == "create":
+                create_user_player_link(
+                    actor=self.request.user,
+                    user_id=self.account_detail.user.id,
+                    player=form.cleaned_data["player"],
+                    relationship=form.cleaned_data["relationship"],
+                    is_primary=form.cleaned_data.get("is_primary", False),
+                )
+                messages.success(self.request, "Player link created.")
+            else:
+                raise ValidationError("Unsupported link action.")
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        return redirect("accounts:user-links", user_id=self.account_detail.user.id)
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get("action", "create")
+        if action == "create":
+            return super().post(request, *args, **kwargs)
+
+        form = self.form_class()
+        try:
+            link_id = int(request.POST.get("link_id", ""))
+            if action == "deactivate":
+                deactivate_user_player_link(actor=request.user, user_id=self.account_detail.user.id, link_id=link_id)
+                messages.success(request, "Player link deactivated.")
+            elif action == "reactivate":
+                reactivate_user_player_link(actor=request.user, user_id=self.account_detail.user.id, link_id=link_id)
+                messages.success(request, "Player link reactivated.")
+            elif action == "set_primary":
+                set_primary_user_player_link(actor=request.user, user_id=self.account_detail.user.id, link_id=link_id)
+                messages.success(request, "Primary self link updated.")
+            else:
+                raise ValidationError("Unsupported link action.")
+        except (TypeError, ValueError, ValidationError) as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        return redirect("accounts:user-links", user_id=self.account_detail.user.id)
 
 
 class AccountOnlyCreateView(AccountOperationsStaffRequiredMixin, FormView):

@@ -12,6 +12,12 @@ from accounts.models import AccountRole, UserPlayerLink
 from accounts.services import account_query_service
 from accounts.services.account_query_service import AccountListFilters
 from accounts.services.email_service import find_existing_email_user, normalize_email
+from accounts.services.link_service import (
+    activate_link,
+    deactivate_link,
+    link_user_to_player,
+    set_primary_self_link,
+)
 from accounts.services.password_service import (
     generate_birthdate_password,
     mark_password_change_required,
@@ -20,7 +26,7 @@ from accounts.services.password_service import (
 from accounts.services.profile_service import get_or_create_account_profile, set_account_role
 from accounts.services.provisioning_service import STATUS_CREATED, provision_player_account
 from accounts.services.role_service import role_label
-from accounts.services.username_service import validate_available_username
+from accounts.services.username_service import validate_available_username, validate_available_username_for_user
 from players.models import Player
 
 
@@ -90,15 +96,48 @@ class CreatedAccountResult:
     player: Player | None = None
 
 
+@dataclass(frozen=True)
+class UpdatedAccountResult:
+    user: User
+    username: str
+    role: str
+    role_label: str
+    is_active: bool
+
+
+@dataclass(frozen=True)
+class UpdatedLinkResult:
+    link: UserPlayerLink
+    user: User
+    player: Player
+    relationship: str
+    is_primary: bool
+    is_active: bool
+
+
 def _validate_actor_can_create_role(actor, role: str) -> None:
     if role == AccountRole.ADMIN and not getattr(actor, "is_superuser", False):
         raise ValidationError("Only superusers can create admin accounts.")
+
+
+def _validate_actor_can_assign_role(actor, role: str) -> None:
+    if role == AccountRole.ADMIN and not getattr(actor, "is_superuser", False):
+        raise ValidationError("Only superusers can assign admin role.")
 
 
 def _validate_email_available(email: str) -> str:
     normalized = normalize_email(email)
     if normalized and find_existing_email_user(normalized):
         raise ValidationError("Email is already in use.")
+    return normalized
+
+
+def _validate_email_available_for_user(user: User, email: str) -> str:
+    normalized = normalize_email(email)
+    if normalized:
+        existing_user = find_existing_email_user(normalized)
+        if existing_user and existing_user.pk != user.pk:
+            raise ValidationError("Email is already in use.")
     return normalized
 
 
@@ -140,6 +179,36 @@ def _linked_player_row(link: UserPlayerLink) -> LinkedPlayerRow:
         created_from_import=link.created_from_import,
         import_label=import_label,
     )
+
+
+def _updated_account_result(user: User) -> UpdatedAccountResult:
+    role = _role_for_user(user)
+    return UpdatedAccountResult(
+        user=user,
+        username=user.username,
+        role=role,
+        role_label=role_label(role),
+        is_active=user.is_active,
+    )
+
+
+def _updated_link_result(link: UserPlayerLink) -> UpdatedLinkResult:
+    return UpdatedLinkResult(
+        link=link,
+        user=link.user,
+        player=link.player,
+        relationship=link.relationship,
+        is_primary=link.is_primary,
+        is_active=link.is_active,
+    )
+
+
+def _get_user_for_update(user_id: int) -> User:
+    return User.objects.select_for_update().select_related("account_profile").get(pk=user_id)
+
+
+def _get_link_for_user(user: User, link_id: int) -> UserPlayerLink:
+    return UserPlayerLink.objects.select_for_update().select_related("user", "player").get(pk=link_id, user=user)
 
 
 def get_account_operations_dashboard() -> AccountOperationsDashboard:
@@ -225,6 +294,93 @@ def get_account_detail(user_id: int) -> AccountDetailContext:
         role_label=role_label(role),
         linked_players=[_linked_player_row(link) for link in links],
     )
+
+
+@transaction.atomic
+def update_account(
+    *,
+    actor,
+    user_id: int,
+    username: str,
+    first_name: str = "",
+    last_name: str = "",
+    email: str = "",
+    role: str = AccountRole.GUEST_EVALUATOR,
+    is_active: bool = True,
+) -> UpdatedAccountResult:
+    """Update lifecycle and profile fields for an existing account."""
+    _validate_actor_can_assign_role(actor, role)
+    user = _get_user_for_update(user_id)
+    user.username = validate_available_username_for_user(user, username)
+    user.first_name = str(first_name or "").strip()
+    user.last_name = str(last_name or "").strip()
+    user.email = _validate_email_available_for_user(user, email)
+    user.is_active = bool(is_active)
+    user.save(update_fields=["username", "first_name", "last_name", "email", "is_active"])
+    set_account_role(user, role, actor=actor)
+    user.refresh_from_db()
+    return _updated_account_result(user)
+
+
+@transaction.atomic
+def activate_account(*, actor, user_id: int) -> UpdatedAccountResult:
+    """Activate an existing account without changing profile or link history."""
+    user = _get_user_for_update(user_id)
+    if not user.is_active:
+        user.is_active = True
+        user.save(update_fields=["is_active"])
+    return _updated_account_result(user)
+
+
+@transaction.atomic
+def deactivate_account(*, actor, user_id: int) -> UpdatedAccountResult:
+    """Deactivate an existing account without deleting account data or links."""
+    user = _get_user_for_update(user_id)
+    if user.is_active:
+        user.is_active = False
+        user.save(update_fields=["is_active"])
+    return _updated_account_result(user)
+
+
+@transaction.atomic
+def create_user_player_link(
+    *,
+    actor,
+    user_id: int,
+    player: Player,
+    relationship: str,
+    is_primary: bool = False,
+) -> UpdatedLinkResult:
+    """Create an active user/player link through the account operations workflow."""
+    user = _get_user_for_update(user_id)
+    if UserPlayerLink.objects.filter(user=user, player=player, relationship=relationship, is_active=True).exists():
+        raise ValidationError("An active link already exists for this user, player, and relationship.")
+    link = link_user_to_player(user, player, relationship=relationship, is_primary=is_primary)
+    return _updated_link_result(link)
+
+
+@transaction.atomic
+def deactivate_user_player_link(*, actor, user_id: int, link_id: int) -> UpdatedLinkResult:
+    """Deactivate a user/player link without deleting its history."""
+    user = _get_user_for_update(user_id)
+    link = _get_link_for_user(user, link_id)
+    return _updated_link_result(deactivate_link(link, actor=actor))
+
+
+@transaction.atomic
+def reactivate_user_player_link(*, actor, user_id: int, link_id: int) -> UpdatedLinkResult:
+    """Reactivate an existing inactive user/player link when constraints allow it."""
+    user = _get_user_for_update(user_id)
+    link = _get_link_for_user(user, link_id)
+    return _updated_link_result(activate_link(link, actor=actor))
+
+
+@transaction.atomic
+def set_primary_user_player_link(*, actor, user_id: int, link_id: int) -> UpdatedLinkResult:
+    """Set an existing self link as the active primary player link."""
+    user = _get_user_for_update(user_id)
+    link = _get_link_for_user(user, link_id)
+    return _updated_link_result(set_primary_self_link(link, actor=actor))
 
 
 @transaction.atomic

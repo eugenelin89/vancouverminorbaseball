@@ -38,13 +38,29 @@ def username_for_player(player) -> str:
     return username
 
 
-def validate_available_username(username: str) -> str:
-    """Validate an explicitly supplied username and return the normalized value."""
+def _normalize_explicit_username(username: str) -> str:
     cleaned = str(username or "").strip().casefold()
     if not cleaned:
         raise ValidationError("Username is required.")
     if USERNAME_ALLOWED_PATTERN.search(cleaned):
         raise ValidationError("Username may contain only letters, numbers, dots, underscores, and hyphens.")
+    return cleaned
+
+
+def validate_available_username(username: str) -> str:
+    """Validate an explicitly supplied username and return the normalized value."""
+    cleaned = _normalize_explicit_username(username)
     if User.objects.filter(username__iexact=cleaned).exists():
+        raise ValidationError("Username is already in use.")
+    return cleaned
+
+
+def validate_available_username_for_user(user, username: str) -> str:
+    """Validate a username change while allowing the current user's username."""
+    if not isinstance(user, User):
+        raise ValidationError("A valid user is required.")
+    cleaned = _normalize_explicit_username(username)
+    existing_user = User.objects.filter(username__iexact=cleaned).first()
+    if existing_user and existing_user.pk != user.pk:
         raise ValidationError("Username is already in use.")
     return cleaned

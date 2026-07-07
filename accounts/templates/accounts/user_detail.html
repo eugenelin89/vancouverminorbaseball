@@ -1,7 +1,7 @@
 {% extends "pdp/base.html" %}
 
 {% block pdp_title %}Account Detail{% endblock %}
-{% block pdp_subtitle %}Read-only account and linked player context.{% endblock %}
+{% block pdp_subtitle %}Account and linked player context.{% endblock %}
 
 {% block pdp_content %}
 <section class="pdp-grid pdp-grid--single">
@@ -49,7 +49,11 @@
             <dt>Last login</dt>
             <dd>{{ target_user.last_login|default:"-" }}</dd>
         </dl>
-        <p><a class="button button--ghost" href="{% url 'accounts:user-list' %}">Back to users</a></p>
+        <div class="pdp-actions">
+            <a class="button button--primary" href="{% url 'accounts:user-edit' target_user.id %}">Edit Account</a>
+            <a class="button button--ghost" href="{% url 'accounts:user-links' target_user.id %}">Manage Links</a>
+            <a class="button button--ghost" href="{% url 'accounts:user-list' %}">Back to users</a>
+        </div>
     </article>
 
     <article class="pdp-card">

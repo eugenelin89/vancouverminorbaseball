@@ -8,6 +8,8 @@ from accounts.views import (
     AccountPasswordChangeView,
     AccountProfileView,
     AccountUserDetailView,
+    AccountUserEditView,
+    AccountUserLinksView,
     AccountUserListView,
     PlayerAccountCreateView,
 )
@@ -25,4 +27,6 @@ urlpatterns = [
     path("profile/", AccountProfileView.as_view(), name="profile"),
     path("users/", AccountUserListView.as_view(), name="user-list"),
     path("users/<int:user_id>/", AccountUserDetailView.as_view(), name="user-detail"),
+    path("users/<int:user_id>/edit/", AccountUserEditView.as_view(), name="user-edit"),
+    path("users/<int:user_id>/links/", AccountUserLinksView.as_view(), name="user-links"),
 ]

@@ -1,0 +1,50 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Edit Account{% endblock %}
+{% block pdp_subtitle %}Manage account lifecycle, username, and role.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>{{ target_user.get_full_name|default:target_user.username }}</h2>
+        <form method="post" class="pdp-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label>
+                Username
+                {{ form.username }}
+                {{ form.username.errors }}
+            </label>
+            <label>
+                First name
+                {{ form.first_name }}
+                {{ form.first_name.errors }}
+            </label>
+            <label>
+                Last name
+                {{ form.last_name }}
+                {{ form.last_name.errors }}
+            </label>
+            <label>
+                Email
+                {{ form.email }}
+                {{ form.email.errors }}
+            </label>
+            <label>
+                Role
+                {{ form.role }}
+                {{ form.role.errors }}
+            </label>
+            <label>
+                {{ form.is_active }}
+                {{ form.is_active.label }}
+                {{ form.is_active.errors }}
+            </label>
+            <div class="pdp-actions">
+                <button class="button button--primary" type="submit">Save Account</button>
+                <a class="button button--ghost" href="{% url 'accounts:user-detail' target_user.id %}">Cancel</a>
+            </div>
+        </form>
+    </article>
+</section>
+{% endblock %}

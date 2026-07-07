@@ -10,11 +10,18 @@ from django.contrib.auth import SESSION_KEY
 
 from accounts.models import AccountProfile, AccountRole, UserPlayerLink, UserPlayerRelationship
 from accounts.services.account_operations_service import (
+    activate_account,
     create_account_only,
     create_player_account,
+    create_user_player_link,
+    deactivate_account,
+    deactivate_user_player_link,
     get_account_detail,
     get_account_list,
     get_account_operations_dashboard,
+    reactivate_user_player_link,
+    set_primary_user_player_link,
+    update_account,
 )
 from accounts.services.account_query_service import AccountListFilters, count_players_without_self_link, filter_account_users
 from accounts.services.auth_redirect_service import (
@@ -48,6 +55,7 @@ from accounts.services.link_service import (
     get_users_for_player,
     is_player_self,
     link_user_to_player,
+    set_primary_self_link,
     unlink_user_from_player,
 )
 from accounts.services.password_service import (
@@ -72,6 +80,7 @@ from accounts.services.username_service import (
     base_username_for_player,
     normalize_username_part,
     validate_available_username,
+    validate_available_username_for_user,
     username_for_player,
 )
 from analytics.services.permissions import can_submit_coach_assessment
@@ -421,6 +430,147 @@ class AccountOperationsServiceTests(TestCase):
         with self.assertRaises(ValidationError):
             create_player_account(actor=self.staff, player=self.player, role=AccountRole.COACH)
 
+    def test_update_account_changes_lifecycle_username_email_and_role(self):
+        result = update_account(
+            actor=self.staff,
+            user_id=self.coach.id,
+            username=" Coach.Updated ",
+            first_name="Updated",
+            last_name="Coach",
+            email="UPDATED@example.com",
+            role=AccountRole.GUEST_EVALUATOR,
+            is_active=False,
+        )
+
+        self.coach.refresh_from_db()
+        self.assertEqual(result.username, "coach.updated")
+        self.assertEqual(result.role, AccountRole.GUEST_EVALUATOR)
+        self.assertFalse(result.is_active)
+        self.assertEqual(self.coach.username, "coach.updated")
+        self.assertEqual(self.coach.email, "updated@example.com")
+        self.assertEqual(self.coach.account_profile.role, AccountRole.GUEST_EVALUATOR)
+        self.assertFalse(self.coach.is_staff)
+        self.assertFalse(self.coach.is_superuser)
+
+    def test_update_account_rejects_duplicate_username_and_email(self):
+        User.objects.create_user(username="taken", email="taken@example.com")
+
+        with self.assertRaises(ValidationError):
+            update_account(
+                actor=self.staff,
+                user_id=self.coach.id,
+                username="TAKEN",
+                email="coach@example.com",
+                role=AccountRole.COACH,
+            )
+        with self.assertRaises(ValidationError):
+            update_account(
+                actor=self.staff,
+                user_id=self.coach.id,
+                username="coach.one",
+                email="Taken@Example.com",
+                role=AccountRole.COACH,
+            )
+
+    def test_update_account_admin_role_requires_superuser(self):
+        with self.assertRaises(ValidationError):
+            update_account(
+                actor=self.staff,
+                user_id=self.coach.id,
+                username="coach.one",
+                role=AccountRole.ADMIN,
+            )
+
+        superuser = User.objects.create_superuser(username="ops.admin", password="testpass")
+        result = update_account(
+            actor=superuser,
+            user_id=self.coach.id,
+            username="coach.one",
+            role=AccountRole.ADMIN,
+        )
+
+        self.coach.refresh_from_db()
+        self.assertEqual(result.role, AccountRole.ADMIN)
+        self.assertEqual(self.coach.account_profile.role, AccountRole.ADMIN)
+        self.assertFalse(self.coach.is_staff)
+        self.assertFalse(self.coach.is_superuser)
+
+    def test_activate_and_deactivate_account_preserve_profile_and_links(self):
+        deactivate_result = deactivate_account(actor=self.staff, user_id=self.player_user.id)
+        self.player_user.refresh_from_db()
+        link = UserPlayerLink.objects.get(user=self.player_user, player=self.player)
+
+        self.assertFalse(deactivate_result.is_active)
+        self.assertFalse(self.player_user.is_active)
+        self.assertEqual(self.player_user.account_profile.role, AccountRole.PLAYER)
+        self.assertTrue(link.is_active)
+
+        activate_result = activate_account(actor=self.staff, user_id=self.player_user.id)
+        self.player_user.refresh_from_db()
+
+        self.assertTrue(activate_result.is_active)
+        self.assertTrue(self.player_user.is_active)
+        self.assertTrue(UserPlayerLink.objects.get(pk=link.pk).is_active)
+
+    def test_account_operations_manage_player_links_through_services(self):
+        link_result = create_user_player_link(
+            actor=self.staff,
+            user_id=self.coach.id,
+            player=self.player,
+            relationship=UserPlayerRelationship.COACH,
+            is_primary=False,
+        )
+
+        self.assertTrue(link_result.is_active)
+        self.assertFalse(link_result.is_primary)
+        with self.assertRaises(ValidationError):
+            create_user_player_link(
+                actor=self.staff,
+                user_id=self.coach.id,
+                player=self.player,
+                relationship=UserPlayerRelationship.COACH,
+                is_primary=False,
+            )
+
+        deactivated = deactivate_user_player_link(actor=self.staff, user_id=self.coach.id, link_id=link_result.link.id)
+        self.assertFalse(deactivated.is_active)
+        self.assertFalse(UserPlayerLink.objects.get(pk=link_result.link.id).is_primary)
+
+        reactivated = reactivate_user_player_link(actor=self.staff, user_id=self.coach.id, link_id=link_result.link.id)
+        self.assertTrue(reactivated.is_active)
+
+    def test_account_operations_set_primary_self_link_switches_existing_primary(self):
+        other_player = Player.objects.create(first_name="Second", last_name="Player")
+        first_link = UserPlayerLink.objects.get(user=self.player_user, player=self.player)
+        second_link = create_user_player_link(
+            actor=self.staff,
+            user_id=self.player_user.id,
+            player=other_player,
+            relationship=UserPlayerRelationship.SELF,
+            is_primary=False,
+        ).link
+
+        result = set_primary_user_player_link(actor=self.staff, user_id=self.player_user.id, link_id=second_link.id)
+        first_link.refresh_from_db()
+        second_link.refresh_from_db()
+
+        self.assertTrue(result.is_primary)
+        self.assertFalse(first_link.is_primary)
+        self.assertTrue(second_link.is_primary)
+        self.assertEqual(UserPlayerLink.objects.filter(user=self.player_user, is_primary=True, is_active=True).count(), 1)
+
+    def test_account_operations_reject_primary_non_self_link(self):
+        link = create_user_player_link(
+            actor=self.staff,
+            user_id=self.coach.id,
+            player=self.player,
+            relationship=UserPlayerRelationship.PARENT,
+            is_primary=False,
+        ).link
+
+        with self.assertRaises(ValidationError):
+            set_primary_user_player_link(actor=self.staff, user_id=self.coach.id, link_id=link.id)
+
 
 class UserPlayerLinkModelTests(TestCase):
     def setUp(self):
@@ -712,6 +862,35 @@ class UserPlayerLinkServiceTests(TestCase):
         self.assertTrue(is_player_self(self.user, self.player))
         self.assertFalse(is_player_self(self.user, self.other_player))
 
+    def test_set_primary_self_link_switches_primary_link(self):
+        first_link = link_user_to_player(self.user, self.player)
+        second_link = link_user_to_player(
+            self.user,
+            self.other_player,
+            relationship=UserPlayerRelationship.SELF,
+            is_primary=False,
+        )
+
+        set_primary_self_link(second_link)
+        first_link.refresh_from_db()
+        second_link.refresh_from_db()
+
+        self.assertFalse(first_link.is_primary)
+        self.assertTrue(second_link.is_primary)
+        self.assertTrue(second_link.is_active)
+        self.assertEqual(get_primary_player(self.user), self.other_player)
+
+    def test_set_primary_self_link_rejects_non_self_link(self):
+        parent_link = link_user_to_player(
+            self.user,
+            self.player,
+            relationship=UserPlayerRelationship.PARENT,
+            is_primary=False,
+        )
+
+        with self.assertRaises(ValidationError):
+            set_primary_self_link(parent_link)
+
     def test_is_player_self_ignores_inactive_or_non_self_links(self):
         parent_link = link_user_to_player(
             self.user,
@@ -751,6 +930,14 @@ class AccountUsernameServiceTests(TestCase):
             validate_available_username("coach.ONE")
         with self.assertRaises(ValidationError):
             validate_available_username("bad username")
+
+    def test_validate_available_username_for_user_allows_current_user(self):
+        user = User.objects.create_user(username="coach.one")
+        User.objects.create_user(username="other")
+
+        self.assertEqual(validate_available_username_for_user(user, " Coach.One "), "coach.one")
+        with self.assertRaises(ValidationError):
+            validate_available_username_for_user(user, "OTHER")
 
 
 class AccountEmailServiceTests(TestCase):
@@ -1237,6 +1424,147 @@ class AccountOperationsViewTests(TestCase):
         self.assertContains(response, "coach@example.com")
         self.assertContains(response, "Coach")
         self.assertContains(response, "Alex Player")
+        self.assertContains(response, reverse("accounts:user-edit", kwargs={"user_id": self.coach.id}))
+        self.assertContains(response, reverse("accounts:user-links", kwargs={"user_id": self.coach.id}))
+
+    def test_user_edit_requires_staff(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.get(reverse("accounts:user-edit", kwargs={"user_id": self.coach.id}))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_can_edit_account_lifecycle_username_and_role(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-edit", kwargs={"user_id": self.coach.id}),
+            {
+                "username": " Coach.Updated ",
+                "first_name": "Updated",
+                "last_name": "Coach",
+                "email": "updated@example.com",
+                "role": AccountRole.GUEST_EVALUATOR,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("accounts:user-detail", kwargs={"user_id": self.coach.id}))
+        self.coach.refresh_from_db()
+        self.assertEqual(self.coach.username, "coach.updated")
+        self.assertFalse(self.coach.is_active)
+        self.assertEqual(self.coach.account_profile.role, AccountRole.GUEST_EVALUATOR)
+        self.assertFalse(self.coach.is_staff)
+        self.assertFalse(self.coach.is_superuser)
+
+    def test_staff_user_edit_rejects_duplicate_username_and_admin_role(self):
+        User.objects.create_user(username="taken")
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-edit", kwargs={"user_id": self.coach.id}),
+            {
+                "username": "taken",
+                "role": AccountRole.COACH,
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Username is already in use")
+
+        response = self.client.post(
+            reverse("accounts:user-edit", kwargs={"user_id": self.coach.id}),
+            {
+                "username": "coach.one",
+                "role": AccountRole.ADMIN,
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Only superusers can assign admin role")
+        self.coach.refresh_from_db()
+        self.assertEqual(self.coach.account_profile.role, AccountRole.COACH)
+
+    def test_user_links_requires_staff(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.get(reverse("accounts:user-links", kwargs={"user_id": self.coach.id}))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_can_create_deactivate_and_reactivate_link(self):
+        other_player = Player.objects.create(first_name="Blake", last_name="Player")
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-links", kwargs={"user_id": self.coach.id}),
+            {
+                "action": "create",
+                "player": other_player.id,
+                "relationship": UserPlayerRelationship.PARENT,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        link = UserPlayerLink.objects.get(user=self.coach, player=other_player, relationship=UserPlayerRelationship.PARENT)
+        self.assertTrue(link.is_active)
+        self.assertFalse(link.is_primary)
+
+        response = self.client.post(
+            reverse("accounts:user-links", kwargs={"user_id": self.coach.id}),
+            {"action": "deactivate", "link_id": link.id},
+        )
+        self.assertEqual(response.status_code, 302)
+        link.refresh_from_db()
+        self.assertFalse(link.is_active)
+
+        response = self.client.post(
+            reverse("accounts:user-links", kwargs={"user_id": self.coach.id}),
+            {"action": "reactivate", "link_id": link.id},
+        )
+        self.assertEqual(response.status_code, 302)
+        link.refresh_from_db()
+        self.assertTrue(link.is_active)
+
+    def test_staff_can_set_primary_self_link_from_links_page(self):
+        first_player = Player.objects.create(first_name="Self", last_name="One")
+        second_player = Player.objects.create(first_name="Self", last_name="Two")
+        first_link = link_user_to_player(self.coach, first_player, relationship=UserPlayerRelationship.SELF)
+        second_link = link_user_to_player(
+            self.coach,
+            second_player,
+            relationship=UserPlayerRelationship.SELF,
+            is_primary=False,
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-links", kwargs={"user_id": self.coach.id}),
+            {"action": "set_primary", "link_id": second_link.id},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        first_link.refresh_from_db()
+        second_link.refresh_from_db()
+        self.assertFalse(first_link.is_primary)
+        self.assertTrue(second_link.is_primary)
+
+    def test_links_page_rejects_duplicate_active_link(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-links", kwargs={"user_id": self.coach.id}),
+            {
+                "action": "create",
+                "player": self.player.id,
+                "relationship": UserPlayerRelationship.COACH,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "An active link already exists")
 
     def test_profile_page_links_staff_to_account_operations(self):
         self.client.force_login(self.staff)

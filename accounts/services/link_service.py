@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 
 from accounts.models import UserPlayerLink, UserPlayerRelationship
 from players.models import Player, PlayerImportBatch
@@ -162,6 +163,30 @@ def activate_link(link, actor=None) -> UserPlayerLink:
         link.save(update_fields=["is_active", "updated_at"])
     except IntegrityError as exc:
         raise ValidationError("This user/player link conflicts with an existing active link.") from exc
+    return link
+
+
+@transaction.atomic
+def set_primary_self_link(link, actor=None) -> UserPlayerLink:
+    """Make a self link the active primary link for its user and player."""
+    if not isinstance(link, UserPlayerLink):
+        raise ValidationError("A valid user/player link is required.")
+    if link.relationship != UserPlayerRelationship.SELF:
+        raise ValidationError("Only self links can be primary.")
+
+    UserPlayerLink.objects.select_for_update().filter(
+        Q(user=link.user) | Q(player=link.player),
+        relationship=UserPlayerRelationship.SELF,
+        is_active=True,
+        is_primary=True,
+    ).exclude(pk=link.pk).update(is_primary=False)
+
+    link.is_active = True
+    link.is_primary = True
+    try:
+        link.save(update_fields=["is_active", "is_primary", "updated_at"])
+    except IntegrityError as exc:
+        raise ValidationError("This primary self link conflicts with an existing active link.") from exc
     return link
 
 

@@ -1,0 +1,94 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Manage Player Links{% endblock %}
+{% block pdp_subtitle %}Create, deactivate, reactivate, and manage primary self links.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>{{ target_user.get_full_name|default:target_user.username }}</h2>
+        <form method="post" class="pdp-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            {{ form.non_field_errors }}
+            <label>
+                Player
+                {{ form.player }}
+                {{ form.player.errors }}
+            </label>
+            <label>
+                Relationship
+                {{ form.relationship }}
+                {{ form.relationship.errors }}
+            </label>
+            <label>
+                {{ form.is_primary }}
+                {{ form.is_primary.label }}
+                {{ form.is_primary.errors }}
+            </label>
+            <div class="pdp-actions">
+                <button class="button button--primary" type="submit">Create Link</button>
+                <a class="button button--ghost" href="{% url 'accounts:user-detail' target_user.id %}">Back to account</a>
+            </div>
+        </form>
+    </article>
+
+    <article class="pdp-card">
+        <h2>Existing Links</h2>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Relationship</th>
+                        <th>Primary</th>
+                        <th>Status</th>
+                        <th>Imported</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in linked_players %}
+                        <tr>
+                            <td>{{ row.player.display_name }}</td>
+                            <td>{{ row.relationship }}</td>
+                            <td>{% if row.is_primary %}Yes{% else %}No{% endif %}</td>
+                            <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                            <td>{% if row.created_from_import %}Yes{% else %}No{% endif %}</td>
+                            <td>
+                                <div class="pdp-actions">
+                                    {% if row.is_active %}
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="deactivate">
+                                            <input type="hidden" name="link_id" value="{{ row.link.id }}">
+                                            <button class="button button--ghost" type="submit">Deactivate</button>
+                                        </form>
+                                    {% else %}
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="reactivate">
+                                            <input type="hidden" name="link_id" value="{{ row.link.id }}">
+                                            <button class="button button--ghost" type="submit">Reactivate</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if row.link.relationship == "self" and not row.is_primary %}
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="set_primary">
+                                            <input type="hidden" name="link_id" value="{{ row.link.id }}">
+                                            <button class="button button--ghost" type="submit">Set Primary</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6">No linked players found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}
