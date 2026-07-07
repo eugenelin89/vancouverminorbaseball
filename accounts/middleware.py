@@ -8,12 +8,15 @@ class AccountPasswordChangeRequiredMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        if self._should_redirect(request):
+            return redirect(ACCOUNT_PASSWORD_PATH)
+        return self.get_response(request)
+
+    def _should_redirect(self, request) -> bool:
         user = getattr(request, "user", None)
-        if (
+        return bool(
             user
             and user.is_authenticated
             and should_force_password_change(user)
             and not is_password_change_allowed_path(request.path, user)
-        ):
-            return redirect(ACCOUNT_PASSWORD_PATH)
-        return self.get_response(request)
+        )

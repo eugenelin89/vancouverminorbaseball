@@ -2,10 +2,15 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
-from django.urls import reverse_lazy
+from django.shortcuts import redirect
 from django.views.generic import TemplateView
 
-from accounts.services.auth_redirect_service import ACCOUNT_PASSWORD_PATH, landing_url_for_user, should_force_password_change
+from accounts.services.auth_redirect_service import (
+    ACCOUNT_LOGIN_PATH,
+    ACCOUNT_PASSWORD_PATH,
+    landing_url_for_user,
+    should_force_password_change,
+)
 from accounts.services.link_service import get_players_for_user
 from accounts.services.password_service import clear_password_change_required
 from accounts.services.profile_service import get_account_role
@@ -25,21 +30,19 @@ class AccountLoginView(LoginView):
 
 
 class AccountLogoutView(LogoutView):
-    next_page = reverse_lazy("accounts:login")
+    next_page = ACCOUNT_LOGIN_PATH
 
 
 class AccountPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     template_name = "accounts/password_change.html"
 
-    def get_success_url(self):
-        return landing_url_for_user(self.request.user)
-
     def form_valid(self, form):
-        response = super().form_valid(form)
-        clear_password_change_required(self.request.user)
-        update_session_auth_hash(self.request, self.request.user)
+        # Keep the forced-password flow explicit: save, clear flag, preserve session, then redirect.
+        user = form.save()
+        clear_password_change_required(user)
+        update_session_auth_hash(self.request, user)
         messages.success(self.request, "Password updated.")
-        return response
+        return redirect(landing_url_for_user(user))
 
 
 class AccountProfileView(LoginRequiredMixin, TemplateView):

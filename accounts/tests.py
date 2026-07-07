@@ -719,7 +719,7 @@ class AccountAuthViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], ACCOUNT_PROFILE_PATH)
+        self.assertEqual(response["Location"], landing_url_for_user(self.user))
 
     def test_staff_login_lands_at_analytics(self):
         response = self.client.post(
@@ -728,7 +728,7 @@ class AccountAuthViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], ANALYTICS_HOME_PATH)
+        self.assertEqual(response["Location"], landing_url_for_user(self.staff))
 
     def test_safe_next_parameter_is_respected_without_forced_password_change(self):
         response = self.client.post(
@@ -785,11 +785,36 @@ class AccountAuthViewTests(TestCase):
 
         profile.refresh_from_db()
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], ACCOUNT_PROFILE_PATH)
+        self.assertEqual(response["Location"], landing_url_for_user(self.user))
         self.assertFalse(profile.must_change_password)
         self.assertIn(SESSION_KEY, self.client.session)
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("new-strong-pass-123"))
+
+        landing_response = self.client.get(response["Location"])
+        self.assertEqual(landing_response.status_code, 200)
+        self.assertNotEqual(landing_response.get("Location"), ACCOUNT_PASSWORD_PATH)
+
+    def test_password_change_redirects_staff_to_landing_service_url(self):
+        profile = get_or_create_account_profile(self.staff)
+        profile.must_change_password = True
+        profile.save(update_fields=["must_change_password", "updated_at"])
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:password-change"),
+            {
+                "old_password": "testpass",
+                "new_password1": "new-strong-pass-123",
+                "new_password2": "new-strong-pass-123",
+            },
+        )
+
+        profile.refresh_from_db()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], landing_url_for_user(self.staff))
+        self.assertFalse(profile.must_change_password)
+        self.assertIn(SESSION_KEY, self.client.session)
 
     def test_inactive_user_cannot_login(self):
         inactive = User.objects.create_user(username="inactive", password="testpass", is_active=False)
@@ -838,6 +863,39 @@ class AccountPasswordMiddlewareTests(TestCase):
         self.assertEqual(self.client.get(reverse("accounts:password-change")).status_code, 200)
         self.assertNotEqual(self.client.get(reverse("accounts:login")).status_code, 302)
         self.assertEqual(self.client.post(reverse("accounts:logout")).status_code, 302)
+
+    def test_password_page_post_is_not_blocked_by_middleware(self):
+        self.require_password_change()
+
+        response = self.client.post(
+            reverse("accounts:password-change"),
+            {
+                "old_password": "wrong-password",
+                "new_password1": "new-strong-pass-123",
+                "new_password2": "new-strong-pass-123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Update Password")
+
+    def test_middleware_does_not_redirect_after_successful_password_change(self):
+        self.require_password_change()
+
+        response = self.client.post(
+            reverse("accounts:password-change"),
+            {
+                "old_password": "testpass",
+                "new_password1": "new-strong-pass-123",
+                "new_password2": "new-strong-pass-123",
+            },
+        )
+
+        self.profile.refresh_from_db()
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(self.profile.must_change_password)
+        profile_response = self.client.get(reverse("accounts:profile"))
+        self.assertEqual(profile_response.status_code, 200)
 
     def test_static_media_and_superuser_admin_paths_are_allowed(self):
         superuser = User.objects.create_superuser(username="admin", password="testpass")

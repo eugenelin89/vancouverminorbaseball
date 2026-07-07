@@ -8,6 +8,11 @@ ACCOUNT_LOGOUT_PATH = "/accounts/logout/"
 ACCOUNT_PASSWORD_PATH = "/accounts/password/"
 ACCOUNT_PROFILE_PATH = "/accounts/profile/"
 ANALYTICS_HOME_PATH = "/analytics/"
+ACCOUNT_PASSWORD_ALLOWED_PATHS = {
+    ACCOUNT_LOGIN_PATH,
+    ACCOUNT_LOGOUT_PATH,
+    ACCOUNT_PASSWORD_PATH,
+}
 
 
 def landing_url_for_user(user) -> str:
@@ -31,8 +36,7 @@ def should_force_password_change(user) -> bool:
 
 def is_password_change_allowed_path(path: str, user) -> bool:
     """Return whether a path is allowed while password change is required."""
-    allowed_paths = {ACCOUNT_LOGIN_PATH, ACCOUNT_LOGOUT_PATH, ACCOUNT_PASSWORD_PATH}
-    if path in allowed_paths:
+    if path in ACCOUNT_PASSWORD_ALLOWED_PATHS:
         return True
     static_url = getattr(settings, "STATIC_URL", "")
     media_url = getattr(settings, "MEDIA_URL", "")
