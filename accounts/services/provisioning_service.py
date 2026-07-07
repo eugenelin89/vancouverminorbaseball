@@ -120,13 +120,21 @@ def _find_safe_email_user(player: Player, email: str):
     return email_user, link
 
 
-def _apply_import_profile_state(user, import_batch, *, set_player_role: bool):
+def _apply_import_profile_state(user, import_batch, *, set_player_role: bool, created_from_import: bool):
     profile = get_or_create_account_profile(user)
+    update_fields = []
     if set_player_role and profile.role not in {AccountRole.ADMIN, AccountRole.STAFF}:
         profile.role = AccountRole.PLAYER
-    profile.created_from_import = True
-    profile.import_batch = import_batch
-    profile.save(update_fields=["role", "created_from_import", "import_batch", "updated_at"])
+        update_fields.append("role")
+    if created_from_import:
+        if not profile.created_from_import:
+            profile.created_from_import = True
+            update_fields.append("created_from_import")
+        if profile.import_batch_id != getattr(import_batch, "id", None):
+            profile.import_batch = import_batch
+            update_fields.append("import_batch")
+    if update_fields:
+        profile.save(update_fields=[*update_fields, "updated_at"])
     return profile
 
 
@@ -134,9 +142,11 @@ def _ensure_active_self_link(link, import_batch):
     if link.is_active:
         return link
     link.is_primary = True
-    link.created_from_import = True
-    link.import_batch = import_batch
-    link.save(update_fields=["is_primary", "created_from_import", "import_batch", "updated_at"])
+    update_fields = ["is_primary"]
+    if link.created_from_import and import_batch and not link.import_batch_id:
+        link.import_batch = import_batch
+        update_fields.append("import_batch")
+    link.save(update_fields=[*update_fields, "updated_at"])
     return activate_link(link)
 
 
@@ -166,7 +176,7 @@ def _safe_linked_user_result(player, link, import_batch, email: str, row_number:
     if normalized_email and not link.user.email:
         link.user.email = normalized_email
         link.user.save(update_fields=["email"])
-    _apply_import_profile_state(link.user, import_batch, set_player_role=False)
+    _apply_import_profile_state(link.user, import_batch, set_player_role=False, created_from_import=False)
     return ProvisioningResult(
         player_id=player.id,
         row_number=row_number,
@@ -209,7 +219,7 @@ def provision_player_account(
                     user_id=email_user.id,
                     messages=[_row_message(row_number, "; ".join(exc.messages))],
                 )
-            _apply_import_profile_state(email_user, import_batch, set_player_role=False)
+            _apply_import_profile_state(email_user, import_batch, set_player_role=False, created_from_import=False)
             return ProvisioningResult(
                 player_id=player.id,
                 row_number=row_number,
@@ -247,7 +257,7 @@ def provision_player_account(
 
     user = User.objects.create(username=username, email=normalized_email, is_active=activate_user)
     set_temporary_password(user, player)
-    profile = _apply_import_profile_state(user, import_batch, set_player_role=True)
+    profile = _apply_import_profile_state(user, import_batch, set_player_role=True, created_from_import=True)
     if not profile.must_change_password:
         mark_password_change_required(user, True)
     link_user_to_player(

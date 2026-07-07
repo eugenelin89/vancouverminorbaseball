@@ -593,6 +593,27 @@ class AccountProvisioningServiceTests(TestCase):
         self.assertEqual(AccountProfile.objects.filter(user=user).count(), 1)
         self.assertEqual(UserPlayerLink.objects.filter(user=user, player=self.player).count(), 1)
 
+    def test_provision_player_account_preserves_manual_link_provenance(self):
+        user = User.objects.create_user(username="manual.player", email="manual@example.com")
+        profile = get_or_create_account_profile(user)
+        link = link_user_to_player(user, self.player)
+        deactivate_link(link)
+
+        result = provision_player_account(
+            self.player,
+            import_batch=self.import_batch,
+            email="manual@example.com",
+            row_number=2,
+        )
+        profile.refresh_from_db()
+        link.refresh_from_db()
+
+        self.assertEqual(result.status, STATUS_ALREADY_LINKED)
+        self.assertFalse(profile.created_from_import)
+        self.assertIsNone(profile.import_batch)
+        self.assertFalse(link.created_from_import)
+        self.assertIsNone(link.import_batch)
+
     def test_provision_player_account_remains_idempotent_after_link_deactivation_and_reactivation(self):
         first = provision_player_account(self.player, import_batch=self.import_batch, row_number=2)
         link = UserPlayerLink.objects.get(player=self.player, user_id=first.user_id)
@@ -628,6 +649,8 @@ class AccountProvisioningServiceTests(TestCase):
 
         self.assertEqual(result.status, STATUS_ALREADY_LINKED)
         self.assertEqual(staff_profile.role, AccountRole.STAFF)
+        self.assertFalse(staff_profile.created_from_import)
+        self.assertIsNone(staff_profile.import_batch)
 
     def test_provisioning_summary_serializes_safe_counts_without_plaintext_passwords(self):
         summary = provision_accounts_for_import(
