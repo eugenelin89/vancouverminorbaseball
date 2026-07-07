@@ -77,6 +77,12 @@ Because the site is mostly static, productivity comes from editing `content.py` 
 
 ---
 
+## Project Snapshot Policy
+
+When a file is created or changed in this repository, update `project_flat_file.txt` before finishing the task. The snapshot should include all project text files with their full absolute paths and clear separators. Binary files should be represented by metadata and a short description rather than embedding their full contents.
+
+---
+
 ## Production Deployment on DigitalOcean (Ubuntu 20.04+)
 
 The following steps assume you already operate other subdomains (e.g. `dev.vancouverminor.com`) on the same Droplet and that this application should serve the apex domain at `https://vancouverminor.com`. Adjust paths and names to suit your environment.
