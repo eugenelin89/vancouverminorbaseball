@@ -512,6 +512,43 @@ class AccountOperationsServiceTests(TestCase):
         self.assertTrue(self.player_user.is_active)
         self.assertTrue(UserPlayerLink.objects.get(pk=link.pk).is_active)
 
+    def test_deactivate_account_rejects_self_deactivation(self):
+        with self.assertRaises(ValidationError):
+            deactivate_account(actor=self.staff, user_id=self.staff.id)
+
+        self.staff.refresh_from_db()
+        self.assertTrue(self.staff.is_active)
+
+    def test_update_account_rejects_self_deactivation(self):
+        with self.assertRaises(ValidationError):
+            update_account(
+                actor=self.staff,
+                user_id=self.staff.id,
+                username="staff",
+                role=AccountRole.STAFF,
+                is_active=False,
+            )
+
+        self.staff.refresh_from_db()
+        self.assertTrue(self.staff.is_active)
+
+    def test_deactivate_account_rejects_last_active_superuser(self):
+        superuser = User.objects.create_superuser(username="ops.admin", password="testpass")
+
+        with self.assertRaises(ValidationError):
+            deactivate_account(actor=self.staff, user_id=superuser.id)
+
+        superuser.refresh_from_db()
+        self.assertTrue(superuser.is_active)
+
+    def test_deactivate_account_allows_superuser_when_another_active_superuser_exists(self):
+        superuser = User.objects.create_superuser(username="ops.admin", password="testpass")
+        User.objects.create_superuser(username="ops.admin2", password="testpass")
+
+        result = deactivate_account(actor=self.staff, user_id=superuser.id)
+
+        self.assertFalse(result.is_active)
+
     def test_account_operations_manage_player_links_through_services(self):
         link_result = create_user_player_link(
             actor=self.staff,
@@ -1414,6 +1451,13 @@ class AccountOperationsViewTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_user_detail_missing_account_returns_404(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": 999999}))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_user_detail_renders_profile_and_linked_players(self):
         self.client.force_login(self.staff)
 
@@ -1565,6 +1609,28 @@ class AccountOperationsViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "An active link already exists")
+
+    def test_links_page_handles_invalid_link_id_as_form_error(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-links", kwargs={"user_id": self.coach.id}),
+            {"action": "deactivate", "link_id": "999999"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Player link not found")
+
+    def test_links_page_handles_unknown_action_as_form_error(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-links", kwargs={"user_id": self.coach.id}),
+            {"action": "unsupported", "link_id": "1"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Unsupported link action")
 
     def test_profile_page_links_staff_to_account_operations(self):
         self.client.force_login(self.staff)

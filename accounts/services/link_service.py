@@ -59,17 +59,25 @@ def _validate_primary_self_conflicts(user, player, exclude_link_id=None) -> None
         raise ValidationError("This player already has an active primary self user link.")
 
 
-def _validate_active_relationship_conflict(link) -> None:
+def validate_no_active_relationship_conflict(user, player, relationship: str, exclude_link_id=None) -> None:
+    """Validate that no active link exists for this user, player, and relationship."""
+    _validate_user(user)
+    _validate_player(player)
+    relationship = _validate_relationship(relationship)
     conflicts = UserPlayerLink.objects.filter(
-        user=link.user,
-        player=link.player,
-        relationship=link.relationship,
+        user=user,
+        player=player,
+        relationship=relationship,
         is_active=True,
     )
-    if link.pk:
-        conflicts = conflicts.exclude(pk=link.pk)
+    if exclude_link_id:
+        conflicts = conflicts.exclude(pk=exclude_link_id)
     if conflicts.exists():
         raise ValidationError("An active link already exists for this user, player, and relationship.")
+
+
+def _validate_active_relationship_conflict(link) -> None:
+    validate_no_active_relationship_conflict(link.user, link.player, link.relationship, exclude_link_id=link.pk)
 
 
 @transaction.atomic

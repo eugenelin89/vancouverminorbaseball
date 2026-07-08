@@ -17,6 +17,7 @@ from accounts.services.link_service import (
     deactivate_link,
     link_user_to_player,
     set_primary_self_link,
+    validate_no_active_relationship_conflict,
 )
 from accounts.services.password_service import (
     generate_birthdate_password,
@@ -123,6 +124,15 @@ def _validate_actor_can_create_role(actor, role: str) -> None:
 def _validate_actor_can_assign_role(actor, role: str) -> None:
     if role == AccountRole.ADMIN and not getattr(actor, "is_superuser", False):
         raise ValidationError("Only superusers can assign admin role.")
+
+
+def _validate_account_deactivation_allowed(actor, user: User) -> None:
+    if actor and getattr(actor, "id", None) == user.id:
+        raise ValidationError("You cannot deactivate your own account.")
+    if user.is_superuser and user.is_active:
+        other_active_superusers = User.objects.filter(is_superuser=True, is_active=True).exclude(pk=user.pk).exists()
+        if not other_active_superusers:
+            raise ValidationError("You cannot deactivate the last active superuser account.")
 
 
 def _validate_email_available(email: str) -> str:
@@ -315,6 +325,8 @@ def update_account(
     user.first_name = str(first_name or "").strip()
     user.last_name = str(last_name or "").strip()
     user.email = _validate_email_available_for_user(user, email)
+    if user.is_active and not bool(is_active):
+        _validate_account_deactivation_allowed(actor, user)
     user.is_active = bool(is_active)
     user.save(update_fields=["username", "first_name", "last_name", "email", "is_active"])
     set_account_role(user, role, actor=actor)
@@ -337,6 +349,7 @@ def deactivate_account(*, actor, user_id: int) -> UpdatedAccountResult:
     """Deactivate an existing account without deleting account data or links."""
     user = _get_user_for_update(user_id)
     if user.is_active:
+        _validate_account_deactivation_allowed(actor, user)
         user.is_active = False
         user.save(update_fields=["is_active"])
     return _updated_account_result(user)
@@ -353,8 +366,7 @@ def create_user_player_link(
 ) -> UpdatedLinkResult:
     """Create an active user/player link through the account operations workflow."""
     user = _get_user_for_update(user_id)
-    if UserPlayerLink.objects.filter(user=user, player=player, relationship=relationship, is_active=True).exists():
-        raise ValidationError("An active link already exists for this user, player, and relationship.")
+    validate_no_active_relationship_conflict(user, player, relationship)
     link = link_user_to_player(user, player, relationship=relationship, is_primary=is_primary)
     return _updated_link_result(link)
 

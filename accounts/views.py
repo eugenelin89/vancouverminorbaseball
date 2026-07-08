@@ -2,7 +2,8 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.http import Http404
 from django.shortcuts import redirect
 from django.views.generic import FormView, TemplateView
 
@@ -40,6 +41,13 @@ from accounts.services.role_service import role_label
 class AccountOperationsStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return can_view_account_operations_dashboard(self.request.user)
+
+
+def _account_detail_or_404(user_id):
+    try:
+        return get_account_detail(user_id)
+    except ObjectDoesNotExist as exc:
+        raise Http404("Account not found.") from exc
 
 
 class AccountLoginView(LoginView):
@@ -131,7 +139,7 @@ class AccountUserDetailView(AccountOperationsStaffRequiredMixin, TemplateView):
     template_name = "accounts/user_detail.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.account_detail = get_account_detail(kwargs["user_id"])
+        self.account_detail = _account_detail_or_404(kwargs["user_id"])
         if not can_view_account_detail(request.user, self.account_detail.user):
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
@@ -149,7 +157,7 @@ class AccountUserEditView(AccountOperationsStaffRequiredMixin, FormView):
     form_class = AccountEditForm
 
     def dispatch(self, request, *args, **kwargs):
-        self.account_detail = get_account_detail(kwargs["user_id"])
+        self.account_detail = _account_detail_or_404(kwargs["user_id"])
         if not can_view_account_detail(request.user, self.account_detail.user):
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
@@ -195,7 +203,7 @@ class AccountUserLinksView(AccountOperationsStaffRequiredMixin, FormView):
     form_class = UserPlayerLinkForm
 
     def dispatch(self, request, *args, **kwargs):
-        self.account_detail = get_account_detail(kwargs["user_id"])
+        self.account_detail = _account_detail_or_404(kwargs["user_id"])
         if not can_view_account_detail(request.user, self.account_detail.user):
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
@@ -231,7 +239,8 @@ class AccountUserLinksView(AccountOperationsStaffRequiredMixin, FormView):
         if action == "create":
             return super().post(request, *args, **kwargs)
 
-        form = self.form_class()
+        form = self.form_class(request.POST)
+        form.is_valid()
         try:
             link_id = int(request.POST.get("link_id", ""))
             if action == "deactivate":
@@ -245,6 +254,9 @@ class AccountUserLinksView(AccountOperationsStaffRequiredMixin, FormView):
                 messages.success(request, "Primary self link updated.")
             else:
                 raise ValidationError("Unsupported link action.")
+        except ObjectDoesNotExist:
+            form.add_error(None, "Player link not found.")
+            return self.form_invalid(form)
         except (TypeError, ValueError, ValidationError) as exc:
             form.add_error(None, exc)
             return self.form_invalid(form)
