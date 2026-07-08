@@ -86,3 +86,11 @@ class BulkAccountOperationForm(forms.Form):
         if self.cleaned_data.get("select_all"):
             return self.cleaned_data.get("visible_user_ids", [])
         return self.cleaned_data.get("user_ids", [])
+
+
+class CoachImportUploadForm(forms.Form):
+    csv_file = forms.FileField(label="Coach CSV")
+
+
+class CoachImportConfirmForm(forms.Form):
+    confirm = forms.BooleanField(required=True, label="Create or reuse the valid coach accounts shown in the preview.")

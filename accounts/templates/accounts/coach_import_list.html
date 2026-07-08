@@ -1,0 +1,18 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Import Coaches{% endblock %}
+{% block pdp_subtitle %}Create or reuse coach accounts from a CSV file.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>Coach CSV</h2>
+        <p>Required columns: first_name, last_name, email.</p>
+        <p>Optional columns: username, team, division, is_active, notes, source_id.</p>
+        <div class="pdp-actions">
+            <a class="button button--primary" href="{% url 'accounts:coach-import-new' %}">Upload Coach CSV</a>
+            <a class="button button--ghost" href="{% url 'accounts:operations-dashboard' %}">Account Operations</a>
+        </div>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Coach Import Result{% endblock %}
+{% block pdp_subtitle %}Copy temporary passwords now. They will not be shown again.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>Summary</h2>
+        <dl class="pdp-definition-list">
+            <dt>Rows processed</dt><dd>{{ result.rows_processed }}</dd>
+            <dt>Users created</dt><dd>{{ result.users_created }}</dd>
+            <dt>Existing coaches reused</dt><dd>{{ result.existing_coaches_reused }}</dd>
+            <dt>Conflicts</dt><dd>{{ result.conflicts }}</dd>
+            <dt>Errors</dt><dd>{{ result.errors }}</dd>
+            <dt>Skipped rows</dt><dd>{{ result.skipped_rows }}</dd>
+            <dt>Active accounts</dt><dd>{{ result.active_accounts }}</dd>
+            <dt>Inactive accounts</dt><dd>{{ result.inactive_accounts }}</dd>
+            <dt>Password change required</dt><dd>{{ result.password_change_required }}</dd>
+        </dl>
+    </article>
+
+    <article class="pdp-card">
+        <h2>Rows</h2>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Status</th>
+                        <th>Username</th>
+                        <th>Temporary password</th>
+                        <th>Messages</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in result.rows %}
+                        <tr>
+                            <td>{{ row.row_number|default:"-" }}</td>
+                            <td>{{ row.status }}</td>
+                            <td>
+                                {% if row.user_id %}
+                                    <a href="{% url 'accounts:user-detail' user_id=row.user_id %}">{{ row.username }}</a>
+                                {% else %}
+                                    {{ row.username|default:"-" }}
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ row.temporary_password|default:"-" }}</strong></td>
+                            <td>
+                                {% for message in row.messages %}
+                                    <div>{{ message }}</div>
+                                {% empty %}
+                                    -
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5">No rows processed.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}

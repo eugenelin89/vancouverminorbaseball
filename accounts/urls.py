@@ -12,6 +12,10 @@ from accounts.views import (
     AccountUserLinksView,
     AccountUserListView,
     AccountUserPasswordResetView,
+    CoachImportConfirmView,
+    CoachImportListView,
+    CoachImportPreviewView,
+    CoachImportUploadView,
     PlayerAccountCreateView,
 )
 
@@ -22,6 +26,10 @@ urlpatterns = [
     path("", AccountOperationsDashboardView.as_view(), name="operations-dashboard"),
     path("create/", AccountOnlyCreateView.as_view(), name="account-create"),
     path("create/player/", PlayerAccountCreateView.as_view(), name="player-account-create"),
+    path("imports/coaches/", CoachImportListView.as_view(), name="coach-import-list"),
+    path("imports/coaches/new/", CoachImportUploadView.as_view(), name="coach-import-new"),
+    path("imports/coaches/preview/", CoachImportPreviewView.as_view(), name="coach-import-preview"),
+    path("imports/coaches/confirm/", CoachImportConfirmView.as_view(), name="coach-import-confirm"),
     path("login/", AccountLoginView.as_view(), name="login"),
     path("logout/", AccountLogoutView.as_view(), name="logout"),
     path("password/", AccountPasswordChangeView.as_view(), name="password-change"),

@@ -3,6 +3,7 @@ from django.contrib.messages import get_messages
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
@@ -35,6 +36,13 @@ from accounts.services.auth_redirect_service import (
     is_password_change_allowed_path,
     landing_url_for_user,
     should_force_password_change,
+)
+from accounts.services.coach_import_service import (
+    RESULT_CONFLICT,
+    RESULT_CREATED,
+    RESULT_REUSED,
+    commit_coach_import,
+    preview_coach_import,
 )
 from accounts.services.email_service import emails_equal, find_existing_email_user, normalize_email
 from accounts.services.permissions import (
@@ -80,10 +88,12 @@ from accounts.services.profile_service import get_account_role, get_or_create_ac
 from accounts.services.role_service import default_role_for_user, role_for_user, role_label, validate_role
 from accounts.services.username_service import (
     base_username_for_player,
+    base_username_for_person,
     normalize_username_part,
     validate_available_username,
     validate_available_username_for_user,
     username_for_player,
+    username_for_person,
 )
 from analytics.services.permissions import can_submit_coach_assessment
 from players.models import Player, PlayerImportBatch
@@ -1569,6 +1579,137 @@ class AccountAuthViewTests(TestCase):
         self.assertContains(response, "Guest Evaluator")
 
 
+class CoachImportServiceTests(TestCase):
+    def setUp(self):
+        self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
+
+    def csv_text(self, rows):
+        return "first_name,last_name,email,username,team,division,is_active,notes,source_id\n" + "\n".join(rows)
+
+    def test_valid_csv_creates_active_coach_with_one_time_password(self):
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Casey,Coach,casey@example.com,,Reds,13U,true,Lead coach,C001"]),
+        )
+
+        user = User.objects.get(email="casey@example.com")
+        profile = user.account_profile
+        result_row = result.rows[0]
+        self.assertEqual(result_row.status, RESULT_CREATED)
+        self.assertEqual(user.username, "casey.coach")
+        self.assertEqual(user.first_name, "Casey")
+        self.assertEqual(user.last_name, "Coach")
+        self.assertTrue(user.is_active)
+        self.assertEqual(profile.role, AccountRole.COACH)
+        self.assertTrue(profile.must_change_password)
+        self.assertEqual(profile.metadata["team"], "Reds")
+        self.assertEqual(profile.metadata["division"], "13U")
+        self.assertTrue(result_row.temporary_password)
+        self.assertTrue(user.check_password(result_row.temporary_password))
+        self.assertNotIn(result_row.temporary_password, repr(result_row))
+        self.assertFalse(UserPlayerLink.objects.filter(user=user).exists())
+        self.assertEqual(Player.objects.count(), 0)
+        self.assertEqual(result.users_created, 1)
+        self.assertEqual(result.active_accounts, 1)
+        self.assertEqual(result.inactive_accounts, 0)
+        self.assertEqual(result.password_change_required, 1)
+
+    def test_imported_coach_can_be_inactive(self):
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Inactive,Coach,inactive.coach@example.com,,,,false,,"]),
+        )
+
+        user = User.objects.get(username="inactive.coach")
+        self.assertFalse(user.is_active)
+        self.assertEqual(result.inactive_accounts, 1)
+
+    def test_explicit_username_is_normalized_and_validated(self):
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["User,Name,user.name@example.com,Explicit.User,,,,,"]),
+        )
+
+        self.assertEqual(result.rows[0].username, "explicit.user")
+        self.assertTrue(User.objects.filter(username="explicit.user").exists())
+
+    def test_generated_username_collision_uses_suffix(self):
+        User.objects.create_user(username="casey.coach", email="other@example.com")
+
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Casey,Coach,casey2@example.com,,,,,,"]),
+        )
+
+        self.assertEqual(result.rows[0].username, "casey.coach2")
+        self.assertTrue(User.objects.filter(username="casey.coach2").exists())
+
+    def test_duplicate_email_with_existing_coach_reuses_account(self):
+        existing = User.objects.create_user(username="existing.coach", email="coach@example.com", password="oldpass")
+        set_account_role(existing, AccountRole.COACH)
+
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Existing,Coach,COACH@example.com,,,,,,"]),
+        )
+
+        existing.refresh_from_db()
+        self.assertEqual(result.rows[0].status, RESULT_REUSED)
+        self.assertEqual(result.existing_coaches_reused, 1)
+        self.assertEqual(User.objects.filter(email__iexact="coach@example.com").count(), 1)
+        self.assertTrue(existing.account_profile.must_change_password)
+        self.assertTrue(existing.check_password(result.rows[0].temporary_password))
+
+    def test_duplicate_email_with_non_coach_conflicts(self):
+        existing = User.objects.create_user(username="player.user", email="shared@example.com")
+        set_account_role(existing, AccountRole.PLAYER)
+
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Shared,Coach,shared@example.com,,,,,,"]),
+        )
+
+        self.assertEqual(result.rows[0].status, RESULT_CONFLICT)
+        self.assertEqual(result.conflicts, 1)
+        self.assertEqual(User.objects.count(), 2)
+
+    def test_explicit_duplicate_username_conflicts(self):
+        User.objects.create_user(username="taken.name")
+
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Taken,Name,taken@example.com,taken.name,,,,,"]),
+        )
+
+        self.assertEqual(result.rows[0].status, RESULT_CONFLICT)
+        self.assertFalse(User.objects.filter(email="taken@example.com").exists())
+
+    def test_missing_required_fields_produce_row_errors(self):
+        preview = preview_coach_import("first_name,last_name,email\nMissing,Email,\n")
+        result = commit_coach_import(self.staff, "first_name,last_name,email\nMissing,Email,\n")
+
+        self.assertEqual(preview.rows[0].status, "error")
+        self.assertIn("Missing required field", preview.rows[0].messages[0])
+        self.assertEqual(result.errors, 1)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_missing_required_columns_produce_import_error(self):
+        result = commit_coach_import(self.staff, "first_name,last_name\nNo,Email\n")
+
+        self.assertEqual(result.errors, 1)
+        self.assertIn("Missing required column", result.rows[0].messages[0])
+
+    def test_regular_user_cannot_commit_coach_import(self):
+        regular = User.objects.create_user(username="regular", password="testpass")
+
+        with self.assertRaisesMessage(ValidationError, "Only staff users can import coaches"):
+            commit_coach_import(regular, self.csv_text(["Casey,Coach,casey@example.com,,,,,,"]))
+
+    def test_username_for_person_uses_same_normalization_style(self):
+        self.assertEqual(base_username_for_person("Jos\u00e9", "Van Horne"), "jose.vanhorne")
+        self.assertEqual(username_for_person("Jos\u00e9", "Van Horne"), "jose.vanhorne")
+
+
 class AccountOperationsViewTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
@@ -1617,6 +1758,7 @@ class AccountOperationsViewTests(TestCase):
         self.assertContains(response, "Players without self-linked accounts")
         self.assertContains(response, reverse("accounts:account-create"))
         self.assertContains(response, reverse("accounts:player-account-create"))
+        self.assertContains(response, reverse("accounts:coach-import-list"))
 
     def test_user_list_requires_staff(self):
         self.client.force_login(self.regular)
@@ -2152,6 +2294,81 @@ class AccountOperationsViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Player already has a linked user account")
         self.assertEqual(UserPlayerLink.objects.filter(player=player, relationship=UserPlayerRelationship.SELF).count(), 1)
+
+    def test_coach_import_pages_require_staff(self):
+        self.client.force_login(self.regular)
+
+        urls = [
+            reverse("accounts:coach-import-list"),
+            reverse("accounts:coach-import-new"),
+            reverse("accounts:coach-import-preview"),
+            reverse("accounts:coach-import-confirm"),
+        ]
+
+        for url in urls:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 403)
+
+    def test_staff_can_preview_and_confirm_coach_import(self):
+        self.client.force_login(self.staff)
+        csv_file = SimpleUploadedFile(
+            "coaches.csv",
+            b"first_name,last_name,email,team,division\nNew,Coach,new.coach@example.com,Reds,13U\n",
+            content_type="text/csv",
+        )
+
+        upload_response = self.client.post(reverse("accounts:coach-import-new"), {"csv_file": csv_file})
+        self.assertEqual(upload_response.status_code, 302)
+        self.assertEqual(upload_response["Location"], reverse("accounts:coach-import-preview"))
+
+        preview_response = self.client.get(reverse("accounts:coach-import-preview"))
+        self.assertEqual(preview_response.status_code, 200)
+        self.assertContains(preview_response, "Ready to create")
+        self.assertContains(preview_response, "new.coach@example.com")
+
+        confirm_response = self.client.post(reverse("accounts:coach-import-confirm"), {"confirm": "on"})
+        self.assertEqual(confirm_response.status_code, 200)
+        self.assertContains(confirm_response, "Coach Import Result")
+        self.assertContains(confirm_response, "Temporary password")
+        user = User.objects.get(username="new.coach")
+        temporary_password = confirm_response.context["result"].rows[0].temporary_password
+        self.assertTrue(user.check_password(temporary_password))
+        self.assertTrue(user.is_active)
+        self.assertEqual(user.account_profile.role, AccountRole.COACH)
+        self.assertTrue(user.account_profile.must_change_password)
+        self.assertFalse(UserPlayerLink.objects.filter(user=user).exists())
+        self.assertEqual(Player.objects.count(), 1)
+
+        detail_response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": user.id}))
+        self.assertNotContains(detail_response, temporary_password)
+        confirm_again = self.client.get(reverse("accounts:coach-import-confirm"))
+        self.assertEqual(confirm_again.status_code, 302)
+
+    def test_coach_import_reuses_existing_coach_and_blocks_non_coach_email(self):
+        existing_coach = User.objects.create_user(username="existing.coach", email="existing@example.com")
+        set_account_role(existing_coach, AccountRole.COACH)
+        existing_player = User.objects.create_user(username="existing.player", email="player@example.com")
+        set_account_role(existing_player, AccountRole.PLAYER)
+        self.client.force_login(self.staff)
+        csv_file = SimpleUploadedFile(
+            "coaches.csv",
+            (
+                "first_name,last_name,email\n"
+                "Existing,Coach,existing@example.com\n"
+                "Existing,Player,player@example.com\n"
+            ).encode(),
+            content_type="text/csv",
+        )
+
+        self.client.post(reverse("accounts:coach-import-new"), {"csv_file": csv_file})
+        response = self.client.post(reverse("accounts:coach-import-confirm"), {"confirm": "on"})
+
+        self.assertEqual(response.status_code, 200)
+        result = response.context["result"]
+        self.assertEqual(result.existing_coaches_reused, 1)
+        self.assertEqual(result.conflicts, 1)
+        self.assertEqual(User.objects.filter(email__iexact="existing@example.com").count(), 1)
+        self.assertEqual(User.objects.filter(email__iexact="player@example.com").count(), 1)
 
 
 class AccountPasswordMiddlewareTests(TestCase):

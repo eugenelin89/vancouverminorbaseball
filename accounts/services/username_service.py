@@ -22,14 +22,31 @@ def base_username_for_player(player) -> str:
     """Return firstname.lastname username base for a player."""
     first = normalize_username_part(getattr(player, "first_name", ""))
     last = normalize_username_part(getattr(player, "last_name", ""))
+    return base_username_for_person(first, last)
+
+
+def base_username_for_person(first_name: str, last_name: str) -> str:
+    """Return firstname.lastname username base for a person."""
+    first = normalize_username_part(first_name)
+    last = normalize_username_part(last_name)
     if not first or not last:
-        raise ValidationError("Player first and last name are required to generate a username.")
+        raise ValidationError("First and last name are required to generate a username.")
     return f"{first}.{last}"
 
 
 def username_for_player(player) -> str:
     """Return a unique deterministic username for a player."""
     base_username = base_username_for_player(player)
+    return unique_username_from_base(base_username)
+
+
+def username_for_person(first_name: str, last_name: str) -> str:
+    """Return a unique deterministic firstname.lastname username for a person."""
+    return unique_username_from_base(base_username_for_person(first_name, last_name))
+
+
+def unique_username_from_base(base_username: str) -> str:
+    """Return an available username by suffixing a normalized base when needed."""
     username = base_username
     suffix = 2
     while User.objects.filter(username__iexact=username).exists():

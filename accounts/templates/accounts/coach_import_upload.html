@@ -1,0 +1,23 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Upload Coach CSV{% endblock %}
+{% block pdp_subtitle %}Preview coach accounts before creating or reusing them.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>Upload</h2>
+        <form method="post" enctype="multipart/form-data" class="pdp-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label>
+                Coach CSV
+                {{ form.csv_file }}
+                {{ form.csv_file.errors }}
+            </label>
+            <button class="button button--primary" type="submit">Preview Import</button>
+            <a class="button button--ghost" href="{% url 'accounts:coach-import-list' %}">Cancel</a>
+        </form>
+    </article>
+</section>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}Preview Coach Import{% endblock %}
+{% block pdp_subtitle %}Review rows before creating or reusing coach accounts.{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>Summary</h2>
+        <dl class="pdp-definition-list">
+            <dt>Rows processed</dt><dd>{{ preview.rows_processed }}</dd>
+            <dt>Ready to create</dt><dd>{{ preview.ready_count }}</dd>
+            <dt>Existing coaches to reuse</dt><dd>{{ preview.reuse_count }}</dd>
+            <dt>Conflicts</dt><dd>{{ preview.conflict_count }}</dd>
+            <dt>Errors</dt><dd>{{ preview.error_count }}</dd>
+        </dl>
+        {% if preview.row_errors %}
+            <ul>
+                {% for error in preview.row_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </article>
+
+    <article class="pdp-card">
+        <h2>Rows</h2>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Username</th>
+                        <th>Active</th>
+                        <th>Status</th>
+                        <th>Messages</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview.rows %}
+                        <tr>
+                            <td>{{ row.row_number }}</td>
+                            <td>{{ row.first_name }} {{ row.last_name }}</td>
+                            <td>{{ row.email }}</td>
+                            <td>{{ row.final_username|default:"-" }}</td>
+                            <td>{{ row.is_active|yesno:"Yes,No" }}</td>
+                            <td>{{ row.status }}</td>
+                            <td>
+                                {% for message in row.messages %}
+                                    <div>{{ message }}</div>
+                                {% empty %}
+                                    -
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7">No rows found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="pdp-card">
+        <h2>Confirm</h2>
+        <p>Only rows marked ready or reuse will be processed. Temporary passwords are shown once on the result page.</p>
+        <form method="post" action="{% url 'accounts:coach-import-confirm' %}" class="pdp-form">
+            {% csrf_token %}
+            <label>
+                {{ form.confirm }}
+                {{ form.confirm.label }}
+                {{ form.confirm.errors }}
+            </label>
+            <button class="button button--primary" type="submit" {% if not preview.can_confirm %}disabled{% endif %}>Confirm Import</button>
+            <a class="button button--ghost" href="{% url 'accounts:coach-import-new' %}">Upload Different CSV</a>
+        </form>
+    </article>
+</section>
+{% endblock %}

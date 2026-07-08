@@ -11,6 +11,8 @@ from accounts.forms import (
     AccountEditForm,
     AccountOnlyCreateForm,
     BulkAccountOperationForm,
+    CoachImportConfirmForm,
+    CoachImportUploadForm,
     PasswordResetConfirmForm,
     PlayerAccountCreateForm,
     UserPlayerLinkForm,
@@ -36,6 +38,7 @@ from accounts.services.auth_redirect_service import (
     landing_url_for_user,
     should_force_password_change,
 )
+from accounts.services.coach_import_service import commit_coach_import, preview_coach_import, preview_coach_import_file
 from accounts.services.link_service import get_players_for_user
 from accounts.services.password_service import clear_password_change_required
 from accounts.services.permissions import (
@@ -170,6 +173,79 @@ class AccountUserListView(AccountOperationsStaffRequiredMixin, TemplateView):
                 )
                 form = BulkAccountOperationForm(visible_user_ids=visible_user_ids)
         return self.render_to_response(self.get_context_data(bulk_form=form, bulk_result=bulk_result))
+
+
+class CoachImportListView(AccountOperationsStaffRequiredMixin, TemplateView):
+    template_name = "accounts/coach_import_list.html"
+
+
+class CoachImportUploadView(AccountOperationsStaffRequiredMixin, FormView):
+    template_name = "accounts/coach_import_upload.html"
+    form_class = CoachImportUploadForm
+
+    def form_valid(self, form):
+        try:
+            csv_file = form.cleaned_data["csv_file"]
+            preview_coach_import_file(csv_file)
+            csv_file.seek(0)
+            raw = csv_file.read()
+            csv_text = raw if isinstance(raw, str) else raw.decode("utf-8-sig")
+        except (UnicodeDecodeError, ValidationError) as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        self.request.session["coach_import_csv"] = csv_text
+        self.request.session.modified = True
+        return redirect("accounts:coach-import-preview")
+
+
+class CoachImportPreviewView(AccountOperationsStaffRequiredMixin, FormView):
+    template_name = "accounts/coach_import_preview.html"
+    form_class = CoachImportConfirmForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated or not self.test_func():
+            return super().dispatch(request, *args, **kwargs)
+        self.csv_text = request.session.get("coach_import_csv", "")
+        if not self.csv_text:
+            messages.error(request, "Upload a coach CSV before previewing an import.")
+            return redirect("accounts:coach-import-new")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_preview(self):
+        return preview_coach_import(self.csv_text)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["preview"] = self.get_preview()
+        return context
+
+    def form_valid(self, form):
+        return redirect("accounts:coach-import-confirm")
+
+
+class CoachImportConfirmView(AccountOperationsStaffRequiredMixin, TemplateView):
+    template_name = "accounts/coach_import_result.html"
+
+    def get(self, request, *args, **kwargs):
+        return redirect("accounts:coach-import-preview")
+
+    def post(self, request, *args, **kwargs):
+        form = CoachImportConfirmForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, "Confirm the coach import before continuing.")
+            return redirect("accounts:coach-import-preview")
+        csv_text = request.session.get("coach_import_csv", "")
+        if not csv_text:
+            messages.error(request, "Upload a coach CSV before confirming an import.")
+            return redirect("accounts:coach-import-new")
+        try:
+            result = commit_coach_import(request.user, csv_text)
+        except ValidationError as exc:
+            messages.error(request, "; ".join(exc.messages))
+            return redirect("accounts:coach-import-preview")
+        request.session.pop("coach_import_csv", None)
+        request.session.modified = True
+        return self.render_to_response(self.get_context_data(result=result))
 
 
 class AccountUserDetailView(AccountOperationsStaffRequiredMixin, TemplateView):
