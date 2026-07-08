@@ -506,9 +506,16 @@ Safety rules:
 - Display clear warnings when staff access is controlled by Django `is_staff` or `is_superuser`.
 - Use server-rendered pages consistent with the rest of the platform.
 
-## 9. Future Phases
+## 9. Implementation Phases And Status
 
-Implementation should be split into small, independently testable phases.
+Platform V1 Account Operations is split into small, independently testable phases. The implemented sequence is:
+
+- Phase A - Account Operations Foundation.
+- Phase B - Manual Account Creation.
+- Phase C - Account Lifecycle and Link Management.
+- Phase D - Operational Password Reset.
+- Phase E - Bulk Operations.
+- Phase F - Production Hardening / Freeze.
 
 ### Phase A: Account Operations Foundation
 
@@ -528,86 +535,115 @@ Deliverables:
 - read-only linked player and profile summaries;
 - tests for staff access, non-staff denial, search, filtering, and empty states.
 
+Status: implemented.
+
 ### Phase B: Manual Account Creation
 
 Goals:
 
-- Allow staff to create coach, parent, player, and guest evaluator accounts.
-- Allow superusers to create staff accounts.
+- Allow staff to create coach, parent, player, staff-role metadata, and guest evaluator accounts.
 - Keep account-only creation distinct from player account creation.
+- Keep Django `User.is_staff` and `User.is_superuser` changes outside this workflow.
 
 Deliverables:
 
-- `/accounts/users/create/`;
-- service-backed account-only creation for coach, parent, guest evaluator, and staff users;
+- `/accounts/create/`;
+- `/accounts/create/player/`;
+- service-backed account-only creation for coach, parent, guest evaluator, and staff-role metadata users;
 - service-backed player account creation that starts from an existing `players.Player`;
 - role assignment through `profile_service`;
 - temporary password setup through `password_service`;
-- optional user-player link creation through `link_service`;
+- player-account self-link creation through `link_service`;
 - tests for duplicate username/email, role defaults, staff restrictions, player-account creation from existing players, no player duplication, and password-change requirement.
 
-### Phase C: Link Management
+Status: implemented.
+
+### Phase C: Account Lifecycle And Link Management
 
 Goals:
 
-- Allow staff to manually link and unlink users and players.
-- Provide player-centered linked-user view.
+- Allow staff to update username, email, platform role metadata, and active status.
+- Prevent self-deactivation and last-active-superuser deactivation.
+- Allow staff to manually link, deactivate, reactivate, and mark primary user-player links.
+- Preserve account, link, and import provenance history.
 
 Deliverables:
 
+- `/accounts/users/<id>/edit/`;
 - `/accounts/users/<id>/links/`;
-- `/accounts/users/<id>/links/add/`;
-- link activation/deactivation actions;
-- `/accounts/players/<player_id>/users/`;
-- tests for duplicate active links, primary self-link constraints, link history preservation, and permission checks.
-
-### Phase D: Account State And Role Operations
-
-Goals:
-
-- Allow staff to manage active status and account roles safely.
-- Allow superusers to manage privileged staff/admin state.
-
-Deliverables:
-
-- activate/deactivate confirmation pages;
-- role change page;
+- username, email, role, and active-state edit form;
+- account activation/deactivation through service-backed update paths;
+- link create, deactivate, reactivate, and primary-self actions;
 - staff/superuser guardrails;
 - self-lockout prevention;
 - last-superuser protection;
-- tests for all safety rules.
+- tests for duplicate active links, primary self-link constraints, link history preservation, role/staff distinction, lifecycle safety rules, and permission checks.
 
-### Phase E: Password And Username Operations
+Status: implemented.
+
+### Phase D: Operational Password Reset
 
 Goals:
 
-- Allow staff to reset passwords and change usernames through services.
+- Allow staff to reset passwords through account services.
+- Display temporary passwords only once.
+- Force password change after reset.
+- Preserve account active state, profile metadata, links, and provenance.
 
 Deliverables:
 
-- password reset page;
-- username change page;
-- generated temporary password flow or approved birthdate reset flow;
+- `/accounts/users/<id>/password/`;
+- staff password reset confirmation form;
+- birthdate temporary password for player self-linked accounts;
+- random temporary password for non-player accounts;
 - forced password-change after staff reset;
-- username collision handling;
-- tests proving no plaintext password persistence and correct password-change enforcement.
+- tests proving no plaintext password persistence, one-time display behavior, and correct password-change enforcement.
 
-### Phase F: Bulk Operations And Polish
+Status: implemented.
+
+### Phase E: Bulk Operations
 
 Goals:
 
 - Add only low-risk bulk actions after single-user operations are stable.
+- Reuse existing single-account services instead of duplicating business rules.
+- Avoid bulk password reset, bulk username changes, bulk role changes, and bulk user creation.
 
-Possible deliverables:
+Deliverables:
 
 - bulk activate selected users;
 - bulk deactivate selected users;
 - bulk require password change;
-- bulk role update only if safe and restricted;
-- improved filters for imported accounts and linked/unlinked accounts;
-- tests for partial failures and permission restrictions.
+- bulk clear password-change requirement;
+- partial-failure reporting;
+- permission restrictions;
+- tests for successful actions, partial failures, missing users, empty selections, unsupported actions, self-deactivation protection, last-superuser protection, and filtered select-all behavior.
 
-Bulk operations should be deferred if implementation pressure would weaken safety or clarity.
+Status: implemented.
+
+### Phase F: Production Hardening / Freeze
+
+Goals:
+
+- Perform the final production-readiness review before freezing Platform V1 Account Operations.
+- Do not add features unless a blocking defect is found and explicitly approved.
+
+Review areas:
+
+- architecture consistency;
+- service boundaries;
+- authentication and authorization correctness;
+- password exposure safety;
+- account/player identity separation;
+- import provenance preservation;
+- permission coverage;
+- edge-case behavior;
+- performance and query sanity;
+- UX consistency;
+- documentation finalization;
+- freeze declaration.
+
+Status: pending.
 
 ### Explicitly Deferred: Bulk Coach Import
 
@@ -628,6 +664,7 @@ That future plan should define CSV format, matching rules, duplicate detection, 
 - Username changes could create collisions or make staff unable to find accounts.
 - Imported player accounts may be active immediately, so staff need clear visibility into which accounts still require password changes.
 - Bulk operations could cause large accidental access changes if not carefully confirmed and permission-guarded.
+- Phase F could expose production-readiness defects that require targeted cleanup before freeze.
 - Without audit logging, staff may have limited historical visibility into who performed account changes. Audit logging is out of scope for this plan unless separately approved.
 
 ## 11. Open Questions
@@ -639,16 +676,17 @@ That future plan should define CSV format, matching rules, duplicate detection, 
 - Should `AccountProfile.is_active` be kept synchronized with `User.is_active`, or treated as platform metadata only?
 - Should assigning `AccountProfile.role=admin` require superuser even if it does not grant Django admin access?
 - Should changing `User.is_staff` be included in this operational UI, or remain in Django admin for Platform V1?
-- Should bulk operations be included in the initial implementation or deferred until after single-account workflows are proven in production?
 - Should account merge and duplicate account resolution be planned as a later Platform V1 operations extension or deferred to a future platform version?
 - Should account-operation changes eventually produce audit records? This plan treats audit logging as out of scope, but production operations may require it later.
+- What exact checklist should define the Phase F freeze declaration?
 
 ## Definition Of Done
 
-This roadmap is ready for implementation when:
+This roadmap is ready for Phase F freeze review when:
 
-- each phase has a detailed implementation prompt or engineering plan;
+- Phases A-E are implemented and tested;
 - permission rules are confirmed;
 - password reset behavior is confirmed;
 - role/staff/superuser boundaries are confirmed;
-- the first implementation phase can be built without introducing new architecture decisions.
+- documentation reflects the implemented state;
+- Phase F can proceed without introducing new feature scope.

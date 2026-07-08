@@ -209,6 +209,89 @@ Authentication behavior:
 - Non-staff users land at `/accounts/profile/`.
 - PDP routes and middleware remain installed for legacy coexistence.
 
+## Platform V1 Account Operations
+
+Platform V1 Account Operations extends Account Management V1 with staff-facing production operations. These workflows are implemented through Phase E and are ready for Phase F production hardening/freeze review.
+
+Implemented sequence:
+
+- Phase A - Account Operations Foundation.
+- Phase B - Manual Account Creation.
+- Phase C - Account Lifecycle and Link Management.
+- Phase D - Operational Password Reset.
+- Phase E - Bulk Operations.
+- Phase F - Production Hardening / Freeze. This is pending and is not a feature phase.
+
+Implemented routes:
+
+- `/accounts/`: staff Account Operations dashboard.
+- `/accounts/users/`: staff account list with search, filters, and safe bulk actions.
+- `/accounts/users/<id>/`: account detail page.
+- `/accounts/create/`: account-only creation for coach, parent, staff, guest evaluator, and other non-player login accounts.
+- `/accounts/create/player/`: player-account creation for an existing canonical `players.Player`.
+- `/accounts/users/<id>/edit/`: username, email, role, and active-state editing.
+- `/accounts/users/<id>/links/`: user-player link create/deactivate/reactivate/primary management.
+- `/accounts/users/<id>/password/`: operational password reset.
+
+Main staff workflows:
+
+- review account summary cards and issue queues;
+- search and filter accounts by username, name, email, role, active status, staff/superuser status, import status, password-change requirement, and link status;
+- create account-only users without creating players;
+- create player login accounts from existing `players.Player` records;
+- edit username, email, `AccountProfile.role`, and active status;
+- activate and deactivate accounts without deleting profile, link, or provenance history;
+- link and unlink users and players through `UserPlayerLink`;
+- reset a user's password and require password change on next login;
+- bulk activate, deactivate, require password change, and clear password-change requirement.
+
+Service ownership:
+
+- `account_query_service` owns account list query/filter behavior.
+- `account_operations_service` owns staff Account Operations orchestration and read models.
+- `username_service` owns username normalization and collision rules.
+- `password_service` owns temporary-password generation and password-change flags.
+- `link_service` owns all user-player link rules.
+- `profile_service` owns account role updates.
+- `provisioning_service` owns import/player account provisioning.
+
+Security model:
+
+- Account Operations pages are staff-only and require Django `User.is_staff` or `User.is_superuser`.
+- `AccountProfile.role` is platform metadata only.
+- `AccountProfile.role = staff` does not grant Django staff access.
+- `AccountProfile.role = admin` does not grant Django superuser access.
+- Creating or editing an account role never mutates `User.is_staff` or `User.is_superuser`.
+- Assigning the platform `admin` role is restricted to Django superusers even though the role itself does not grant Django admin access.
+- The system blocks self-deactivation and last-active-superuser deactivation.
+
+Password exposure rules:
+
+- Temporary passwords are shown only immediately after account creation or staff password reset.
+- Temporary passwords are not stored in import summaries, metadata, source rows, messages, or account detail pages.
+- Player-account temporary passwords use canonical player birthdate as `YYYYMMDD`.
+- Non-player operational passwords use generated random temporary passwords.
+- All temporary passwords force `must_change_password=True`.
+
+Provenance rules:
+
+- Import-provisioned accounts and links preserve `created_from_import` and `import_batch`.
+- Manual account creation does not create import provenance.
+- Account activation/deactivation preserves account profile, user-player link, and import provenance history.
+- User-player links are deactivated/reactivated rather than deleted in normal operations.
+
+Deferred from Platform V1 Account Operations:
+
+- Phase F production hardening/freeze review;
+- audit logging;
+- account merge;
+- duplicate account resolution;
+- invitation and email verification flows;
+- coach import;
+- parent import;
+- portal dashboards;
+- self-service password recovery email flow.
+
 ## Service Boundaries
 
 `profile_service`
@@ -354,7 +437,7 @@ accounts.services.provisioning_service
 active Django User + AccountProfile + UserPlayerLink
     |
     v
-staff activation (future workflow unless activation was explicitly selected at import)
+staff Account Operations visibility and correction tools
     |
     v
 /accounts/login/
@@ -414,22 +497,25 @@ Role handling:
 
 These are intentional V1 deferrals:
 
-- staff account management UI
-- account activation UI
-- password reset workflow
 - email invitation workflow
+- email verification workflow
+- self-service password recovery email flow
 - self-registration
+- account merge
+- duplicate account resolution
+- coach import
+- parent import
 - player portal
 - parent portal
 - coach portal
+- portal dashboards
 - evaluator role snapshot integration with Account Management roles
 - audit history for account changes
-- bulk account operations
 - custom user model
 - social login or SSO
 - PDP retirement
 
-These should be layered into future versions. They should not be backfilled into V1 without opening a new version or implementation phase.
+These should be layered into future versions or explicit implementation phases. They should not be backfilled into V1 without a separate plan.
 
 ## Technical Decisions
 
@@ -511,7 +597,7 @@ Coverage includes:
 - PDP coexistence
 - ownership-boundary regressions
 
-Every phase concluded with implementation review and regression testing. The final release review accepted Account Management V1 for the Phase 1-4 scope.
+Every core V1 phase concluded with implementation review and regression testing. Platform V1 Account Operations has also been implemented through Phase E and is awaiting Phase F production hardening/freeze review.
 
 ## Lessons Learned
 
@@ -541,11 +627,12 @@ Account Management V1
 Status:
 
 ```text
-COMPLETE
-FROZEN
+CORE V1 COMPLETE
+PLATFORM V1 ACCOUNT OPERATIONS PHASES A-E COMPLETE
+PHASE F PRODUCTION HARDENING / FREEZE PENDING
 ```
 
-Account Management V1 is ready for production for the implemented Phase 1-4 scope.
+Account Management V1 core account infrastructure is complete. Platform V1 Account Operations is implemented through Phase E and should receive a Phase F production hardening/freeze review before being declared frozen.
 
 V1 should remain stable. Future work should be added through a new version or explicit implementation phase.
 
@@ -555,16 +642,17 @@ Likely Account Management V2 work:
 
 - evaluator identity integration
 - mapping account roles into Analytics evaluator role snapshots
-- staff account management UI
-- account activation workflow
-- password reset workflow
 - email invitation workflow
+- email verification workflow
+- self-service password recovery email flow
 - audit history
+- account merge
+- duplicate account resolution
+- coach import
+- parent import
 - player portal
 - parent portal
 - coach portal
-- account deactivation/reactivation operations
-- bulk provisioning review
 - PDP retirement and migration planning
 
 Future versions should continue the V1 principles:

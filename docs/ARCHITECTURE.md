@@ -135,6 +135,9 @@ Responsibilities:
 - platform login/logout/password-change routes
 - forced password-change middleware
 - account landing URL behavior
+- staff Account Operations dashboard/list/detail
+- manual account creation and player-account creation
+- account lifecycle, link management, operational password reset, and safe bulk account actions
 
 What it owns:
 
@@ -153,7 +156,7 @@ What it must not own:
 
 Current status:
 
-V1 complete and frozen for Phases 1-4.
+Core V1 is complete. Platform V1 Account Operations is implemented through Phase E and is awaiting Phase F production hardening/freeze review.
 
 Documentation:
 
@@ -268,7 +271,7 @@ Dependency guidance:
 | --- | --- | --- |
 | Players | V1 | Complete |
 | Analytics | V1 | Complete |
-| Account Management | V1 | Complete / Frozen |
+| Account Management | V1 | Core complete; Account Operations Phase F pending |
 | Drafts | Active | Active development |
 | PDP | Legacy | Transitionary |
 | LeagueHub | Planned | Planned |
@@ -282,6 +285,7 @@ The platform currently has:
 - production-ready player import and matching workflow
 - production-ready Analytics V1 workflow
 - production-ready Account Management V1 foundation
+- staff-facing Account Operations implemented through Phase E
 - account provisioning from player imports
 - forced password-change account flow
 - staff-only Analytics command center and reporting tables
