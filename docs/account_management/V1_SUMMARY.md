@@ -211,7 +211,7 @@ Authentication behavior:
 
 ## Platform V1 Account Operations
 
-Platform V1 Account Operations extends Account Management V1 with staff-facing production operations. These workflows are implemented through Phase E and are ready for Phase F production hardening/freeze review.
+Platform V1 Account Operations extends Account Management V1 with staff-facing production operations. These workflows are implemented through Phase F and are frozen for Platform V1.
 
 Implemented sequence:
 
@@ -220,7 +220,7 @@ Implemented sequence:
 - Phase C - Account Lifecycle and Link Management.
 - Phase D - Operational Password Reset.
 - Phase E - Bulk Operations.
-- Phase F - Production Hardening / Freeze. This is pending and is not a feature phase.
+- Phase F - Production Hardening / Freeze. This was a freeze review, not a feature phase.
 
 Implemented routes:
 
@@ -282,7 +282,6 @@ Provenance rules:
 
 Deferred from Platform V1 Account Operations:
 
-- Phase F production hardening/freeze review;
 - audit logging;
 - account merge;
 - duplicate account resolution;
@@ -597,7 +596,7 @@ Coverage includes:
 - PDP coexistence
 - ownership-boundary regressions
 
-Every core V1 phase concluded with implementation review and regression testing. Platform V1 Account Operations has also been implemented through Phase E and is awaiting Phase F production hardening/freeze review.
+Every core V1 phase concluded with implementation review and regression testing. Platform V1 Account Operations has also completed Phase F production hardening/freeze review.
 
 ## Lessons Learned
 
@@ -627,12 +626,11 @@ Account Management V1
 Status:
 
 ```text
-CORE V1 COMPLETE
-PLATFORM V1 ACCOUNT OPERATIONS PHASES A-E COMPLETE
-PHASE F PRODUCTION HARDENING / FREEZE PENDING
+COMPLETE
+FROZEN
 ```
 
-Account Management V1 core account infrastructure is complete. Platform V1 Account Operations is implemented through Phase E and should receive a Phase F production hardening/freeze review before being declared frozen.
+Account Management V1 core account infrastructure is complete. Platform V1 Account Operations is implemented through Phase F and is frozen for Platform V1.
 
 V1 should remain stable. Future work should be added through a new version or explicit implementation phase.
 

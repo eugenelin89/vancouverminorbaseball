@@ -25,6 +25,7 @@ from accounts.services.password_service import (
     set_random_temporary_password,
     set_temporary_password,
 )
+from accounts.services.permissions import can_manage_accounts, can_manage_privileged_accounts
 from accounts.services.profile_service import get_or_create_account_profile, set_account_role
 from accounts.services.provisioning_service import STATUS_CREATED, provision_player_account
 from accounts.services.role_service import role_label
@@ -151,13 +152,24 @@ class BulkOperationResult:
 
 
 def _validate_actor_can_create_role(actor, role: str) -> None:
+    if not can_manage_accounts(actor):
+        raise ValidationError("Only staff users can manage accounts.")
     if role == AccountRole.ADMIN and not getattr(actor, "is_superuser", False):
         raise ValidationError("Only superusers can create admin accounts.")
 
 
 def _validate_actor_can_assign_role(actor, role: str) -> None:
+    if not can_manage_accounts(actor):
+        raise ValidationError("Only staff users can manage accounts.")
     if role == AccountRole.ADMIN and not getattr(actor, "is_superuser", False):
         raise ValidationError("Only superusers can assign admin role.")
+
+
+def _validate_actor_can_manage_target(actor, user: User) -> None:
+    if not can_manage_accounts(actor):
+        raise ValidationError("Only staff users can manage accounts.")
+    if (user.is_staff or user.is_superuser) and not can_manage_privileged_accounts(actor):
+        raise ValidationError("Only superusers can manage staff or superuser accounts.")
 
 
 def _validate_account_deactivation_allowed(actor, user: User) -> None:
@@ -365,12 +377,13 @@ def update_account(
     """Update lifecycle and profile fields for an existing account."""
     _validate_actor_can_assign_role(actor, role)
     user = _get_user_for_update(user_id)
+    if user.is_active and not bool(is_active):
+        _validate_account_deactivation_allowed(actor, user)
+    _validate_actor_can_manage_target(actor, user)
     user.username = validate_available_username_for_user(user, username)
     user.first_name = str(first_name or "").strip()
     user.last_name = str(last_name or "").strip()
     user.email = _validate_email_available_for_user(user, email)
-    if user.is_active and not bool(is_active):
-        _validate_account_deactivation_allowed(actor, user)
     user.is_active = bool(is_active)
     user.save(update_fields=["username", "first_name", "last_name", "email", "is_active"])
     set_account_role(user, role, actor=actor)
@@ -382,6 +395,7 @@ def update_account(
 def activate_account(*, actor, user_id: int) -> UpdatedAccountResult:
     """Activate an existing account without changing profile or link history."""
     user = _get_user_for_update(user_id)
+    _validate_actor_can_manage_target(actor, user)
     if not user.is_active:
         user.is_active = True
         user.save(update_fields=["is_active"])
@@ -394,6 +408,7 @@ def deactivate_account(*, actor, user_id: int) -> UpdatedAccountResult:
     user = _get_user_for_update(user_id)
     if user.is_active:
         _validate_account_deactivation_allowed(actor, user)
+        _validate_actor_can_manage_target(actor, user)
         user.is_active = False
         user.save(update_fields=["is_active"])
     return _updated_account_result(user)
@@ -410,6 +425,7 @@ def create_user_player_link(
 ) -> UpdatedLinkResult:
     """Create an active user/player link through the account operations workflow."""
     user = _get_user_for_update(user_id)
+    _validate_actor_can_manage_target(actor, user)
     validate_no_active_relationship_conflict(user, player, relationship)
     link = link_user_to_player(user, player, relationship=relationship, is_primary=is_primary)
     return _updated_link_result(link)
@@ -419,6 +435,7 @@ def create_user_player_link(
 def deactivate_user_player_link(*, actor, user_id: int, link_id: int) -> UpdatedLinkResult:
     """Deactivate a user/player link without deleting its history."""
     user = _get_user_for_update(user_id)
+    _validate_actor_can_manage_target(actor, user)
     link = _get_link_for_user(user, link_id)
     return _updated_link_result(deactivate_link(link, actor=actor))
 
@@ -427,6 +444,7 @@ def deactivate_user_player_link(*, actor, user_id: int, link_id: int) -> Updated
 def reactivate_user_player_link(*, actor, user_id: int, link_id: int) -> UpdatedLinkResult:
     """Reactivate an existing inactive user/player link when constraints allow it."""
     user = _get_user_for_update(user_id)
+    _validate_actor_can_manage_target(actor, user)
     link = _get_link_for_user(user, link_id)
     return _updated_link_result(activate_link(link, actor=actor))
 
@@ -435,6 +453,7 @@ def reactivate_user_player_link(*, actor, user_id: int, link_id: int) -> Updated
 def set_primary_user_player_link(*, actor, user_id: int, link_id: int) -> UpdatedLinkResult:
     """Set an existing self link as the active primary player link."""
     user = _get_user_for_update(user_id)
+    _validate_actor_can_manage_target(actor, user)
     link = _get_link_for_user(user, link_id)
     return _updated_link_result(set_primary_self_link(link, actor=actor))
 
@@ -443,6 +462,7 @@ def set_primary_user_player_link(*, actor, user_id: int, link_id: int) -> Update
 def reset_account_password(*, actor, user_id: int) -> PasswordResetResult:
     """Reset an existing account password and require password change on next login."""
     user = _get_user_for_update(user_id)
+    _validate_actor_can_manage_target(actor, user)
     player = _player_for_password_reset(user)
     if player:
         temporary_password = generate_birthdate_password(player)
@@ -458,6 +478,7 @@ def reset_account_password(*, actor, user_id: int) -> PasswordResetResult:
 def set_account_password_change_required(*, actor, user_id: int, required: bool) -> UpdatedAccountResult:
     """Set the password-change requirement for an existing account."""
     user = _get_user_for_update(user_id)
+    _validate_actor_can_manage_target(actor, user)
     mark_password_change_required(user, bool(required))
     user.refresh_from_db()
     return _updated_account_result(user)
@@ -494,6 +515,8 @@ def _validation_message(exc: ValidationError) -> str:
 
 def bulk_account_operation(*, actor, action: str, user_ids) -> BulkOperationResult:
     """Apply a safe account operation to selected users and collect per-account failures."""
+    if not can_manage_accounts(actor):
+        raise ValidationError("Only staff users can manage accounts.")
     if action not in BULK_ACCOUNT_ACTIONS:
         raise ValidationError("Unsupported bulk action.")
 

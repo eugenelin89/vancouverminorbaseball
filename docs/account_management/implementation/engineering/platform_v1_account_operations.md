@@ -643,7 +643,7 @@ Review areas:
 - documentation finalization;
 - freeze declaration.
 
-Status: pending.
+Status: complete. Platform V1 Account Operations is frozen.
 
 ### Explicitly Deferred: Bulk Coach Import
 
@@ -664,7 +664,7 @@ That future plan should define CSV format, matching rules, duplicate detection, 
 - Username changes could create collisions or make staff unable to find accounts.
 - Imported player accounts may be active immediately, so staff need clear visibility into which accounts still require password changes.
 - Bulk operations could cause large accidental access changes if not carefully confirmed and permission-guarded.
-- Phase F could expose production-readiness defects that require targeted cleanup before freeze.
+- Future account-operation changes after freeze should use a new version or explicit approved implementation phase.
 - Without audit logging, staff may have limited historical visibility into who performed account changes. Audit logging is out of scope for this plan unless separately approved.
 
 ## 11. Open Questions
@@ -678,15 +678,15 @@ That future plan should define CSV format, matching rules, duplicate detection, 
 - Should changing `User.is_staff` be included in this operational UI, or remain in Django admin for Platform V1?
 - Should account merge and duplicate account resolution be planned as a later Platform V1 operations extension or deferred to a future platform version?
 - Should account-operation changes eventually produce audit records? This plan treats audit logging as out of scope, but production operations may require it later.
-- What exact checklist should define the Phase F freeze declaration?
+- What future version should introduce audit logging, if production operations require it?
 
 ## Definition Of Done
 
-This roadmap is ready for Phase F freeze review when:
+This roadmap is complete when:
 
 - Phases A-E are implemented and tested;
 - permission rules are confirmed;
 - password reset behavior is confirmed;
 - role/staff/superuser boundaries are confirmed;
 - documentation reflects the implemented state;
-- Phase F can proceed without introducing new feature scope.
+- Phase F production hardening/freeze review is complete.

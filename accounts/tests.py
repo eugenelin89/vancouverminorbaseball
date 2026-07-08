@@ -497,6 +497,53 @@ class AccountOperationsServiceTests(TestCase):
         self.assertFalse(self.coach.is_staff)
         self.assertFalse(self.coach.is_superuser)
 
+    def test_account_operation_services_require_staff_actor(self):
+        with self.assertRaisesMessage(ValidationError, "Only staff users can manage accounts"):
+            create_account_only(actor=self.coach, username="not.allowed", role=AccountRole.COACH)
+        with self.assertRaisesMessage(ValidationError, "Only staff users can manage accounts"):
+            create_player_account(actor=self.coach, player=self.player)
+        with self.assertRaisesMessage(ValidationError, "Only staff users can manage accounts"):
+            update_account(
+                actor=self.coach,
+                user_id=self.player_user.id,
+                username="alex.player",
+                role=AccountRole.PLAYER,
+            )
+        with self.assertRaisesMessage(ValidationError, "Only staff users can manage accounts"):
+            reset_account_password(actor=self.coach, user_id=self.player_user.id)
+        with self.assertRaisesMessage(ValidationError, "Only staff users can manage accounts"):
+            bulk_account_operation(actor=self.coach, action="activate", user_ids=[self.player_user.id])
+
+    def test_staff_cannot_mutate_staff_or_superuser_accounts(self):
+        other_staff = User.objects.create_user(username="other.staff", password="testpass", is_staff=True)
+        superuser = User.objects.create_superuser(username="ops.admin", password="testpass")
+        superuser_actor = User.objects.create_superuser(username="ops.admin2", password="testpass")
+
+        with self.assertRaisesMessage(ValidationError, "Only superusers can manage staff or superuser accounts"):
+            update_account(
+                actor=self.staff,
+                user_id=other_staff.id,
+                username="other.staff",
+                role=AccountRole.STAFF,
+            )
+        with self.assertRaisesMessage(ValidationError, "Only superusers can manage staff or superuser accounts"):
+            activate_account(actor=self.staff, user_id=other_staff.id)
+        with self.assertRaisesMessage(ValidationError, "Only superusers can manage staff or superuser accounts"):
+            deactivate_account(actor=self.staff, user_id=superuser.id)
+        with self.assertRaisesMessage(ValidationError, "Only superusers can manage staff or superuser accounts"):
+            reset_account_password(actor=self.staff, user_id=superuser.id)
+        with self.assertRaisesMessage(ValidationError, "Only superusers can manage staff or superuser accounts"):
+            create_user_player_link(
+                actor=self.staff,
+                user_id=other_staff.id,
+                player=self.player,
+                relationship=UserPlayerRelationship.STAFF,
+            )
+
+        result = reset_account_password(actor=superuser_actor, user_id=other_staff.id)
+        other_staff.refresh_from_db()
+        self.assertTrue(other_staff.check_password(result.temporary_password))
+
     def test_activate_and_deactivate_account_preserve_profile_and_links(self):
         deactivate_result = deactivate_account(actor=self.staff, user_id=self.player_user.id)
         self.player_user.refresh_from_db()
@@ -543,11 +590,12 @@ class AccountOperationsServiceTests(TestCase):
         superuser.refresh_from_db()
         self.assertTrue(superuser.is_active)
 
-    def test_deactivate_account_allows_superuser_when_another_active_superuser_exists(self):
+    def test_deactivate_account_allows_superuser_actor_when_another_active_superuser_exists(self):
         superuser = User.objects.create_superuser(username="ops.admin", password="testpass")
+        actor = User.objects.create_superuser(username="ops.actor", password="testpass")
         User.objects.create_superuser(username="ops.admin2", password="testpass")
 
-        result = deactivate_account(actor=self.staff, user_id=superuser.id)
+        result = deactivate_account(actor=actor, user_id=superuser.id)
 
         self.assertFalse(result.is_active)
 
@@ -1787,6 +1835,22 @@ class AccountOperationsViewTests(TestCase):
         self.coach.refresh_from_db()
         self.assertEqual(self.coach.account_profile.role, AccountRole.COACH)
 
+    def test_staff_user_edit_rejects_staff_or_superuser_target(self):
+        other_staff = User.objects.create_user(username="other.staff", password="testpass", is_staff=True)
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-edit", kwargs={"user_id": other_staff.id}),
+            {
+                "username": "other.staff",
+                "role": AccountRole.STAFF,
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Only superusers can manage staff or superuser accounts")
+
     def test_user_links_requires_staff(self):
         self.client.force_login(self.regular)
 
@@ -1951,6 +2015,19 @@ class AccountOperationsViewTests(TestCase):
         response = self.client.get(reverse("accounts:user-password-reset", kwargs={"user_id": 999999}))
 
         self.assertEqual(response.status_code, 404)
+
+    def test_staff_password_reset_rejects_staff_or_superuser_target(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-password-reset", kwargs={"user_id": self.superuser.id}),
+            {"confirm": "on"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Only superusers can manage staff or superuser accounts")
+        self.superuser.refresh_from_db()
+        self.assertTrue(self.superuser.check_password("testpass"))
 
     def test_profile_page_links_staff_to_account_operations(self):
         self.client.force_login(self.staff)
