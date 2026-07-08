@@ -13,15 +13,15 @@ These instructions apply to the entire repository.
 
 ## Project Snapshot Policy
 
-- When any file is created, modified, moved, or deleted, update `project_flat_file.txt` before finishing the task.
-- `project_flat_file.txt` should include every project file with:
-  - the full absolute file path,
-  - a clear separator before each file,
-  - text file contents included directly,
-  - binary files represented only by metadata and a short description.
-- Do not embed binary file contents in the snapshot.
-- Exclude `.git`, `.venv`, `__pycache__`, `node_modules`, `dist`, `build`, and the snapshot file itself.
-- Exclude unrelated untracked scratch files unless the user explicitly asks to include them or they were intentionally created as part of the current task.
+- Do not regenerate or update a full-project flat file during normal work.
+- Treat `project_flat_file.txt` as an on-request artifact only. Update it only when the user explicitly asks for a full project snapshot.
+- Prefer token-efficient records:
+  - the prompt archive should contain the user's prompt,
+  - the implementation commit diff,
+  - and, if useful, a short list of changed files.
+- Do not paste full repository contents into prompt records.
+- If a snapshot is explicitly requested, binary files should still be represented only by metadata and a short description.
+- Snapshot-style artifacts should exclude `.git`, `.venv`, `__pycache__`, `node_modules`, `dist`, `build`, generated caches, and unrelated scratch files unless the user explicitly asks to include them.
 
 ## Prompt Archive And Commit Policy
 
@@ -40,7 +40,7 @@ When a user prompt causes any file to be created, modified, moved, or deleted:
 - Commit the implementation/documentation changes first, using a concise commit message based on the resulting work summary.
 - Generate the diff for that commit against its previous commit.
 - Paste that diff into the prompt record.
-- Commit the prompt record and regenerated `project_flat_file.txt` separately.
+- Commit the prompt record separately.
 - Push the resulting commits to the remote repository before finishing the workflow.
 - Do not include unrelated user changes in either commit.
 - If a task cannot be committed safely because the worktree contains unrelated staged changes or an instruction explicitly forbids committing, explain the blocker.
