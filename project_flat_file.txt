@@ -47488,7 +47488,42 @@ index 2872dda..498162f 100644
 
 ====================================================================================================
 
-FILE 186: /Users/eugenelin/dev/vmba0/drafts/README.md
+FILE 186: /Users/eugenelin/dev/vmba0/docs/prompts/prompt_50_platform.md
+----------------------------------------------------------------------------------------------------
+# Prompt 50 - Platform
+
+## User Prompt
+
+```text
+update the flatfile
+```
+
+## App / Subsystem
+
+platform
+
+## Work Commit
+
+```text
+540074c5b5046575cc81cd9bd5d552a22a05a836 Update project flat file
+```
+
+## Commit Diff
+
+The full patch is intentionally not embedded here because this prompt updated
+`project_flat_file.txt`, a generated full-project snapshot. Embedding the full
+patch would duplicate the repository snapshot inside the prompt archive and
+conflict with the token-efficient flatfile policy in `AGENTS.md`.
+
+```text
+540074c Update project flat file
+ project_flat_file.txt | 82310 +++++++++++++++++++++++++-----------------------
+ 1 file changed, 43050 insertions(+), 39260 deletions(-)
+```
+
+====================================================================================================
+
+FILE 187: /Users/eugenelin/dev/vmba0/drafts/README.md
 ----------------------------------------------------------------------------------------------------
 # Drafts App
 
@@ -47531,13 +47566,13 @@ All roster-changing operations run inside database transactions and write a `Dra
 
 ====================================================================================================
 
-FILE 187: /Users/eugenelin/dev/vmba0/drafts/__init__.py
+FILE 188: /Users/eugenelin/dev/vmba0/drafts/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 188: /Users/eugenelin/dev/vmba0/drafts/admin.py
+FILE 189: /Users/eugenelin/dev/vmba0/drafts/admin.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import admin
 
@@ -47581,7 +47616,7 @@ class DraftActionAdmin(admin.ModelAdmin):
 
 ====================================================================================================
 
-FILE 189: /Users/eugenelin/dev/vmba0/drafts/apps.py
+FILE 190: /Users/eugenelin/dev/vmba0/drafts/apps.py
 ----------------------------------------------------------------------------------------------------
 from django.apps import AppConfig
 
@@ -47593,7 +47628,7 @@ class DraftsConfig(AppConfig):
 
 ====================================================================================================
 
-FILE 190: /Users/eugenelin/dev/vmba0/drafts/forms.py
+FILE 191: /Users/eugenelin/dev/vmba0/drafts/forms.py
 ----------------------------------------------------------------------------------------------------
 from django import forms
 
@@ -47771,7 +47806,7 @@ class TradeForm(forms.Form):
 
 ====================================================================================================
 
-FILE 191: /Users/eugenelin/dev/vmba0/drafts/models.py
+FILE 192: /Users/eugenelin/dev/vmba0/drafts/models.py
 ----------------------------------------------------------------------------------------------------
 from django.conf import settings
 from django.db import models
@@ -47969,7 +48004,7 @@ class DraftAction(models.Model):
 
 ====================================================================================================
 
-FILE 192: /Users/eugenelin/dev/vmba0/drafts/services.py
+FILE 193: /Users/eugenelin/dev/vmba0/drafts/services.py
 ----------------------------------------------------------------------------------------------------
 import csv
 import io
@@ -48435,7 +48470,7 @@ def get_command_center_data(*, draft, search="", team_filter="", sort="name", ex
 
 ====================================================================================================
 
-FILE 193: /Users/eugenelin/dev/vmba0/drafts/tests.py
+FILE 194: /Users/eugenelin/dev/vmba0/drafts/tests.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -48661,7 +48696,7 @@ class DraftViewTests(TestCase):
 
 ====================================================================================================
 
-FILE 194: /Users/eugenelin/dev/vmba0/drafts/urls.py
+FILE 195: /Users/eugenelin/dev/vmba0/drafts/urls.py
 ----------------------------------------------------------------------------------------------------
 from django.urls import path
 
@@ -48699,7 +48734,7 @@ urlpatterns = [
 
 ====================================================================================================
 
-FILE 195: /Users/eugenelin/dev/vmba0/drafts/views.py
+FILE 196: /Users/eugenelin/dev/vmba0/drafts/views.py
 ----------------------------------------------------------------------------------------------------
 import csv
 
@@ -49008,7 +49043,7 @@ class DraftExportView(DraftBaseMixin, View):
 
 ====================================================================================================
 
-FILE 196: /Users/eugenelin/dev/vmba0/drafts/migrations/0001_initial.py
+FILE 197: /Users/eugenelin/dev/vmba0/drafts/migrations/0001_initial.py
 ----------------------------------------------------------------------------------------------------
 # Generated by Django 4.2.25 on 2026-03-10 23:19
 
@@ -49102,13 +49137,13 @@ class Migration(migrations.Migration):
 
 ====================================================================================================
 
-FILE 197: /Users/eugenelin/dev/vmba0/drafts/migrations/__init__.py
+FILE 198: /Users/eugenelin/dev/vmba0/drafts/migrations/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 198: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/_header.html
+FILE 199: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/_header.html
 ----------------------------------------------------------------------------------------------------
 <header class="draft-shell__top">
     <div>
@@ -49140,7 +49175,7 @@ FILE 198: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/_header.html
 
 ====================================================================================================
 
-FILE 199: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/command_center.html
+FILE 200: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/command_center.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load draft_tags %}
@@ -49427,7 +49462,7 @@ FILE 199: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/command_center.html
 
 ====================================================================================================
 
-FILE 200: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_form.html
+FILE 201: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_form.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 
@@ -49482,7 +49517,7 @@ FILE 200: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_form.html
 
 ====================================================================================================
 
-FILE 201: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_import.html
+FILE 202: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_import.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 
@@ -49579,7 +49614,7 @@ FILE 201: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_import.html
 
 ====================================================================================================
 
-FILE 202: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_list.html
+FILE 203: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_list.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 
@@ -49658,7 +49693,7 @@ FILE 202: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/draft_list.html
 
 ====================================================================================================
 
-FILE 203: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/public_live.html
+FILE 204: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/public_live.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load draft_tags %}
@@ -49831,7 +49866,7 @@ FILE 203: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/public_live.html
 
 ====================================================================================================
 
-FILE 204: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/trade_form.html
+FILE 205: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/trade_form.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 
@@ -49903,13 +49938,13 @@ FILE 204: /Users/eugenelin/dev/vmba0/drafts/templates/drafts/trade_form.html
 
 ====================================================================================================
 
-FILE 205: /Users/eugenelin/dev/vmba0/drafts/templatetags/__init__.py
+FILE 206: /Users/eugenelin/dev/vmba0/drafts/templatetags/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 206: /Users/eugenelin/dev/vmba0/drafts/templatetags/draft_tags.py
+FILE 207: /Users/eugenelin/dev/vmba0/drafts/templatetags/draft_tags.py
 ----------------------------------------------------------------------------------------------------
 from django import template
 
@@ -49924,12 +49959,12 @@ def get_item(mapping, key):
 
 ====================================================================================================
 
-FILE 207: /Users/eugenelin/dev/vmba0/home/__init__.py
+FILE 208: /Users/eugenelin/dev/vmba0/home/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 ====================================================================================================
 
-FILE 208: /Users/eugenelin/dev/vmba0/home/admin.py
+FILE 209: /Users/eugenelin/dev/vmba0/home/admin.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import admin
 
@@ -49937,7 +49972,7 @@ from django.contrib import admin
 
 ====================================================================================================
 
-FILE 209: /Users/eugenelin/dev/vmba0/home/apps.py
+FILE 210: /Users/eugenelin/dev/vmba0/home/apps.py
 ----------------------------------------------------------------------------------------------------
 from django.apps import AppConfig
 
@@ -49948,7 +49983,7 @@ class HomeConfig(AppConfig):
 
 ====================================================================================================
 
-FILE 210: /Users/eugenelin/dev/vmba0/home/content.py
+FILE 211: /Users/eugenelin/dev/vmba0/home/content.py
 ----------------------------------------------------------------------------------------------------
 """Static content data for the Vancouver Minor site."""
 
@@ -50463,7 +50498,7 @@ FOOTER_LINKS = [
 
 ====================================================================================================
 
-FILE 211: /Users/eugenelin/dev/vmba0/home/models.py
+FILE 212: /Users/eugenelin/dev/vmba0/home/models.py
 ----------------------------------------------------------------------------------------------------
 from django.db import models
 
@@ -50471,7 +50506,7 @@ from django.db import models
 
 ====================================================================================================
 
-FILE 212: /Users/eugenelin/dev/vmba0/home/tests.py
+FILE 213: /Users/eugenelin/dev/vmba0/home/tests.py
 ----------------------------------------------------------------------------------------------------
 from django.test import TestCase
 
@@ -50484,7 +50519,7 @@ class HomeNavigationTests(TestCase):
 
 ====================================================================================================
 
-FILE 213: /Users/eugenelin/dev/vmba0/home/urls.py
+FILE 214: /Users/eugenelin/dev/vmba0/home/urls.py
 ----------------------------------------------------------------------------------------------------
 from django.urls import path
 
@@ -50517,7 +50552,7 @@ for slug in PAGE_REGISTRY:
 
 ====================================================================================================
 
-FILE 214: /Users/eugenelin/dev/vmba0/home/views.py
+FILE 215: /Users/eugenelin/dev/vmba0/home/views.py
 ----------------------------------------------------------------------------------------------------
 from collections import OrderedDict
 
@@ -50663,17 +50698,17 @@ class PlaceholderPageView(TemplateView):
 
 ====================================================================================================
 
-FILE 215: /Users/eugenelin/dev/vmba0/home/migrations/__init__.py
+FILE 216: /Users/eugenelin/dev/vmba0/home/migrations/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 ====================================================================================================
 
-FILE 216: /Users/eugenelin/dev/vmba0/leaguehub/__init__.py
+FILE 217: /Users/eugenelin/dev/vmba0/leaguehub/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 ====================================================================================================
 
-FILE 217: /Users/eugenelin/dev/vmba0/leaguehub/admin.py
+FILE 218: /Users/eugenelin/dev/vmba0/leaguehub/admin.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import admin
 
@@ -50758,7 +50793,7 @@ class GameScoreAuditEntryAdmin(TimeStampedAdmin):
 
 ====================================================================================================
 
-FILE 218: /Users/eugenelin/dev/vmba0/leaguehub/apps.py
+FILE 219: /Users/eugenelin/dev/vmba0/leaguehub/apps.py
 ----------------------------------------------------------------------------------------------------
 from django.apps import AppConfig
 
@@ -50770,7 +50805,7 @@ class LeaguehubConfig(AppConfig):
 
 ====================================================================================================
 
-FILE 219: /Users/eugenelin/dev/vmba0/leaguehub/forms.py
+FILE 220: /Users/eugenelin/dev/vmba0/leaguehub/forms.py
 ----------------------------------------------------------------------------------------------------
 from django import forms
 from django.contrib.auth import get_user_model
@@ -50959,7 +50994,7 @@ class GamePhotoForm(forms.ModelForm):
 
 ====================================================================================================
 
-FILE 220: /Users/eugenelin/dev/vmba0/leaguehub/models.py
+FILE 221: /Users/eugenelin/dev/vmba0/leaguehub/models.py
 ----------------------------------------------------------------------------------------------------
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -51310,7 +51345,7 @@ class GameScoreAuditEntry(TimeStampedModel):
 
 ====================================================================================================
 
-FILE 221: /Users/eugenelin/dev/vmba0/leaguehub/tests.py
+FILE 222: /Users/eugenelin/dev/vmba0/leaguehub/tests.py
 ----------------------------------------------------------------------------------------------------
 import shutil
 import tempfile
@@ -51733,7 +51768,7 @@ class LeagueHubFlowTests(TestCase):
 
 ====================================================================================================
 
-FILE 222: /Users/eugenelin/dev/vmba0/leaguehub/urls.py
+FILE 223: /Users/eugenelin/dev/vmba0/leaguehub/urls.py
 ----------------------------------------------------------------------------------------------------
 from django.urls import path
 
@@ -51784,7 +51819,7 @@ urlpatterns = [
 
 ====================================================================================================
 
-FILE 223: /Users/eugenelin/dev/vmba0/leaguehub/views.py
+FILE 224: /Users/eugenelin/dev/vmba0/leaguehub/views.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -52180,7 +52215,7 @@ class GamePhotoSubmitView(TeamContentMixin, View):
 
 ====================================================================================================
 
-FILE 224: /Users/eugenelin/dev/vmba0/leaguehub/migrations/0001_initial.py
+FILE 225: /Users/eugenelin/dev/vmba0/leaguehub/migrations/0001_initial.py
 ----------------------------------------------------------------------------------------------------
 # Generated by Django 4.2.25 on 2026-04-12 06:58
 
@@ -52449,18 +52484,18 @@ class Migration(migrations.Migration):
 
 ====================================================================================================
 
-FILE 225: /Users/eugenelin/dev/vmba0/leaguehub/migrations/__init__.py
+FILE 226: /Users/eugenelin/dev/vmba0/leaguehub/migrations/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 ====================================================================================================
 
-FILE 226: /Users/eugenelin/dev/vmba0/leaguehub/services/__init__.py
+FILE 227: /Users/eugenelin/dev/vmba0/leaguehub/services/__init__.py
 ----------------------------------------------------------------------------------------------------
 """Service layer for leaguehub workflows."""
 
 ====================================================================================================
 
-FILE 227: /Users/eugenelin/dev/vmba0/leaguehub/services/content.py
+FILE 228: /Users/eugenelin/dev/vmba0/leaguehub/services/content.py
 ----------------------------------------------------------------------------------------------------
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -52502,7 +52537,7 @@ def save_game_photo(*, game, team, actor, image, caption=""):
 
 ====================================================================================================
 
-FILE 228: /Users/eugenelin/dev/vmba0/leaguehub/services/permissions.py
+FILE 229: /Users/eugenelin/dev/vmba0/leaguehub/services/permissions.py
 ----------------------------------------------------------------------------------------------------
 from leaguehub.models import CoachRole, TeamCoachAssignment
 
@@ -52558,7 +52593,7 @@ def can_contribute_team_content(user, game, team) -> bool:
 
 ====================================================================================================
 
-FILE 229: /Users/eugenelin/dev/vmba0/leaguehub/services/presentation.py
+FILE 230: /Users/eugenelin/dev/vmba0/leaguehub/services/presentation.py
 ----------------------------------------------------------------------------------------------------
 from datetime import timedelta
 
@@ -52902,7 +52937,7 @@ def get_results_context(*, league_season: LeagueSeason, user=None):
 
 ====================================================================================================
 
-FILE 230: /Users/eugenelin/dev/vmba0/leaguehub/services/score_workflow.py
+FILE 231: /Users/eugenelin/dev/vmba0/leaguehub/services/score_workflow.py
 ----------------------------------------------------------------------------------------------------
 from dataclasses import dataclass
 from typing import Optional
@@ -53074,7 +53109,7 @@ def admin_override_score(
 
 ====================================================================================================
 
-FILE 231: /Users/eugenelin/dev/vmba0/leaguehub/services/standings.py
+FILE 232: /Users/eugenelin/dev/vmba0/leaguehub/services/standings.py
 ----------------------------------------------------------------------------------------------------
 from dataclasses import dataclass
 
@@ -53175,7 +53210,7 @@ def calculate_official_standings(*, league_season: LeagueSeason):
 
 ====================================================================================================
 
-FILE 232: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/base.html
+FILE 233: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/base.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 {% load static %}
@@ -53217,7 +53252,7 @@ FILE 232: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/base.html
 
 ====================================================================================================
 
-FILE 233: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/dashboard.html
+FILE 234: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/dashboard.html
 ----------------------------------------------------------------------------------------------------
 {% extends "leaguehub/base.html" %}
 
@@ -53349,7 +53384,7 @@ FILE 233: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/dashboard.htm
 
 ====================================================================================================
 
-FILE 234: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/game_detail.html
+FILE 235: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/game_detail.html
 ----------------------------------------------------------------------------------------------------
 {% extends "leaguehub/base.html" %}
 
@@ -53537,7 +53572,7 @@ FILE 234: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/game_detail.h
 
 ====================================================================================================
 
-FILE 235: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/index.html
+FILE 236: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/index.html
 ----------------------------------------------------------------------------------------------------
 {% extends "leaguehub/base.html" %}
 
@@ -53590,7 +53625,7 @@ FILE 235: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/index.html
 
 ====================================================================================================
 
-FILE 236: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/manage.html
+FILE 237: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/manage.html
 ----------------------------------------------------------------------------------------------------
 {% extends "leaguehub/base.html" %}
 
@@ -53738,7 +53773,7 @@ FILE 236: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/manage.html
 
 ====================================================================================================
 
-FILE 237: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/results.html
+FILE 238: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/results.html
 ----------------------------------------------------------------------------------------------------
 {% extends "leaguehub/base.html" %}
 
@@ -53785,7 +53820,7 @@ FILE 237: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/results.html
 
 ====================================================================================================
 
-FILE 238: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/standings.html
+FILE 239: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/standings.html
 ----------------------------------------------------------------------------------------------------
 {% extends "leaguehub/base.html" %}
 
@@ -53845,7 +53880,7 @@ FILE 238: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/standings.htm
 
 ====================================================================================================
 
-FILE 239: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/team_detail.html
+FILE 240: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/team_detail.html
 ----------------------------------------------------------------------------------------------------
 {% extends "leaguehub/base.html" %}
 
@@ -53980,18 +54015,18 @@ FILE 239: /Users/eugenelin/dev/vmba0/leaguehub/templates/leaguehub/team_detail.h
 
 ====================================================================================================
 
-FILE 240: /Users/eugenelin/dev/vmba0/media/scholarships/transcripts/IMG_7327.jpg
+FILE 241: /Users/eugenelin/dev/vmba0/media/scholarships/transcripts/IMG_7327.jpg
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/media/scholarships/transcripts/IMG_7327.jpg, size=468766 bytes, type=image/jpeg]
 
 ====================================================================================================
 
-FILE 241: /Users/eugenelin/dev/vmba0/pdp/__init__.py
+FILE 242: /Users/eugenelin/dev/vmba0/pdp/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 ====================================================================================================
 
-FILE 242: /Users/eugenelin/dev/vmba0/pdp/admin.py
+FILE 243: /Users/eugenelin/dev/vmba0/pdp/admin.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import admin
 
@@ -54159,7 +54194,7 @@ class ExternalPerformanceSourceAdmin(TimeStampedAdmin):
 
 ====================================================================================================
 
-FILE 243: /Users/eugenelin/dev/vmba0/pdp/apps.py
+FILE 244: /Users/eugenelin/dev/vmba0/pdp/apps.py
 ----------------------------------------------------------------------------------------------------
 from django.apps import AppConfig
 
@@ -54171,7 +54206,7 @@ class PdpConfig(AppConfig):
 
 ====================================================================================================
 
-FILE 244: /Users/eugenelin/dev/vmba0/pdp/forms.py
+FILE 245: /Users/eugenelin/dev/vmba0/pdp/forms.py
 ----------------------------------------------------------------------------------------------------
 from django import forms
 from django.forms import inlineformset_factory
@@ -54379,7 +54414,7 @@ ReportItemFormSet = inlineformset_factory(
 
 ====================================================================================================
 
-FILE 245: /Users/eugenelin/dev/vmba0/pdp/middleware.py
+FILE 246: /Users/eugenelin/dev/vmba0/pdp/middleware.py
 ----------------------------------------------------------------------------------------------------
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -54408,7 +54443,7 @@ class FirstLoginPasswordChangeMiddleware:
 
 ====================================================================================================
 
-FILE 246: /Users/eugenelin/dev/vmba0/pdp/models.py
+FILE 247: /Users/eugenelin/dev/vmba0/pdp/models.py
 ----------------------------------------------------------------------------------------------------
 from django.conf import settings
 from django.db import models
@@ -55132,7 +55167,7 @@ class ExternalPerformanceSource(TimeStampedModel):
 
 ====================================================================================================
 
-FILE 247: /Users/eugenelin/dev/vmba0/pdp/tests.py
+FILE 248: /Users/eugenelin/dev/vmba0/pdp/tests.py
 ----------------------------------------------------------------------------------------------------
 import io
 import zipfile
@@ -55306,7 +55341,7 @@ class PermissionAndDevelopmentTests(TestCase):
 
 ====================================================================================================
 
-FILE 248: /Users/eugenelin/dev/vmba0/pdp/urls.py
+FILE 249: /Users/eugenelin/dev/vmba0/pdp/urls.py
 ----------------------------------------------------------------------------------------------------
 from django.urls import path
 
@@ -55353,7 +55388,7 @@ urlpatterns = [
 
 ====================================================================================================
 
-FILE 249: /Users/eugenelin/dev/vmba0/pdp/views.py
+FILE 250: /Users/eugenelin/dev/vmba0/pdp/views.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -55836,7 +55871,7 @@ class DrillLibraryView(LoginRequiredMixin, TemplateView):
 
 ====================================================================================================
 
-FILE 250: /Users/eugenelin/dev/vmba0/pdp/migrations/0001_initial.py
+FILE 251: /Users/eugenelin/dev/vmba0/pdp/migrations/0001_initial.py
 ----------------------------------------------------------------------------------------------------
 # Generated by Django 4.2.25 on 2026-03-26 08:53
 
@@ -56413,18 +56448,18 @@ class Migration(migrations.Migration):
 
 ====================================================================================================
 
-FILE 251: /Users/eugenelin/dev/vmba0/pdp/migrations/__init__.py
+FILE 252: /Users/eugenelin/dev/vmba0/pdp/migrations/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 ====================================================================================================
 
-FILE 252: /Users/eugenelin/dev/vmba0/pdp/services/__init__.py
+FILE 253: /Users/eugenelin/dev/vmba0/pdp/services/__init__.py
 ----------------------------------------------------------------------------------------------------
 """Service layer for the player development platform."""
 
 ====================================================================================================
 
-FILE 253: /Users/eugenelin/dev/vmba0/pdp/services/accounts.py
+FILE 254: /Users/eugenelin/dev/vmba0/pdp/services/accounts.py
 ----------------------------------------------------------------------------------------------------
 from dataclasses import dataclass
 
@@ -56520,7 +56555,7 @@ def provision_accounts_for_players(players, *, reset_existing_passwords: bool = 
 
 ====================================================================================================
 
-FILE 254: /Users/eugenelin/dev/vmba0/pdp/services/ai.py
+FILE 255: /Users/eugenelin/dev/vmba0/pdp/services/ai.py
 ----------------------------------------------------------------------------------------------------
 from django.db import transaction
 
@@ -56601,7 +56636,7 @@ def run_player_ai_analysis(*, player, season=None, evaluation_event=None, trigge
 
 ====================================================================================================
 
-FILE 255: /Users/eugenelin/dev/vmba0/pdp/services/development.py
+FILE 256: /Users/eugenelin/dev/vmba0/pdp/services/development.py
 ----------------------------------------------------------------------------------------------------
 from collections import defaultdict
 from decimal import Decimal
@@ -56801,7 +56836,7 @@ def assign_drill_to_player(*, player, drill_resource, assigned_by=None, season=N
 
 ====================================================================================================
 
-FILE 256: /Users/eugenelin/dev/vmba0/pdp/services/imports.py
+FILE 257: /Users/eugenelin/dev/vmba0/pdp/services/imports.py
 ----------------------------------------------------------------------------------------------------
 import csv
 import io
@@ -57265,7 +57300,7 @@ def execute_import(
 
 ====================================================================================================
 
-FILE 257: /Users/eugenelin/dev/vmba0/pdp/services/permissions.py
+FILE 258: /Users/eugenelin/dev/vmba0/pdp/services/permissions.py
 ----------------------------------------------------------------------------------------------------
 from django.db.models import Q
 
@@ -57337,7 +57372,7 @@ def visible_logs_for_user(user, queryset=None):
 
 ====================================================================================================
 
-FILE 258: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/ai_insights.html
+FILE 259: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/ai_insights.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 {% load pdp_tags %}
@@ -57393,7 +57428,7 @@ FILE 258: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/ai_insights.html
 
 ====================================================================================================
 
-FILE 259: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/base.html
+FILE 260: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/base.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -57444,7 +57479,7 @@ FILE 259: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/base.html
 
 ====================================================================================================
 
-FILE 260: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/coach_dashboard.html
+FILE 261: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/coach_dashboard.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57510,7 +57545,7 @@ FILE 260: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/coach_dashboard.html
 
 ====================================================================================================
 
-FILE 261: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/development_logs.html
+FILE 262: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/development_logs.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57548,7 +57583,7 @@ FILE 261: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/development_logs.html
 
 ====================================================================================================
 
-FILE 262: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/drill_library.html
+FILE 263: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/drill_library.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57602,7 +57637,7 @@ FILE 262: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/drill_library.html
 
 ====================================================================================================
 
-FILE 263: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/evaluation_history.html
+FILE 264: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/evaluation_history.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57648,7 +57683,7 @@ FILE 263: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/evaluation_history.html
 
 ====================================================================================================
 
-FILE 264: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/goals.html
+FILE 265: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/goals.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57694,7 +57729,7 @@ FILE 264: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/goals.html
 
 ====================================================================================================
 
-FILE 265: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/import_workbench.html
+FILE 266: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/import_workbench.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 {% load pdp_tags %}
@@ -57785,7 +57820,7 @@ FILE 265: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/import_workbench.html
 
 ====================================================================================================
 
-FILE 266: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/login.html
+FILE 267: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/login.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57807,7 +57842,7 @@ FILE 266: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/login.html
 
 ====================================================================================================
 
-FILE 267: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/parent_dashboard.html
+FILE 268: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/parent_dashboard.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57833,7 +57868,7 @@ FILE 267: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/parent_dashboard.html
 
 ====================================================================================================
 
-FILE 268: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/password_change.html
+FILE 269: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/password_change.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -57855,7 +57890,7 @@ FILE 268: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/password_change.html
 
 ====================================================================================================
 
-FILE 269: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/player_dashboard.html
+FILE 270: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/player_dashboard.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 {% load pdp_tags %}
@@ -57992,7 +58027,7 @@ FILE 269: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/player_dashboard.html
 
 ====================================================================================================
 
-FILE 270: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/report_card.html
+FILE 271: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/report_card.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -58028,7 +58063,7 @@ FILE 270: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/report_card.html
 
 ====================================================================================================
 
-FILE 271: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/roadmap.html
+FILE 272: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/roadmap.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -58082,7 +58117,7 @@ FILE 271: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/roadmap.html
 
 ====================================================================================================
 
-FILE 272: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/snapshots.html
+FILE 273: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/snapshots.html
 ----------------------------------------------------------------------------------------------------
 {% extends "pdp/base.html" %}
 
@@ -58121,13 +58156,13 @@ FILE 272: /Users/eugenelin/dev/vmba0/pdp/templates/pdp/snapshots.html
 
 ====================================================================================================
 
-FILE 273: /Users/eugenelin/dev/vmba0/pdp/templatetags/__init__.py
+FILE 274: /Users/eugenelin/dev/vmba0/pdp/templatetags/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 274: /Users/eugenelin/dev/vmba0/pdp/templatetags/pdp_tags.py
+FILE 275: /Users/eugenelin/dev/vmba0/pdp/templatetags/pdp_tags.py
 ----------------------------------------------------------------------------------------------------
 from decimal import Decimal
 
@@ -58165,13 +58200,13 @@ def format_delta(value):
 
 ====================================================================================================
 
-FILE 275: /Users/eugenelin/dev/vmba0/players/__init__.py
+FILE 276: /Users/eugenelin/dev/vmba0/players/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 276: /Users/eugenelin/dev/vmba0/players/admin.py
+FILE 277: /Users/eugenelin/dev/vmba0/players/admin.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import admin
 
@@ -58263,7 +58298,7 @@ class PlayerTagAdmin(TimeStampedAdmin):
 
 ====================================================================================================
 
-FILE 277: /Users/eugenelin/dev/vmba0/players/apps.py
+FILE 278: /Users/eugenelin/dev/vmba0/players/apps.py
 ----------------------------------------------------------------------------------------------------
 from django.apps import AppConfig
 
@@ -58274,7 +58309,7 @@ class PlayersConfig(AppConfig):
 
 ====================================================================================================
 
-FILE 278: /Users/eugenelin/dev/vmba0/players/models.py
+FILE 279: /Users/eugenelin/dev/vmba0/players/models.py
 ----------------------------------------------------------------------------------------------------
 from django.conf import settings
 from django.db import models
@@ -58508,7 +58543,7 @@ class PlayerTag(TimeStampedModel):
 
 ====================================================================================================
 
-FILE 279: /Users/eugenelin/dev/vmba0/players/tests.py
+FILE 280: /Users/eugenelin/dev/vmba0/players/tests.py
 ----------------------------------------------------------------------------------------------------
 from datetime import date
 
@@ -59084,7 +59119,7 @@ class PlayerImportWorkflowTests(TestCase):
 
 ====================================================================================================
 
-FILE 280: /Users/eugenelin/dev/vmba0/players/migrations/0001_initial.py
+FILE 281: /Users/eugenelin/dev/vmba0/players/migrations/0001_initial.py
 ----------------------------------------------------------------------------------------------------
 # Generated by Django 4.2.25 on 2026-07-01 19:01
 
@@ -59256,7 +59291,7 @@ class Migration(migrations.Migration):
 
 ====================================================================================================
 
-FILE 281: /Users/eugenelin/dev/vmba0/players/migrations/0002_playerimportbatch_and_more.py
+FILE 282: /Users/eugenelin/dev/vmba0/players/migrations/0002_playerimportbatch_and_more.py
 ----------------------------------------------------------------------------------------------------
 # Generated by Django 4.2.25 on 2026-07-02 17:38
 
@@ -59328,19 +59363,19 @@ class Migration(migrations.Migration):
 
 ====================================================================================================
 
-FILE 282: /Users/eugenelin/dev/vmba0/players/migrations/__init__.py
+FILE 283: /Users/eugenelin/dev/vmba0/players/migrations/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 283: /Users/eugenelin/dev/vmba0/players/services/__init__.py
+FILE 284: /Users/eugenelin/dev/vmba0/players/services/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 284: /Users/eugenelin/dev/vmba0/players/services/identity_service.py
+FILE 285: /Users/eugenelin/dev/vmba0/players/services/identity_service.py
 ----------------------------------------------------------------------------------------------------
 from __future__ import annotations
 
@@ -59427,7 +59462,7 @@ def record_source_row(
 
 ====================================================================================================
 
-FILE 285: /Users/eugenelin/dev/vmba0/players/services/import_service.py
+FILE 286: /Users/eugenelin/dev/vmba0/players/services/import_service.py
 ----------------------------------------------------------------------------------------------------
 from __future__ import annotations
 
@@ -60276,7 +60311,7 @@ def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: 
 
 ====================================================================================================
 
-FILE 286: /Users/eugenelin/dev/vmba0/players/services/matching_service.py
+FILE 287: /Users/eugenelin/dev/vmba0/players/services/matching_service.py
 ----------------------------------------------------------------------------------------------------
 from __future__ import annotations
 
@@ -60412,7 +60447,7 @@ def find_player_match(identity_data: dict) -> PlayerMatchResult:
 
 ====================================================================================================
 
-FILE 287: /Users/eugenelin/dev/vmba0/players/services/tag_service.py
+FILE 288: /Users/eugenelin/dev/vmba0/players/services/tag_service.py
 ----------------------------------------------------------------------------------------------------
 from django.utils.text import slugify
 
@@ -60458,7 +60493,7 @@ def active_tags():
 
 ====================================================================================================
 
-FILE 288: /Users/eugenelin/dev/vmba0/reference/content.json
+FILE 289: /Users/eugenelin/dev/vmba0/reference/content.json
 ----------------------------------------------------------------------------------------------------
 {
   "hero_title": "Welcome to Vancouver Community Baseball",
@@ -60751,7 +60786,7 @@ FILE 288: /Users/eugenelin/dev/vmba0/reference/content.json
 
 ====================================================================================================
 
-FILE 289: /Users/eugenelin/dev/vmba0/reference/source.html
+FILE 290: /Users/eugenelin/dev/vmba0/reference/source.html
 ----------------------------------------------------------------------------------------------------
 <!DOCTYPE html>
 <html lang="en-US">
@@ -61392,13 +61427,13 @@ var themeopts = {"medium_breakpoint":"992","mobile_breakpoint":"768","scrollTopP
 
 ====================================================================================================
 
-FILE 290: /Users/eugenelin/dev/vmba0/scholarships/__init__.py
+FILE 291: /Users/eugenelin/dev/vmba0/scholarships/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 291: /Users/eugenelin/dev/vmba0/scholarships/admin.py
+FILE 292: /Users/eugenelin/dev/vmba0/scholarships/admin.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import admin
 
@@ -61446,7 +61481,7 @@ class ScholarshipReferenceAdmin(admin.ModelAdmin):
 
 ====================================================================================================
 
-FILE 292: /Users/eugenelin/dev/vmba0/scholarships/apps.py
+FILE 293: /Users/eugenelin/dev/vmba0/scholarships/apps.py
 ----------------------------------------------------------------------------------------------------
 from django.apps import AppConfig
 
@@ -61458,7 +61493,7 @@ class ScholarshipsConfig(AppConfig):
 
 ====================================================================================================
 
-FILE 293: /Users/eugenelin/dev/vmba0/scholarships/forms.py
+FILE 294: /Users/eugenelin/dev/vmba0/scholarships/forms.py
 ----------------------------------------------------------------------------------------------------
 from django import forms
 from django.contrib.auth import authenticate, get_user_model, login
@@ -61690,7 +61725,7 @@ class StaffApplicationFilterForm(forms.Form):
 
 ====================================================================================================
 
-FILE 294: /Users/eugenelin/dev/vmba0/scholarships/models.py
+FILE 295: /Users/eugenelin/dev/vmba0/scholarships/models.py
 ----------------------------------------------------------------------------------------------------
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -61900,7 +61935,7 @@ class ScholarshipReference(TimeStampedModel):
 
 ====================================================================================================
 
-FILE 295: /Users/eugenelin/dev/vmba0/scholarships/tests.py
+FILE 296: /Users/eugenelin/dev/vmba0/scholarships/tests.py
 ----------------------------------------------------------------------------------------------------
 from datetime import timedelta
 
@@ -62020,7 +62055,7 @@ class ScholarshipFlowTests(TestCase):
 
 ====================================================================================================
 
-FILE 296: /Users/eugenelin/dev/vmba0/scholarships/urls.py
+FILE 297: /Users/eugenelin/dev/vmba0/scholarships/urls.py
 ----------------------------------------------------------------------------------------------------
 from django.urls import path
 
@@ -62060,7 +62095,7 @@ urlpatterns = [
 
 ====================================================================================================
 
-FILE 297: /Users/eugenelin/dev/vmba0/scholarships/views.py
+FILE 298: /Users/eugenelin/dev/vmba0/scholarships/views.py
 ----------------------------------------------------------------------------------------------------
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -62379,7 +62414,7 @@ class StaffCycleDownloadView(StaffRequiredMixin, TemplateView):
 
 ====================================================================================================
 
-FILE 298: /Users/eugenelin/dev/vmba0/scholarships/migrations/0001_initial.py
+FILE 299: /Users/eugenelin/dev/vmba0/scholarships/migrations/0001_initial.py
 ----------------------------------------------------------------------------------------------------
 # Generated by Django 4.2.25 on 2026-05-01 21:16
 
@@ -62499,13 +62534,13 @@ class Migration(migrations.Migration):
 
 ====================================================================================================
 
-FILE 299: /Users/eugenelin/dev/vmba0/scholarships/migrations/__init__.py
+FILE 300: /Users/eugenelin/dev/vmba0/scholarships/migrations/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 
 ====================================================================================================
 
-FILE 300: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/application_detail.html
+FILE 301: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/application_detail.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -62532,7 +62567,7 @@ FILE 300: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/applica
 
 ====================================================================================================
 
-FILE 301: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/application_form.html
+FILE 302: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/application_form.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -62684,7 +62719,7 @@ FILE 301: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/applica
 
 ====================================================================================================
 
-FILE 302: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/base.html
+FILE 303: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/base.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -62720,7 +62755,7 @@ FILE 302: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/base.ht
 
 ====================================================================================================
 
-FILE 303: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/dashboard.html
+FILE 304: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/dashboard.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -62806,7 +62841,7 @@ FILE 303: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/dashboa
 
 ====================================================================================================
 
-FILE 304: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/download_application.html
+FILE 305: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/download_application.html
 ----------------------------------------------------------------------------------------------------
 <!DOCTYPE html>
 <html lang="en">
@@ -62837,7 +62872,7 @@ FILE 304: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/downloa
 
 ====================================================================================================
 
-FILE 305: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/download_cycle.html
+FILE 306: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/download_cycle.html
 ----------------------------------------------------------------------------------------------------
 <!DOCTYPE html>
 <html lang="en">
@@ -62874,7 +62909,7 @@ FILE 305: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/downloa
 
 ====================================================================================================
 
-FILE 306: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/login.html
+FILE 307: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/login.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -62913,7 +62948,7 @@ FILE 306: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/login.h
 
 ====================================================================================================
 
-FILE 307: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/overview.html
+FILE 308: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/overview.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -63017,7 +63052,7 @@ FILE 307: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/overvie
 
 ====================================================================================================
 
-FILE 308: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/signup.html
+FILE 309: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/signup.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -63078,7 +63113,7 @@ FILE 308: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/signup.
 
 ====================================================================================================
 
-FILE 309: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/staff_application_detail.html
+FILE 310: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/staff_application_detail.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -63104,7 +63139,7 @@ FILE 309: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/staff_a
 
 ====================================================================================================
 
-FILE 310: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/staff_application_list.html
+FILE 311: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/staff_application_list.html
 ----------------------------------------------------------------------------------------------------
 {% extends "scholarships/base.html" %}
 
@@ -63201,7 +63236,7 @@ FILE 310: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/staff_a
 
 ====================================================================================================
 
-FILE 311: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partials/application_readonly.html
+FILE 312: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partials/application_readonly.html
 ----------------------------------------------------------------------------------------------------
 <section class="scholarship-grid scholarship-grid--detail">
     <article class="scholarship-panel">
@@ -63303,7 +63338,7 @@ FILE 311: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partial
 
 ====================================================================================================
 
-FILE 312: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partials/download_application_content.html
+FILE 313: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partials/download_application_content.html
 ----------------------------------------------------------------------------------------------------
 <section class="section">
     <h3>Section A: Applicant Information</h3>
@@ -63363,7 +63398,7 @@ FILE 312: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partial
 
 ====================================================================================================
 
-FILE 313: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partials/form_errors.html
+FILE 314: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partials/form_errors.html
 ----------------------------------------------------------------------------------------------------
 {% if form.non_field_errors or form.errors %}
     <div class="form-errors">
@@ -63381,7 +63416,7 @@ FILE 313: /Users/eugenelin/dev/vmba0/scholarships/templates/scholarships/partial
 
 ====================================================================================================
 
-FILE 314: /Users/eugenelin/dev/vmba0/scripts/extract.py
+FILE 315: /Users/eugenelin/dev/vmba0/scripts/extract.py
 ----------------------------------------------------------------------------------------------------
 from pathlib import Path
 import json
@@ -63459,7 +63494,7 @@ if __name__ == "__main__":
 
 ====================================================================================================
 
-FILE 315: /Users/eugenelin/dev/vmba0/scripts/generate_placeholders.py
+FILE 316: /Users/eugenelin/dev/vmba0/scripts/generate_placeholders.py
 ----------------------------------------------------------------------------------------------------
 import argparse
 from pathlib import Path
@@ -63590,7 +63625,7 @@ if __name__ == "__main__":
 
 ====================================================================================================
 
-FILE 316: /Users/eugenelin/dev/vmba0/scripts/transform.py
+FILE 317: /Users/eugenelin/dev/vmba0/scripts/transform.py
 ----------------------------------------------------------------------------------------------------
 from pathlib import Path
 from urllib.parse import urlparse
@@ -63691,7 +63726,7 @@ if __name__ == "__main__":
 
 ====================================================================================================
 
-FILE 317: /Users/eugenelin/dev/vmba0/static/css/leaguehub.css
+FILE 318: /Users/eugenelin/dev/vmba0/static/css/leaguehub.css
 ----------------------------------------------------------------------------------------------------
 .leaguehub-toolbar {
     align-items: end;
@@ -64042,7 +64077,7 @@ FILE 317: /Users/eugenelin/dev/vmba0/static/css/leaguehub.css
 
 ====================================================================================================
 
-FILE 318: /Users/eugenelin/dev/vmba0/static/css/pdp.css
+FILE 319: /Users/eugenelin/dev/vmba0/static/css/pdp.css
 ----------------------------------------------------------------------------------------------------
 .pdp-shell {
     padding: 0 1.5rem 4rem;
@@ -64314,7 +64349,7 @@ FILE 318: /Users/eugenelin/dev/vmba0/static/css/pdp.css
 
 ====================================================================================================
 
-FILE 319: /Users/eugenelin/dev/vmba0/static/css/scholarships.css
+FILE 320: /Users/eugenelin/dev/vmba0/static/css/scholarships.css
 ----------------------------------------------------------------------------------------------------
 .scholarship-main {
     max-width: calc(var(--max-width) + 4rem);
@@ -64775,7 +64810,7 @@ FILE 319: /Users/eugenelin/dev/vmba0/static/css/scholarships.css
 
 ====================================================================================================
 
-FILE 320: /Users/eugenelin/dev/vmba0/static/css/styles.css
+FILE 321: /Users/eugenelin/dev/vmba0/static/css/styles.css
 ----------------------------------------------------------------------------------------------------
 :root {
     --color-navy: #102a43;
@@ -67295,7 +67330,7 @@ table.tryout-table td:last-child {
 
 ====================================================================================================
 
-FILE 321: /Users/eugenelin/dev/vmba0/static/icons/facebook.svg
+FILE 322: /Users/eugenelin/dev/vmba0/static/icons/facebook.svg
 ----------------------------------------------------------------------------------------------------
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#1877F2">
   <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.028 4.388 11.024 10.125 11.876v-8.4H7.078v-3.476h3.047V9.413c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.964H15.83c-1.49 0-1.953.929-1.953 1.883v2.26h3.328l-.532 3.476h-2.796v8.4C19.612 23.097 24 18.101 24 12.073z"/>
@@ -67303,7 +67338,7 @@ FILE 321: /Users/eugenelin/dev/vmba0/static/icons/facebook.svg
 
 ====================================================================================================
 
-FILE 322: /Users/eugenelin/dev/vmba0/static/icons/instagram.svg
+FILE 323: /Users/eugenelin/dev/vmba0/static/icons/instagram.svg
 ----------------------------------------------------------------------------------------------------
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
   <defs>
@@ -67319,127 +67354,127 @@ FILE 322: /Users/eugenelin/dev/vmba0/static/icons/instagram.svg
 
 ====================================================================================================
 
-FILE 323: /Users/eugenelin/dev/vmba0/static/images/achievement-01.png
+FILE 324: /Users/eugenelin/dev/vmba0/static/images/achievement-01.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-01.png, size=558139 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 324: /Users/eugenelin/dev/vmba0/static/images/achievement-02.png
+FILE 325: /Users/eugenelin/dev/vmba0/static/images/achievement-02.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-02.png, size=1792127 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 325: /Users/eugenelin/dev/vmba0/static/images/achievement-03.png
+FILE 326: /Users/eugenelin/dev/vmba0/static/images/achievement-03.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-03.png, size=349003 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 326: /Users/eugenelin/dev/vmba0/static/images/achievement-04.png
+FILE 327: /Users/eugenelin/dev/vmba0/static/images/achievement-04.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-04.png, size=6472 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 327: /Users/eugenelin/dev/vmba0/static/images/achievement-05.png
+FILE 328: /Users/eugenelin/dev/vmba0/static/images/achievement-05.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-05.png, size=269376 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 328: /Users/eugenelin/dev/vmba0/static/images/achievement-06.png
+FILE 329: /Users/eugenelin/dev/vmba0/static/images/achievement-06.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-06.png, size=6670 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 329: /Users/eugenelin/dev/vmba0/static/images/achievement-07.png
+FILE 330: /Users/eugenelin/dev/vmba0/static/images/achievement-07.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-07.png, size=866301 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 330: /Users/eugenelin/dev/vmba0/static/images/achievement-08.png
+FILE 331: /Users/eugenelin/dev/vmba0/static/images/achievement-08.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-08.png, size=6524 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 331: /Users/eugenelin/dev/vmba0/static/images/achievement-09.png
+FILE 332: /Users/eugenelin/dev/vmba0/static/images/achievement-09.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-09.png, size=6910 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 332: /Users/eugenelin/dev/vmba0/static/images/achievement-10.png
+FILE 333: /Users/eugenelin/dev/vmba0/static/images/achievement-10.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-10.png, size=6574 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 333: /Users/eugenelin/dev/vmba0/static/images/achievement-11.png
+FILE 334: /Users/eugenelin/dev/vmba0/static/images/achievement-11.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-11.png, size=1088438 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 334: /Users/eugenelin/dev/vmba0/static/images/achievement-12.png
+FILE 335: /Users/eugenelin/dev/vmba0/static/images/achievement-12.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-12.png, size=1334355 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 335: /Users/eugenelin/dev/vmba0/static/images/achievement-13.png
+FILE 336: /Users/eugenelin/dev/vmba0/static/images/achievement-13.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/achievement-13.png, size=6855 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 336: /Users/eugenelin/dev/vmba0/static/images/hero-banner.jpg
+FILE 337: /Users/eugenelin/dev/vmba0/static/images/hero-banner.jpg
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/hero-banner.jpg, size=304687 bytes, type=image/jpeg]
 
 ====================================================================================================
 
-FILE 337: /Users/eugenelin/dev/vmba0/static/images/logo.png
+FILE 338: /Users/eugenelin/dev/vmba0/static/images/logo.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/logo.png, size=2669 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 338: /Users/eugenelin/dev/vmba0/static/images/north-fraser-nationals-18u-cp-tryouts.png
+FILE 339: /Users/eugenelin/dev/vmba0/static/images/north-fraser-nationals-18u-cp-tryouts.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/north-fraser-nationals-18u-cp-tryouts.png, size=1369750 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 339: /Users/eugenelin/dev/vmba0/static/images/programs-hero.jpg
+FILE 340: /Users/eugenelin/dev/vmba0/static/images/programs-hero.jpg
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/programs-hero.jpg, size=587570 bytes, type=image/jpeg]
 
 ====================================================================================================
 
-FILE 340: /Users/eugenelin/dev/vmba0/static/images/registration-hero.jpg
+FILE 341: /Users/eugenelin/dev/vmba0/static/images/registration-hero.jpg
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/registration-hero.jpg, size=304687 bytes, type=image/jpeg]
 
 ====================================================================================================
 
-FILE 341: /Users/eugenelin/dev/vmba0/static/images/vmb_hero-banner.jpg
+FILE 342: /Users/eugenelin/dev/vmba0/static/images/vmb_hero-banner.jpg
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/vmb_hero-banner.jpg, size=304687 bytes, type=image/jpeg]
 
 ====================================================================================================
 
-FILE 342: /Users/eugenelin/dev/vmba0/static/images/vmb_logo.png
+FILE 343: /Users/eugenelin/dev/vmba0/static/images/vmb_logo.png
 ----------------------------------------------------------------------------------------------------
 [Binary file omitted: path=/Users/eugenelin/dev/vmba0/static/images/vmb_logo.png, size=386568 bytes, type=image/png]
 
 ====================================================================================================
 
-FILE 343: /Users/eugenelin/dev/vmba0/templates/base.html
+FILE 344: /Users/eugenelin/dev/vmba0/templates/base.html
 ----------------------------------------------------------------------------------------------------
 {% load static %}
 <!DOCTYPE html>
@@ -67491,7 +67526,7 @@ FILE 343: /Users/eugenelin/dev/vmba0/templates/base.html
 
 ====================================================================================================
 
-FILE 344: /Users/eugenelin/dev/vmba0/templates/home/expectations.html
+FILE 345: /Users/eugenelin/dev/vmba0/templates/home/expectations.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -67585,7 +67620,7 @@ FILE 344: /Users/eugenelin/dev/vmba0/templates/home/expectations.html
 
 ====================================================================================================
 
-FILE 345: /Users/eugenelin/dev/vmba0/templates/home/index.html
+FILE 346: /Users/eugenelin/dev/vmba0/templates/home/index.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -67842,7 +67877,7 @@ FILE 345: /Users/eugenelin/dev/vmba0/templates/home/index.html
 
 ====================================================================================================
 
-FILE 346: /Users/eugenelin/dev/vmba0/templates/home/page.html
+FILE 347: /Users/eugenelin/dev/vmba0/templates/home/page.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -67882,7 +67917,7 @@ FILE 346: /Users/eugenelin/dev/vmba0/templates/home/page.html
 
 ====================================================================================================
 
-FILE 347: /Users/eugenelin/dev/vmba0/templates/home/programs.html
+FILE 348: /Users/eugenelin/dev/vmba0/templates/home/programs.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -67941,7 +67976,7 @@ FILE 347: /Users/eugenelin/dev/vmba0/templates/home/programs.html
 
 ====================================================================================================
 
-FILE 348: /Users/eugenelin/dev/vmba0/templates/home/registration.html
+FILE 349: /Users/eugenelin/dev/vmba0/templates/home/registration.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -68113,7 +68148,7 @@ FILE 348: /Users/eugenelin/dev/vmba0/templates/home/registration.html
 
 ====================================================================================================
 
-FILE 349: /Users/eugenelin/dev/vmba0/templates/home/tryouts.html
+FILE 350: /Users/eugenelin/dev/vmba0/templates/home/tryouts.html
 ----------------------------------------------------------------------------------------------------
 {% extends "base.html" %}
 {% load static %}
@@ -68257,7 +68292,7 @@ FILE 349: /Users/eugenelin/dev/vmba0/templates/home/tryouts.html
 
 ====================================================================================================
 
-FILE 350: /Users/eugenelin/dev/vmba0/templates/home/includes/footer.html
+FILE 351: /Users/eugenelin/dev/vmba0/templates/home/includes/footer.html
 ----------------------------------------------------------------------------------------------------
 {% load static %}
 <footer class="site-footer">
@@ -68321,7 +68356,7 @@ FILE 350: /Users/eugenelin/dev/vmba0/templates/home/includes/footer.html
 
 ====================================================================================================
 
-FILE 351: /Users/eugenelin/dev/vmba0/templates/home/includes/nav.html
+FILE 352: /Users/eugenelin/dev/vmba0/templates/home/includes/nav.html
 ----------------------------------------------------------------------------------------------------
 <ul class="menu level-{{ level }}">
     {% for item in items %}
@@ -68341,7 +68376,7 @@ FILE 351: /Users/eugenelin/dev/vmba0/templates/home/includes/nav.html
 
 ====================================================================================================
 
-FILE 352: /Users/eugenelin/dev/vmba0/templates/home/includes/nav_script.html
+FILE 353: /Users/eugenelin/dev/vmba0/templates/home/includes/nav_script.html
 ----------------------------------------------------------------------------------------------------
 <script>
     (function () {
@@ -68420,7 +68455,7 @@ FILE 352: /Users/eugenelin/dev/vmba0/templates/home/includes/nav_script.html
 
 ====================================================================================================
 
-FILE 353: /Users/eugenelin/dev/vmba0/templates/home/includes/site_header.html
+FILE 354: /Users/eugenelin/dev/vmba0/templates/home/includes/site_header.html
 ----------------------------------------------------------------------------------------------------
 {% load static %}
 <header class="site-header">
@@ -68459,12 +68494,12 @@ FILE 353: /Users/eugenelin/dev/vmba0/templates/home/includes/site_header.html
 
 ====================================================================================================
 
-FILE 354: /Users/eugenelin/dev/vmba0/vancouverminor/__init__.py
+FILE 355: /Users/eugenelin/dev/vmba0/vancouverminor/__init__.py
 ----------------------------------------------------------------------------------------------------
 
 ====================================================================================================
 
-FILE 355: /Users/eugenelin/dev/vmba0/vancouverminor/asgi.py
+FILE 356: /Users/eugenelin/dev/vmba0/vancouverminor/asgi.py
 ----------------------------------------------------------------------------------------------------
 """
 ASGI config for vancouverminor project.
@@ -68485,7 +68520,7 @@ application = get_asgi_application()
 
 ====================================================================================================
 
-FILE 356: /Users/eugenelin/dev/vmba0/vancouverminor/settings.py
+FILE 357: /Users/eugenelin/dev/vmba0/vancouverminor/settings.py
 ----------------------------------------------------------------------------------------------------
 """
 Django settings for vancouverminor project.
@@ -68629,7 +68664,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ====================================================================================================
 
-FILE 357: /Users/eugenelin/dev/vmba0/vancouverminor/urls.py
+FILE 358: /Users/eugenelin/dev/vmba0/vancouverminor/urls.py
 ----------------------------------------------------------------------------------------------------
 """
 URL configuration for vancouverminor project.
@@ -68668,7 +68703,7 @@ if settings.DEBUG:
 
 ====================================================================================================
 
-FILE 358: /Users/eugenelin/dev/vmba0/vancouverminor/wsgi.py
+FILE 359: /Users/eugenelin/dev/vmba0/vancouverminor/wsgi.py
 ----------------------------------------------------------------------------------------------------
 """
 WSGI config for vancouverminor project.
