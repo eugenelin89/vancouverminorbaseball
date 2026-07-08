@@ -32,16 +32,19 @@ The current platform supports:
 - draft context from submitted assessments
 - draft room workflows
 - account login and password change
+- staff Account Operations for managing user accounts
 
-Some future features are not available yet, including full player portals, parent portals, coach portals, email invitations, password reset emails, and staff account-management screens.
+Some future features are not available yet, including full player portals, parent portals, coach portals, email invitations, and password reset emails.
 
 ## User Types
 
 ### Administrators And Staff
 
-Administrators and staff can access staff-only areas such as Analytics, imports, player search, review pages, reporting summaries, and draft workflows.
+Administrators and staff can access staff-only areas such as Analytics, imports, player search, review pages, reporting summaries, draft workflows, and Account Operations.
 
-Staff/admin access is controlled by the system account. If you cannot access a staff page, ask a site administrator to check your account permissions.
+Staff/admin access is controlled by Django account permissions. Staff-only Account Operations pages require `User.is_staff` or `User.is_superuser`.
+
+The platform account role is separate from Django staff access. For example, `AccountProfile.role = staff` is metadata and does not grant staff-only page access by itself. If you cannot access a staff page, ask a site administrator to check your Django staff or superuser permissions.
 
 ### Coaches And Evaluators
 
@@ -111,6 +114,111 @@ It shows basic account information such as:
 - linked players, if any
 
 This page is intentionally simple. It is not a player portal.
+
+## Account Operations
+
+Staff can manage platform user accounts from Account Operations:
+
+```text
+/accounts/
+```
+
+The Account Operations dashboard gives staff a production view of account status, including account totals, active and inactive accounts, imported accounts, accounts requiring password changes, players without accounts, and users without player links.
+
+Staff Account Operations includes:
+
+- account search, list, and detail pages
+- account-only creation for coaches, parents, guest evaluators, staff-role metadata users, and other non-player accounts
+- player account creation from an existing player record
+- account activation and deactivation
+- username, email, and platform role editing
+- user-player link management
+- operational password reset
+- bulk account operations for low-risk actions
+
+Account Operations does not create new player identity records. Player accounts are created by finding an existing player, creating a login account, and linking the user to that player.
+
+### Creating Accounts
+
+Staff can create account-only users from:
+
+```text
+/accounts/create/
+```
+
+Use this for coaches, parents, guest evaluators, staff-role metadata users, or other users who do not need a new player identity.
+
+Staff can create a player login account from an existing player record at:
+
+```text
+/accounts/create/player/
+```
+
+Use this only when the player already exists in the player database.
+
+Temporary passwords are shown once immediately after account creation. They are not shown again on the account detail page.
+
+### Editing Accounts
+
+Staff can open an account detail page from the account list:
+
+```text
+/accounts/users/
+```
+
+From account detail, staff can edit:
+
+- username
+- email
+- platform role
+- active/inactive status
+
+Changing `AccountProfile.role` does not change Django `User.is_staff` or `User.is_superuser`. Platform roles help describe account purpose; Django staff/superuser flags control operational access.
+
+### User-Player Links
+
+Staff can manage user-player links from an account detail page.
+
+Supported link relationships include:
+
+- self
+- parent
+- guardian
+- coach
+- staff
+
+A parent or guardian account may be linked to multiple players. A player may also be linked to multiple parents or guardians.
+
+Normal unlinking deactivates the link instead of deleting it, so staff can preserve history and reactivate links when needed.
+
+### Password Reset And Forced Password Change
+
+Staff can perform operational password resets from an account detail page.
+
+When a password is reset:
+
+- a temporary password is shown once
+- the user is required to change the password at next login
+- the temporary password is not stored in account summaries, import data, or account detail pages
+
+Users who must change their password are sent to:
+
+```text
+/accounts/password/
+```
+
+They cannot use normal platform pages until the password change is complete.
+
+### Bulk Account Operations
+
+Staff can perform selected low-risk bulk actions from the account list, such as:
+
+- activate selected accounts
+- deactivate selected accounts
+- require selected users to change passwords
+- clear password-change requirement for selected users
+
+Bulk operations are intended for routine account maintenance. Staff should review selected accounts carefully before applying a bulk action.
 
 ## Analytics Command Center
 
@@ -347,7 +455,6 @@ The following are not part of the current version:
 - public self-registration
 - email invitations
 - password reset emails
-- staff account-management UI
 - audit dashboard
 - video analysis
 - AI-generated summaries

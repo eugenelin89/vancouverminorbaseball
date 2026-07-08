@@ -79,7 +79,9 @@ Because the site is mostly static, productivity comes from editing `content.py` 
 
 ## Project Snapshot Policy
 
-When a file is created or changed in this repository, update `project_flat_file.txt` before finishing the task. The snapshot should include all project text files with their full absolute paths and clear separators. Binary files should be represented by metadata and a short description rather than embedding their full contents.
+Do not regenerate or update `project_flat_file.txt` during normal work. Treat it as an on-request artifact only.
+
+Prompt archive records should store the user prompt and commit diffs, not full repository snapshots. If a full-project snapshot is explicitly requested, exclude dependency, generated, and cache directories such as `.git`, `.venv`, `__pycache__`, `node_modules`, `dist`, and `build`. Binary files should be represented by metadata and a short description rather than embedding their full contents.
 
 ---
 

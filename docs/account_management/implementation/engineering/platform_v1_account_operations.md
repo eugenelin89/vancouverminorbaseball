@@ -2,9 +2,9 @@
 
 ## 1. Objectives
 
-Players V1, Analytics V1, Account Management V1, and the platform architecture documentation are complete and frozen. The remaining gap is operational: staff can authenticate users, provision accounts from imports, link users to players, and force password changes, but they do not yet have production-ready screens for day-to-day account management.
+Players V1, Analytics V1, Account Management V1, Platform V1 Account Operations, and the platform architecture documentation are complete and frozen. This document records the operational account-management plan that was used to complete the staff-facing production workflows for managing accounts, links, passwords, and bulk account actions.
 
-This plan defines the remaining account-management work required to make Platform V1 production-ready. It extends Platform V1 operations without introducing a new architecture version.
+This plan defines the account-management work that made Platform V1 production-ready. It extended Platform V1 operations without introducing a new architecture version.
 
 The objectives are:
 
