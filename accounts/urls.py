@@ -11,6 +11,7 @@ from accounts.views import (
     AccountUserEditView,
     AccountUserLinksView,
     AccountUserListView,
+    AccountUserPasswordResetView,
     PlayerAccountCreateView,
 )
 
@@ -29,4 +30,5 @@ urlpatterns = [
     path("users/<int:user_id>/", AccountUserDetailView.as_view(), name="user-detail"),
     path("users/<int:user_id>/edit/", AccountUserEditView.as_view(), name="user-edit"),
     path("users/<int:user_id>/links/", AccountUserLinksView.as_view(), name="user-links"),
+    path("users/<int:user_id>/password/", AccountUserPasswordResetView.as_view(), name="user-password-reset"),
 ]

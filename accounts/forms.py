@@ -51,3 +51,7 @@ class UserPlayerLinkForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["player"].queryset = Player.objects.filter(is_active=True).order_by("last_name", "first_name", "id")
+
+
+class PasswordResetConfirmForm(forms.Form):
+    confirm = forms.BooleanField(required=True, label="I understand this temporary password will be shown once.")

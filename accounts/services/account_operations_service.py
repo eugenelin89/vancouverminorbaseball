@@ -8,7 +8,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from accounts.models import AccountRole, UserPlayerLink
+from accounts.models import AccountRole, UserPlayerLink, UserPlayerRelationship
 from accounts.services import account_query_service
 from accounts.services.account_query_service import AccountListFilters
 from accounts.services.email_service import find_existing_email_user, normalize_email
@@ -23,6 +23,7 @@ from accounts.services.password_service import (
     generate_birthdate_password,
     mark_password_change_required,
     set_random_temporary_password,
+    set_temporary_password,
 )
 from accounts.services.profile_service import get_or_create_account_profile, set_account_role
 from accounts.services.provisioning_service import STATUS_CREATED, provision_player_account
@@ -114,6 +115,13 @@ class UpdatedLinkResult:
     relationship: str
     is_primary: bool
     is_active: bool
+
+
+@dataclass(frozen=True)
+class PasswordResetResult:
+    user: User
+    username: str
+    temporary_password: str = field(repr=False)
 
 
 def _validate_actor_can_create_role(actor, role: str) -> None:
@@ -219,6 +227,16 @@ def _get_user_for_update(user_id: int) -> User:
 
 def _get_link_for_user(user: User, link_id: int) -> UserPlayerLink:
     return UserPlayerLink.objects.select_for_update().select_related("user", "player").get(pk=link_id, user=user)
+
+
+def _player_for_password_reset(user: User) -> Player | None:
+    link = (
+        UserPlayerLink.objects.select_related("player")
+        .filter(user=user, relationship=UserPlayerRelationship.SELF, is_active=True)
+        .order_by("-is_primary", "id")
+        .first()
+    )
+    return link.player if link else None
 
 
 def get_account_operations_dashboard() -> AccountOperationsDashboard:
@@ -393,6 +411,21 @@ def set_primary_user_player_link(*, actor, user_id: int, link_id: int) -> Update
     user = _get_user_for_update(user_id)
     link = _get_link_for_user(user, link_id)
     return _updated_link_result(set_primary_self_link(link, actor=actor))
+
+
+@transaction.atomic
+def reset_account_password(*, actor, user_id: int) -> PasswordResetResult:
+    """Reset an existing account password and require password change on next login."""
+    user = _get_user_for_update(user_id)
+    player = _player_for_password_reset(user)
+    if player:
+        temporary_password = generate_birthdate_password(player)
+        set_temporary_password(user, player)
+    else:
+        temporary_password = set_random_temporary_password(user)
+    mark_password_change_required(user, True)
+    user.refresh_from_db()
+    return PasswordResetResult(user=user, username=user.username, temporary_password=temporary_password)
 
 
 @transaction.atomic

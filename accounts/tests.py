@@ -20,6 +20,7 @@ from accounts.services.account_operations_service import (
     get_account_list,
     get_account_operations_dashboard,
     reactivate_user_player_link,
+    reset_account_password,
     set_primary_user_player_link,
     update_account,
 )
@@ -607,6 +608,61 @@ class AccountOperationsServiceTests(TestCase):
 
         with self.assertRaises(ValidationError):
             set_primary_user_player_link(actor=self.staff, user_id=self.coach.id, link_id=link.id)
+
+    def test_reset_account_password_uses_birthdate_for_player_account(self):
+        self.player_user.account_profile.must_change_password = False
+        self.player_user.account_profile.save(update_fields=["must_change_password", "updated_at"])
+        original_link_count = UserPlayerLink.objects.filter(user=self.player_user).count()
+
+        result = reset_account_password(actor=self.staff, user_id=self.player_user.id)
+
+        self.player_user.refresh_from_db()
+        self.assertEqual(result.user, self.player_user)
+        self.assertEqual(result.username, "alex.player")
+        self.assertEqual(result.temporary_password, "20120501")
+        self.assertTrue(self.player_user.check_password("20120501"))
+        self.assertTrue(self.player_user.account_profile.must_change_password)
+        self.assertTrue(self.player_user.is_active)
+        self.assertEqual(self.player_user.account_profile.role, AccountRole.PLAYER)
+        self.assertTrue(self.player_user.account_profile.created_from_import)
+        self.assertEqual(self.player_user.account_profile.import_batch, self.import_batch)
+        self.assertEqual(UserPlayerLink.objects.filter(user=self.player_user).count(), original_link_count)
+        self.assertNotIn(result.temporary_password, repr(result))
+
+    def test_reset_account_password_uses_random_password_for_non_player_account(self):
+        self.coach.account_profile.must_change_password = False
+        self.coach.account_profile.save(update_fields=["must_change_password", "updated_at"])
+
+        result = reset_account_password(actor=self.staff, user_id=self.coach.id)
+
+        self.coach.refresh_from_db()
+        self.assertTrue(result.temporary_password)
+        self.assertNotEqual(result.temporary_password, "20120501")
+        self.assertTrue(self.coach.check_password(result.temporary_password))
+        self.assertTrue(self.coach.account_profile.must_change_password)
+        self.assertTrue(self.coach.is_active)
+        self.assertEqual(self.coach.account_profile.role, AccountRole.COACH)
+        self.assertFalse(UserPlayerLink.objects.filter(user=self.coach, relationship=UserPlayerRelationship.SELF).exists())
+        self.assertNotIn(result.temporary_password, repr(result))
+
+    def test_reset_account_password_preserves_inactive_account_state(self):
+        self.assertFalse(self.inactive_user.is_active)
+
+        result = reset_account_password(actor=self.staff, user_id=self.inactive_user.id)
+
+        self.inactive_user.refresh_from_db()
+        self.assertFalse(self.inactive_user.is_active)
+        self.assertTrue(self.inactive_user.check_password(result.temporary_password))
+        self.assertTrue(self.inactive_user.account_profile.must_change_password)
+
+    def test_reset_account_password_rejects_player_account_missing_birthdate(self):
+        player = Player.objects.create(first_name="No", last_name="Birthdate")
+        user = User.objects.create_user(username="no.birthdate", password="testpass")
+        set_account_role(user, AccountRole.PLAYER)
+        link_user_to_player(user, player)
+
+        with self.assertRaises(ValidationError):
+            reset_account_password(actor=self.staff, user_id=user.id)
 
 
 class UserPlayerLinkModelTests(TestCase):
@@ -1470,6 +1526,7 @@ class AccountOperationsViewTests(TestCase):
         self.assertContains(response, "Alex Player")
         self.assertContains(response, reverse("accounts:user-edit", kwargs={"user_id": self.coach.id}))
         self.assertContains(response, reverse("accounts:user-links", kwargs={"user_id": self.coach.id}))
+        self.assertContains(response, reverse("accounts:user-password-reset", kwargs={"user_id": self.coach.id}))
 
     def test_user_edit_requires_staff(self):
         self.client.force_login(self.regular)
@@ -1631,6 +1688,70 @@ class AccountOperationsViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Unsupported link action")
+
+    def test_password_reset_requires_staff(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.get(reverse("accounts:user-password-reset", kwargs={"user_id": self.coach.id}))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_can_reset_non_player_password_and_see_password_once(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-password-reset", kwargs={"user_id": self.coach.id}),
+            {"confirm": "on"},
+        )
+
+        self.coach.refresh_from_db()
+        temporary_password = response.context["password_reset_result"].temporary_password
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Password Reset Complete")
+        self.assertContains(response, temporary_password)
+        self.assertTrue(self.coach.check_password(temporary_password))
+        self.assertTrue(self.coach.account_profile.must_change_password)
+        self.assertNotIn(temporary_password, " ".join(str(message) for message in get_messages(response.wsgi_request)))
+
+        refresh_response = self.client.get(reverse("accounts:user-password-reset", kwargs={"user_id": self.coach.id}))
+        detail_response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": self.coach.id}))
+        self.assertNotContains(refresh_response, temporary_password)
+        self.assertNotContains(detail_response, temporary_password)
+
+    def test_staff_can_reset_player_password_with_birthdate_password(self):
+        player = Player.objects.create(first_name="Blake", last_name="Player", birthdate="2013-06-02")
+        user = User.objects.create_user(username="blake.player", password="testpass")
+        set_account_role(user, AccountRole.PLAYER)
+        link_user_to_player(user, player)
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-password-reset", kwargs={"user_id": user.id}),
+            {"confirm": "on"},
+        )
+
+        user.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "20130602")
+        self.assertTrue(user.check_password("20130602"))
+        self.assertTrue(user.account_profile.must_change_password)
+
+    def test_password_reset_does_not_run_without_confirmation(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(reverse("accounts:user-password-reset", kwargs={"user_id": self.coach.id}), {})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This field is required")
+        self.coach.refresh_from_db()
+        self.assertTrue(self.coach.check_password("testpass"))
+
+    def test_password_reset_missing_account_returns_404(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("accounts:user-password-reset", kwargs={"user_id": 999999}))
+
+        self.assertEqual(response.status_code, 404)
 
     def test_profile_page_links_staff_to_account_operations(self):
         self.client.force_login(self.staff)

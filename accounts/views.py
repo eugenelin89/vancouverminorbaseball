@@ -7,7 +7,13 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.views.generic import FormView, TemplateView
 
-from accounts.forms import AccountEditForm, AccountOnlyCreateForm, PlayerAccountCreateForm, UserPlayerLinkForm
+from accounts.forms import (
+    AccountEditForm,
+    AccountOnlyCreateForm,
+    PasswordResetConfirmForm,
+    PlayerAccountCreateForm,
+    UserPlayerLinkForm,
+)
 from accounts.services.account_operations_service import (
     create_account_only,
     create_player_account,
@@ -17,6 +23,7 @@ from accounts.services.account_operations_service import (
     get_account_list,
     get_account_operations_dashboard,
     reactivate_user_player_link,
+    reset_account_password,
     set_primary_user_player_link,
     update_account,
 )
@@ -261,6 +268,34 @@ class AccountUserLinksView(AccountOperationsStaffRequiredMixin, FormView):
             form.add_error(None, exc)
             return self.form_invalid(form)
         return redirect("accounts:user-links", user_id=self.account_detail.user.id)
+
+
+class AccountUserPasswordResetView(AccountOperationsStaffRequiredMixin, FormView):
+    template_name = "accounts/user_password_reset.html"
+    form_class = PasswordResetConfirmForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.account_detail = _account_detail_or_404(kwargs["user_id"])
+        if not can_view_account_detail(request.user, self.account_detail.user):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["account_detail"] = self.account_detail
+        context["target_user"] = self.account_detail.user
+        return context
+
+    def form_valid(self, form):
+        try:
+            result = reset_account_password(actor=self.request.user, user_id=self.account_detail.user.id)
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        messages.success(self.request, "Password reset successfully.")
+        return self.render_to_response(
+            self.get_context_data(form=self.form_class(), password_reset_result=result)
+        )
 
 
 class AccountOnlyCreateView(AccountOperationsStaffRequiredMixin, FormView):

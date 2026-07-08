@@ -52,6 +52,7 @@
         <div class="pdp-actions">
             <a class="button button--primary" href="{% url 'accounts:user-edit' target_user.id %}">Edit Account</a>
             <a class="button button--ghost" href="{% url 'accounts:user-links' target_user.id %}">Manage Links</a>
+            <a class="button button--ghost" href="{% url 'accounts:user-password-reset' target_user.id %}">Reset Password</a>
             <a class="button button--ghost" href="{% url 'accounts:user-list' %}">Back to users</a>
         </div>
     </article>
