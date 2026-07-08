@@ -77,10 +77,49 @@
     <article class="pdp-card">
         <h2>Results</h2>
         <p>{{ total_count }} account{{ total_count|pluralize }} found.</p>
+        <form method="post" action="{{ current_path }}" class="pdp-form">
+            {% csrf_token %}
+            {{ bulk_form.non_field_errors }}
+            <div class="pdp-actions">
+                <label>
+                    {{ bulk_form.select_all }}
+                    {{ bulk_form.select_all.label }}
+                </label>
+                <label>
+                    Bulk action
+                    {{ bulk_form.action }}
+                    {{ bulk_form.action.errors }}
+                </label>
+                <button class="button button--primary" type="submit">Apply</button>
+            </div>
+            {% if bulk_result %}
+                <section>
+                    <h3>Bulk Operation Result</h3>
+                    <p>{{ bulk_result.successful }} succeeded, {{ bulk_result.failed }} failed, {{ bulk_result.processed }} processed.</p>
+                    {% if bulk_result.errors %}
+                        <div class="table-wrap">
+                            <table class="pdp-table">
+                                <thead>
+                                    <tr><th>Account</th><th>Error</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for error in bulk_result.errors %}
+                                        <tr>
+                                            <td>{{ error.username }}</td>
+                                            <td>{{ error.message }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </section>
+            {% endif %}
         <div class="table-wrap">
             <table class="pdp-table">
                 <thead>
                     <tr>
+                        <th>Select</th>
                         <th>Username</th>
                         <th>Name</th>
                         <th>Email</th>
@@ -97,6 +136,10 @@
                 <tbody>
                     {% for row in rows %}
                         <tr>
+                            <td>
+                                <input type="hidden" name="visible_user_ids" value="{{ row.user.id }}">
+                                <input type="checkbox" name="user_ids" value="{{ row.user.id }}">
+                            </td>
                             <td>{{ row.user.username }}</td>
                             <td>{{ row.user.get_full_name|default:"-" }}</td>
                             <td>{{ row.user.email|default:"-" }}</td>
@@ -122,11 +165,12 @@
                             <td><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="11">No accounts match these filters.</td></tr>
+                        <tr><td colspan="12">No accounts match these filters.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        </form>
     </article>
 </section>
 {% endblock %}

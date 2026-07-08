@@ -10,11 +10,13 @@ from django.views.generic import FormView, TemplateView
 from accounts.forms import (
     AccountEditForm,
     AccountOnlyCreateForm,
+    BulkAccountOperationForm,
     PasswordResetConfirmForm,
     PlayerAccountCreateForm,
     UserPlayerLinkForm,
 )
 from accounts.services.account_operations_service import (
+    bulk_account_operation,
     create_account_only,
     create_player_account,
     create_user_player_link,
@@ -130,9 +132,14 @@ class AccountUserListView(AccountOperationsStaffRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         filters = parse_account_list_filters(self.request.GET)
         account_list = get_account_list(filters)
+        visible_user_ids = [row.user.id for row in account_list.rows]
+        bulk_form = kwargs.get("bulk_form") or BulkAccountOperationForm(visible_user_ids=visible_user_ids)
         context.update(
             {
                 "account_list": account_list,
+                "bulk_form": bulk_form,
+                "bulk_result": kwargs.get("bulk_result"),
+                "current_path": self.request.get_full_path(),
                 "filters": account_list.filters,
                 "rows": account_list.rows,
                 "role_choices": account_list.role_choices,
@@ -140,6 +147,29 @@ class AccountUserListView(AccountOperationsStaffRequiredMixin, TemplateView):
             }
         )
         return context
+
+    def post(self, request, *args, **kwargs):
+        if not can_view_account_list(request.user):
+            raise PermissionDenied
+        visible_user_ids = request.POST.getlist("visible_user_ids")
+        form = BulkAccountOperationForm(request.POST, visible_user_ids=visible_user_ids)
+        bulk_result = None
+        if form.is_valid():
+            try:
+                bulk_result = bulk_account_operation(
+                    actor=request.user,
+                    action=form.cleaned_data["action"],
+                    user_ids=form.selected_user_ids(),
+                )
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                messages.success(
+                    request,
+                    f"Bulk operation complete: {bulk_result.successful} succeeded, {bulk_result.failed} failed.",
+                )
+                form = BulkAccountOperationForm(visible_user_ids=visible_user_ids)
+        return self.render_to_response(self.get_context_data(bulk_form=form, bulk_result=bulk_result))
 
 
 class AccountUserDetailView(AccountOperationsStaffRequiredMixin, TemplateView):

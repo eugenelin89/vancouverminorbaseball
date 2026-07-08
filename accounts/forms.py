@@ -1,6 +1,12 @@
 from django import forms
 
 from accounts.models import AccountRole, UserPlayerRelationship
+from accounts.services.account_operations_service import (
+    BULK_ACTION_ACTIVATE,
+    BULK_ACTION_CLEAR_PASSWORD_CHANGE,
+    BULK_ACTION_DEACTIVATE,
+    BULK_ACTION_REQUIRE_PASSWORD_CHANGE,
+)
 from players.models import Player
 
 
@@ -10,6 +16,13 @@ ACCOUNT_ONLY_ROLE_CHOICES = (
     (AccountRole.PARENT, "Parent"),
     (AccountRole.GUEST_EVALUATOR, "Guest Evaluator"),
     (AccountRole.ADMIN, "Admin"),
+)
+
+BULK_ACTION_CHOICES = (
+    (BULK_ACTION_ACTIVATE, "Activate"),
+    (BULK_ACTION_DEACTIVATE, "Deactivate"),
+    (BULK_ACTION_REQUIRE_PASSWORD_CHANGE, "Require password change"),
+    (BULK_ACTION_CLEAR_PASSWORD_CHANGE, "Clear password change"),
 )
 
 
@@ -55,3 +68,21 @@ class UserPlayerLinkForm(forms.Form):
 
 class PasswordResetConfirmForm(forms.Form):
     confirm = forms.BooleanField(required=True, label="I understand this temporary password will be shown once.")
+
+
+class BulkAccountOperationForm(forms.Form):
+    action = forms.ChoiceField(choices=BULK_ACTION_CHOICES)
+    user_ids = forms.MultipleChoiceField(required=False)
+    visible_user_ids = forms.MultipleChoiceField(required=False)
+    select_all = forms.BooleanField(required=False, label="Select all accounts shown")
+
+    def __init__(self, *args, visible_user_ids=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [(str(user_id), str(user_id)) for user_id in visible_user_ids or []]
+        self.fields["user_ids"].choices = choices
+        self.fields["visible_user_ids"].choices = choices
+
+    def selected_user_ids(self):
+        if self.cleaned_data.get("select_all"):
+            return self.cleaned_data.get("visible_user_ids", [])
+        return self.cleaned_data.get("user_ids", [])

@@ -11,6 +11,7 @@ from django.contrib.auth import SESSION_KEY
 from accounts.models import AccountProfile, AccountRole, UserPlayerLink, UserPlayerRelationship
 from accounts.services.account_operations_service import (
     activate_account,
+    bulk_account_operation,
     create_account_only,
     create_player_account,
     create_user_player_link,
@@ -663,6 +664,93 @@ class AccountOperationsServiceTests(TestCase):
 
         with self.assertRaises(ValidationError):
             reset_account_password(actor=self.staff, user_id=user.id)
+
+    def test_bulk_account_operation_activates_accounts(self):
+        result = bulk_account_operation(actor=self.staff, action="activate", user_ids=[self.inactive_user.id])
+
+        self.inactive_user.refresh_from_db()
+        self.assertEqual(result.processed, 1)
+        self.assertEqual(result.successful, 1)
+        self.assertEqual(result.failed, 0)
+        self.assertTrue(self.inactive_user.is_active)
+
+    def test_bulk_account_operation_deactivates_accounts(self):
+        result = bulk_account_operation(actor=self.staff, action="deactivate", user_ids=[self.coach.id])
+
+        self.coach.refresh_from_db()
+        self.assertEqual(result.processed, 1)
+        self.assertEqual(result.successful, 1)
+        self.assertFalse(self.coach.is_active)
+
+    def test_bulk_account_operation_sets_password_change_requirement(self):
+        mark_password_change_required(self.coach, False)
+
+        result = bulk_account_operation(
+            actor=self.staff,
+            action="require_password_change",
+            user_ids=[self.coach.id],
+        )
+
+        self.coach.refresh_from_db()
+        self.assertEqual(result.successful, 1)
+        self.assertTrue(self.coach.account_profile.must_change_password)
+
+    def test_bulk_account_operation_clears_password_change_requirement(self):
+        mark_password_change_required(self.player_user, True)
+
+        result = bulk_account_operation(
+            actor=self.staff,
+            action="clear_password_change",
+            user_ids=[self.player_user.id],
+        )
+
+        self.player_user.refresh_from_db()
+        self.assertEqual(result.successful, 1)
+        self.assertFalse(self.player_user.account_profile.must_change_password)
+
+    def test_bulk_account_operation_continues_after_failure(self):
+        result = bulk_account_operation(
+            actor=self.staff,
+            action="deactivate",
+            user_ids=[self.staff.id, self.coach.id],
+        )
+
+        self.staff.refresh_from_db()
+        self.coach.refresh_from_db()
+        self.assertEqual(result.processed, 2)
+        self.assertEqual(result.successful, 1)
+        self.assertEqual(result.failed, 1)
+        self.assertEqual(result.errors[0].username, "staff")
+        self.assertIn("cannot deactivate your own account", result.errors[0].message)
+        self.assertTrue(self.staff.is_active)
+        self.assertFalse(self.coach.is_active)
+
+    def test_bulk_account_operation_rejects_empty_selection_and_unknown_action(self):
+        with self.assertRaises(ValidationError):
+            bulk_account_operation(actor=self.staff, action="activate", user_ids=[])
+        with self.assertRaises(ValidationError):
+            bulk_account_operation(actor=self.staff, action="unsupported", user_ids=[self.coach.id])
+
+    def test_bulk_account_operation_reports_missing_users(self):
+        result = bulk_account_operation(actor=self.staff, action="activate", user_ids=[999999])
+
+        self.assertEqual(result.processed, 1)
+        self.assertEqual(result.successful, 0)
+        self.assertEqual(result.failed, 1)
+        self.assertEqual(result.errors[0].username, "Unknown account")
+        self.assertEqual(result.errors[0].message, "Account not found.")
+
+    def test_bulk_account_operation_rejects_last_superuser_deactivation(self):
+        superuser = User.objects.create_superuser(username="ops.admin", password="testpass")
+
+        result = bulk_account_operation(actor=self.staff, action="deactivate", user_ids=[superuser.id])
+
+        superuser.refresh_from_db()
+        self.assertEqual(result.successful, 0)
+        self.assertEqual(result.failed, 1)
+        self.assertEqual(result.errors[0].username, "ops.admin")
+        self.assertIn("last active superuser", result.errors[0].message)
+        self.assertTrue(superuser.is_active)
 
 
 class UserPlayerLinkModelTests(TestCase):
@@ -1499,6 +1587,117 @@ class AccountOperationsViewTests(TestCase):
         self.assertContains(response, "coach.one")
         self.assertContains(response, "Coach")
         self.assertNotContains(response, "regular")
+        self.assertContains(response, "Bulk action")
+        self.assertContains(response, "Select all accounts shown")
+
+    def test_user_list_bulk_post_requires_staff(self):
+        self.client.force_login(self.regular)
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {"action": "activate", "user_ids": [self.coach.id], "visible_user_ids": [self.coach.id]},
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_can_bulk_activate_from_user_list(self):
+        self.coach.is_active = False
+        self.coach.save(update_fields=["is_active"])
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {"action": "activate", "user_ids": [self.coach.id], "visible_user_ids": [self.coach.id]},
+        )
+
+        self.coach.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "1 succeeded, 0 failed")
+        self.assertTrue(self.coach.is_active)
+
+    def test_staff_can_bulk_require_and_clear_password_change_from_user_list(self):
+        mark_password_change_required(self.coach, False)
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {
+                "action": "require_password_change",
+                "user_ids": [self.coach.id],
+                "visible_user_ids": [self.coach.id],
+            },
+        )
+
+        self.coach.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.coach.account_profile.must_change_password)
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {
+                "action": "clear_password_change",
+                "user_ids": [self.coach.id],
+                "visible_user_ids": [self.coach.id],
+            },
+        )
+
+        self.coach.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.coach.account_profile.must_change_password)
+
+    def test_staff_bulk_deactivate_reports_self_failure_and_successes(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {
+                "action": "deactivate",
+                "user_ids": [self.staff.id, self.coach.id],
+                "visible_user_ids": [self.staff.id, self.coach.id],
+            },
+        )
+
+        self.staff.refresh_from_db()
+        self.coach.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "1 succeeded, 1 failed")
+        self.assertContains(response, "staff")
+        self.assertContains(response, "cannot deactivate your own account")
+        self.assertTrue(self.staff.is_active)
+        self.assertFalse(self.coach.is_active)
+
+    def test_staff_bulk_action_rejects_empty_selection_and_unknown_action(self):
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {"action": "activate", "visible_user_ids": [self.coach.id]},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Select at least one account")
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {"action": "unsupported", "user_ids": [self.coach.id], "visible_user_ids": [self.coach.id]},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Select a valid choice")
+
+    def test_staff_bulk_select_all_uses_visible_user_ids(self):
+        self.coach.is_active = False
+        self.coach.save(update_fields=["is_active"])
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("accounts:user-list"),
+            {"action": "activate", "select_all": "on", "visible_user_ids": [self.coach.id]},
+        )
+
+        self.coach.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(self.coach.is_active)
 
     def test_user_detail_requires_staff(self):
         self.client.force_login(self.regular)
