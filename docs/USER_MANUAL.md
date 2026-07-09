@@ -130,6 +130,7 @@ Staff Account Operations includes:
 - account search, list, and detail pages
 - account-only creation for coaches, parents, guest evaluators, staff-role metadata users, and other non-player accounts
 - player account creation from an existing player record
+- coach account import from CSV
 - account activation and deactivation
 - username, email, and platform role editing
 - user-player link management
@@ -157,6 +158,42 @@ Staff can create a player login account from an existing player record at:
 Use this only when the player already exists in the player database.
 
 Temporary passwords are shown once immediately after account creation. They are not shown again on the account detail page.
+
+### Importing Coach Accounts
+
+Staff can import coach accounts from:
+
+```text
+/accounts/imports/coaches/
+```
+
+Coach import uses a preview and confirm workflow:
+
+1. Upload a coach CSV file.
+2. Review the preview for rows to create, existing coach accounts to reuse, conflicts, and row errors.
+3. Confirm the import.
+4. Copy temporary passwords from the result page immediately.
+
+Required CSV columns:
+
+- first_name
+- last_name
+- email
+
+Optional CSV columns:
+
+- username
+- team
+- division
+- is_active
+- notes
+- source_id
+
+If an imported row uses the email address of an existing coach account, the system reuses that coach account. Confirming the import resets that coach's temporary password, and the coach must change the password on next login.
+
+Temporary passwords are shown only once on the immediate result page. They are not stored on the account detail page or in account metadata.
+
+Coach import creates or reuses coach login accounts only. It does not create player records and does not create coach-to-player links.
 
 ### Editing Accounts
 

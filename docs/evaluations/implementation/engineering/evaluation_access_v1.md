@@ -927,13 +927,15 @@ Purpose:
 Deliverables:
 
 - `accounts.services.coach_import_service`;
-- staff-only coach import upload/preview/confirm/detail workflow;
+- staff-only coach import upload/preview/confirm/result workflow without a persistent import batch model;
 - account creation with `AccountProfile.role = coach`;
 - username/email duplicate handling;
 - random temporary password generation;
 - one-time temporary password result display;
 - import summary without plaintext password persistence;
 - tests.
+
+Status: implemented.
 
 ### Phase 2: Evaluation Permission And Role Snapshot Updates
 

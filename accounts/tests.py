@@ -1622,6 +1622,7 @@ class CoachImportServiceTests(TestCase):
 
         user = User.objects.get(username="inactive.coach")
         self.assertFalse(user.is_active)
+        self.assertFalse(result.rows[0].is_active)
         self.assertEqual(result.inactive_accounts, 1)
 
     def test_explicit_username_is_normalized_and_validated(self):
@@ -1647,6 +1648,7 @@ class CoachImportServiceTests(TestCase):
     def test_duplicate_email_with_existing_coach_reuses_account(self):
         existing = User.objects.create_user(username="existing.coach", email="coach@example.com", password="oldpass")
         set_account_role(existing, AccountRole.COACH)
+        original_password_hash = existing.password
 
         result = commit_coach_import(
             self.staff,
@@ -1659,6 +1661,8 @@ class CoachImportServiceTests(TestCase):
         self.assertEqual(User.objects.filter(email__iexact="coach@example.com").count(), 1)
         self.assertTrue(existing.account_profile.must_change_password)
         self.assertTrue(existing.check_password(result.rows[0].temporary_password))
+        self.assertNotEqual(existing.password, original_password_hash)
+        self.assertEqual(existing.account_profile.role, AccountRole.COACH)
 
     def test_duplicate_email_with_non_coach_conflicts(self):
         existing = User.objects.create_user(username="player.user", email="shared@example.com")
@@ -1683,6 +1687,44 @@ class CoachImportServiceTests(TestCase):
 
         self.assertEqual(result.rows[0].status, RESULT_CONFLICT)
         self.assertFalse(User.objects.filter(email="taken@example.com").exists())
+
+    def test_duplicate_email_and_username_within_same_csv_conflict(self):
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(
+                [
+                    "First,Coach,first@example.com,same.username,,,,,",
+                    "Second,Coach,first@example.com,other.username,,,,,",
+                    "Third,Coach,third@example.com,same.username,,,,,",
+                ]
+            ),
+        )
+
+        self.assertEqual(result.users_created, 1)
+        self.assertEqual(result.conflicts, 2)
+        self.assertTrue(User.objects.filter(email="first@example.com").exists())
+        self.assertFalse(User.objects.filter(email="third@example.com").exists())
+
+    def test_blank_csv_fields_do_not_wipe_existing_metadata(self):
+        existing = User.objects.create_user(username="metadata.coach", email="metadata@example.com")
+        profile = set_account_role(existing, AccountRole.COACH)
+        profile.metadata = {"team": "Reds", "division": "13U", "notes": "Keep this", "custom": "value"}
+        profile.save(update_fields=["metadata", "updated_at"])
+
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Metadata,Coach,metadata@example.com,,,,,,"]),
+        )
+
+        profile.refresh_from_db()
+        self.assertEqual(result.rows[0].status, RESULT_REUSED)
+        self.assertEqual(profile.metadata["team"], "Reds")
+        self.assertEqual(profile.metadata["division"], "13U")
+        self.assertEqual(profile.metadata["notes"], "Keep this")
+        self.assertEqual(profile.metadata["custom"], "value")
+        self.assertNotIn(result.rows[0].temporary_password, str(profile.metadata))
+        self.assertFalse(profile.created_from_import)
+        self.assertIsNone(profile.import_batch)
 
     def test_missing_required_fields_produce_row_errors(self):
         preview = preview_coach_import("first_name,last_name,email\nMissing,Email,\n")
@@ -2336,11 +2378,18 @@ class AccountOperationsViewTests(TestCase):
         self.assertTrue(user.is_active)
         self.assertEqual(user.account_profile.role, AccountRole.COACH)
         self.assertTrue(user.account_profile.must_change_password)
+        self.assertFalse(user.is_staff)
+        self.assertFalse(user.is_superuser)
         self.assertFalse(UserPlayerLink.objects.filter(user=user).exists())
         self.assertEqual(Player.objects.count(), 1)
+        self.assertNotIn("coach_import_csv", self.client.session)
 
         detail_response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": user.id}))
         self.assertNotContains(detail_response, temporary_password)
+        list_response = self.client.get(reverse("accounts:coach-import-list"))
+        self.assertNotContains(list_response, temporary_password)
+        preview_again = self.client.get(reverse("accounts:coach-import-preview"))
+        self.assertEqual(preview_again.status_code, 302)
         confirm_again = self.client.get(reverse("accounts:coach-import-confirm"))
         self.assertEqual(confirm_again.status_code, 302)
 
@@ -2367,8 +2416,16 @@ class AccountOperationsViewTests(TestCase):
         result = response.context["result"]
         self.assertEqual(result.existing_coaches_reused, 1)
         self.assertEqual(result.conflicts, 1)
+        temporary_password = result.rows[0].temporary_password
+        existing_coach.refresh_from_db()
+        self.assertTrue(existing_coach.check_password(temporary_password))
+        self.assertTrue(existing_coach.account_profile.must_change_password)
+        self.assertEqual(existing_coach.account_profile.role, AccountRole.COACH)
         self.assertEqual(User.objects.filter(email__iexact="existing@example.com").count(), 1)
         self.assertEqual(User.objects.filter(email__iexact="player@example.com").count(), 1)
+
+        detail_response = self.client.get(reverse("accounts:user-detail", kwargs={"user_id": existing_coach.id}))
+        self.assertNotContains(detail_response, temporary_password)
 
 
 class AccountPasswordMiddlewareTests(TestCase):

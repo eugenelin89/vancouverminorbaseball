@@ -97,6 +97,7 @@ class CoachImportResultRow:
     status: str
     username: str = ""
     user_id: int | None = None
+    is_active: bool = False
     temporary_password: str = field(default="", repr=False)
     messages: list[str] = field(default_factory=list)
 
@@ -131,11 +132,11 @@ class CoachImportResult:
 
     @property
     def active_accounts(self) -> int:
-        return sum(1 for row in self.rows if row.status in {RESULT_CREATED, RESULT_REUSED} and "inactive" not in row.messages)
+        return sum(1 for row in self.rows if row.status in {RESULT_CREATED, RESULT_REUSED} and row.is_active)
 
     @property
     def inactive_accounts(self) -> int:
-        return sum(1 for row in self.rows if row.status in {RESULT_CREATED, RESULT_REUSED} and "inactive" in row.messages)
+        return sum(1 for row in self.rows if row.status in {RESULT_CREATED, RESULT_REUSED} and not row.is_active)
 
     @property
     def password_change_required(self) -> int:
@@ -354,11 +355,15 @@ def _metadata_for_row(row: CoachImportRowPreview) -> dict[str, str]:
     }
 
 
+def _profile_metadata(profile) -> dict:
+    return profile.metadata if isinstance(profile.metadata, dict) else {}
+
+
 @transaction.atomic
 def _reuse_existing_coach(row: CoachImportRowPreview) -> CoachImportResultRow:
     user = User.objects.select_for_update().select_related("account_profile").get(pk=row.existing_user_id)
     profile = set_account_role(user, AccountRole.COACH)
-    metadata = {**profile.metadata, **_metadata_for_row(row)}
+    metadata = {**_profile_metadata(profile), **_metadata_for_row(row)}
     profile.metadata = metadata
     profile.must_change_password = True
     profile.save(update_fields=["metadata", "must_change_password", "updated_at"])
@@ -374,6 +379,7 @@ def _reuse_existing_coach(row: CoachImportRowPreview) -> CoachImportResultRow:
         status=RESULT_REUSED,
         username=user.username,
         user_id=user.id,
+        is_active=user.is_active,
         temporary_password=temporary_password,
         messages=[status_message],
     )
@@ -391,7 +397,7 @@ def _create_coach(row: CoachImportRowPreview) -> CoachImportResultRow:
     temporary_password = set_random_temporary_password(user)
     profile = set_account_role(user, AccountRole.COACH)
     profile.must_change_password = True
-    profile.metadata = {**profile.metadata, **_metadata_for_row(row)}
+    profile.metadata = {**_profile_metadata(profile), **_metadata_for_row(row)}
     profile.save(update_fields=["must_change_password", "metadata", "updated_at"])
     status_message = "inactive" if not user.is_active else "active"
     return CoachImportResultRow(
@@ -399,6 +405,7 @@ def _create_coach(row: CoachImportRowPreview) -> CoachImportResultRow:
         status=RESULT_CREATED,
         username=user.username,
         user_id=user.id,
+        is_active=user.is_active,
         temporary_password=temporary_password,
         messages=[status_message],
     )

@@ -65,7 +65,8 @@
 
     <article class="pdp-card">
         <h2>Confirm</h2>
-        <p>Only rows marked ready or reuse will be processed. Temporary passwords are shown once on the result page.</p>
+        <p>Only rows marked ready or reuse will be processed. Rows marked reuse will use the existing coach account and reset that coach's temporary password. The coach must change the password on next login.</p>
+        <p>Temporary passwords are shown once on the result page.</p>
         <form method="post" action="{% url 'accounts:coach-import-confirm' %}" class="pdp-form">
             {% csrf_token %}
             <label>
