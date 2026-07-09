@@ -29,8 +29,10 @@ ROLE_COACH = "coach"
 ROLE_ASSISTANT_COACH = "assistant_coach"
 ROLE_HEAD_COACH = "head_coach"
 ROLE_COORDINATOR = "coordinator"
+ROLE_PLAYER = "player"
 ROLE_STAFF = "staff"
 ROLE_ADMIN = "admin"
+ROLE_GUEST_EVALUATOR = "guest_evaluator"
 
 COACH_ASSESSMENT_RUBRIC = {
     "scale": "1-5",
@@ -56,8 +58,10 @@ DEFAULT_EVALUATOR_ROLES = [
     (ROLE_ASSISTANT_COACH, "Assistant Coach"),
     (ROLE_HEAD_COACH, "Head Coach"),
     (ROLE_COORDINATOR, "Coordinator"),
+    (ROLE_PLAYER, "Player"),
     (ROLE_STAFF, "Staff"),
     (ROLE_ADMIN, "Admin"),
+    (ROLE_GUEST_EVALUATOR, "Guest Evaluator"),
 ]
 
 DEFAULT_COACH_ASSESSMENT_QUESTIONS = [

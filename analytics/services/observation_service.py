@@ -24,13 +24,13 @@ from analytics.models import (
     ObservationType,
 )
 from analytics.services.question_service import (
-    ROLE_COACH,
     SOURCE_COACH,
     get_active_questions,
     get_coach_assessment_type,
     get_default_coach_assessment_question_set,
     get_question_set_for_cycle,
 )
+from analytics.services.permissions import can_evaluate_player, evaluator_role_for_user
 from players.models import Player
 
 
@@ -129,6 +129,10 @@ def create_observation(
 ) -> Observation:
     """Create an observation with role snapshot and duplicate validation."""
     _validate_question_set_for_type(question_set, observation_type)
+    if evaluator is not None:
+        if not can_evaluate_player(evaluator, player):
+            raise ValidationError("This evaluator cannot evaluate this player.")
+        evaluator_role = evaluator_role or evaluator_role_for_user(evaluator)
     _validate_unique_coach_assessment(
         player=player,
         evaluation_cycle=evaluation_cycle,
@@ -179,7 +183,7 @@ def create_coach_assessment_observation(
     observation_type = get_coach_assessment_type()
     question_set = question_set or get_question_set_for_cycle(evaluation_cycle, observation_type)
     source = source or ObservationSource.objects.get(key=SOURCE_COACH)
-    evaluator_role = evaluator_role or EvaluatorRole.objects.get(key=ROLE_COACH)
+    evaluator_role = evaluator_role or evaluator_role_for_user(evaluator)
     observation = create_observation(
         player=player,
         evaluation_cycle=evaluation_cycle,

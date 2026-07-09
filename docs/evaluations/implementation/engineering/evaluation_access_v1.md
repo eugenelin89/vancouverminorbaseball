@@ -416,8 +416,8 @@ Role snapshot should come from Account Management role metadata:
 - `AccountProfile.role = coach` maps to `EvaluatorRole.coach`;
 - `AccountProfile.role = player` maps to `EvaluatorRole.player`;
 - `AccountProfile.role = staff` maps to `EvaluatorRole.staff`;
-- `AccountProfile.role = admin` should snapshot as `staff` or `admin` only if Analytics defines that evaluator role;
-- `AccountProfile.role = guest_evaluator` maps to `EvaluatorRole.guest_evaluator` if added.
+- `AccountProfile.role = admin` maps to `EvaluatorRole.admin`;
+- `AccountProfile.role = guest_evaluator` maps to `EvaluatorRole.guest_evaluator`.
 
 Recommended implementation:
 
@@ -950,6 +950,8 @@ Deliverables:
 - correct snapshot for player, coach, staff, admin, and guest evaluator users;
 - self-evaluation rule enforced based on Phase 0 decision;
 - regression tests proving existing coach assessment behavior still works.
+
+Status: implemented.
 
 ### Phase 3: Player Evaluation Submission
 

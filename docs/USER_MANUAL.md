@@ -48,7 +48,7 @@ The platform account role is separate from Django staff access. For example, `Ac
 
 ### Coaches And Evaluators
 
-Any authenticated user can submit a coach assessment for any player they know.
+Authenticated coaches, players, staff, and guest evaluators can submit assessments for players they know.
 
 The system records:
 
@@ -359,11 +359,13 @@ Submitted assessments become part of the player's Analytics record.
 
 ## Who Can Evaluate A Player
 
-Any authenticated user can evaluate any player if they know the player.
+Authenticated coaches, players, staff, and guest evaluators can evaluate any player if they know the player.
 
 The player does not need to be on the evaluator's own team.
 
 This is intentional. It allows coaches, coordinators, staff, and other approved evaluators to contribute observations when they have useful knowledge of a player.
+
+Players cannot evaluate themselves in Evaluation Access V1. Parent accounts do not submit evaluations unless staff gives the user a separate evaluator role.
 
 ## Staff Review Of Assessments
 
@@ -507,7 +509,7 @@ Yes. Multiple evaluators can submit assessments for the same player.
 
 ### Can I evaluate a player who is not on my team?
 
-Yes, if you are authenticated and know the player well enough to provide a useful evaluation.
+Yes, if your account has an evaluator role and you know the player well enough to provide a useful evaluation. Players cannot evaluate themselves.
 
 ### Is my role recorded when I submit an evaluation?
 

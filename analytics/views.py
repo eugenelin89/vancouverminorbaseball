@@ -30,7 +30,13 @@ from analytics.services.player_service import (
 )
 from analytics.services.draft_service import get_draft_contexts_for_player
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
-from analytics.services.permissions import can_edit_observation, can_reopen_observation, can_submit_coach_assessment, can_view_observation
+from analytics.services.permissions import (
+    can_edit_observation,
+    can_evaluate_player,
+    can_reopen_observation,
+    can_submit_coach_assessment,
+    can_view_observation,
+)
 from analytics.services.metrics_service import normalize_cycle_id
 from analytics.services.reporting_service import get_command_center_context
 from analytics.services.timeline_service import get_player_timeline
@@ -296,6 +302,8 @@ class CoachAssessmentEditView(LoginRequiredMixin, TemplateView):
                 messages.error(request, "No active coach assessment cycle is available.")
                 return redirect("analytics:assessment-list")
             player = get_object_or_404(Player, pk=kwargs["player_id"], is_active=True)
+            if not can_evaluate_player(request.user, player):
+                raise PermissionDenied("You cannot evaluate this player.")
             existing = get_existing_coach_assessment(player, cycle, request.user)
             if existing and existing.status == OBSERVATION_STATUS_SUBMITTED:
                 return redirect("analytics:assessment-detail", observation_id=existing.pk)

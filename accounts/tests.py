@@ -179,6 +179,14 @@ class AccountPermissionTests(TestCase):
         self.assertTrue(can_view_account_detail(self.staff, self.user))
         self.assertTrue(can_access_account_operations(self.superuser))
 
+    def test_coach_role_does_not_grant_account_operations_access(self):
+        self.profile.role = AccountRole.COACH
+        self.profile.save(update_fields=["role", "updated_at"])
+
+        self.assertFalse(self.user.is_staff)
+        self.assertFalse(self.user.is_superuser)
+        self.assertFalse(can_access_account_operations(self.user))
+
     def test_privileged_account_management_is_superuser_only(self):
         self.assertFalse(can_manage_privileged_accounts(self.user))
         self.assertFalse(can_manage_privileged_accounts(self.staff))

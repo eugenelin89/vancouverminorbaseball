@@ -11,6 +11,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import AccountRole, UserPlayerRelationship
+from accounts.services.link_service import deactivate_link, link_user_to_player
+from accounts.services.profile_service import set_account_role
 from analytics.models import (
     OBSERVATION_STATUS_DRAFT,
     OBSERVATION_STATUS_REOPENED,
@@ -60,6 +63,12 @@ from analytics.services.player_service import (
     parse_player_search_filters,
     search_players,
 )
+from analytics.services.permissions import (
+    can_evaluate_player,
+    can_submit_evaluation,
+    can_view_own_evaluation_draft,
+    evaluator_role_for_user,
+)
 from analytics.services.reporting_service import get_command_center_context
 from analytics.services.draft_service import get_draft_context_for_draft_player, get_draft_contexts_for_draft
 from analytics.services.question_service import (
@@ -67,7 +76,11 @@ from analytics.services.question_service import (
     DEFAULT_COACH_ASSESSMENT_QUESTIONS,
     DEFAULT_EVALUATOR_ROLES,
     DEFAULT_OBSERVATION_SOURCES,
+    ROLE_ADMIN,
     ROLE_COACH,
+    ROLE_GUEST_EVALUATOR,
+    ROLE_PLAYER,
+    ROLE_STAFF,
     SOURCE_COACH,
     ensure_default_coach_assessment_setup,
     get_active_questions,
@@ -430,6 +443,107 @@ class AnalyticsObservationFoundationTests(TestCase):
         self.assertEqual(observation.evaluator_role_key, ROLE_COACH)
         self.assertEqual(observation.evaluator_role_name, "Coach")
         self.assertEqual(observation.observation_type_key, OBSERVATION_TYPE_COACH_ASSESSMENT)
+
+    def test_evaluation_submission_permissions_by_role(self):
+        anonymous = None
+        coach = User.objects.create_user(username="rolecoach", password="testpass")
+        player_user = User.objects.create_user(username="roleplayer", password="testpass")
+        staff_user = User.objects.create_user(username="rolestaff", password="testpass", is_staff=True)
+        guest = User.objects.create_user(username="roleguest", password="testpass")
+        parent = User.objects.create_user(username="roleparent", password="testpass")
+        set_account_role(coach, AccountRole.COACH)
+        set_account_role(player_user, AccountRole.PLAYER)
+        set_account_role(staff_user, AccountRole.STAFF)
+        set_account_role(guest, AccountRole.GUEST_EVALUATOR)
+        set_account_role(parent, AccountRole.PARENT)
+
+        self.assertFalse(can_submit_evaluation(anonymous))
+        self.assertTrue(can_submit_evaluation(coach))
+        self.assertTrue(can_submit_evaluation(player_user))
+        self.assertTrue(can_submit_evaluation(staff_user))
+        self.assertTrue(can_submit_evaluation(guest))
+        self.assertFalse(can_submit_evaluation(parent))
+
+    def test_self_evaluation_is_blocked_by_active_self_link_only(self):
+        player_user = User.objects.create_user(username="selflinked", password="testpass")
+        set_account_role(player_user, AccountRole.PLAYER)
+        link = link_user_to_player(player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+
+        self.assertFalse(can_evaluate_player(player_user, self.player))
+        self.assertTrue(can_evaluate_player(player_user, self.other_player))
+        with self.assertRaises(ValidationError):
+            create_coach_assessment_observation(
+                player=self.player,
+                evaluation_cycle=self.cycle,
+                evaluator=player_user,
+            )
+
+        deactivate_link(link)
+        self.assertTrue(can_evaluate_player(player_user, self.player))
+
+    def test_parent_role_cannot_create_observation(self):
+        parent = User.objects.create_user(username="parent", password="testpass")
+        set_account_role(parent, AccountRole.PARENT)
+
+        with self.assertRaises(ValidationError):
+            create_coach_assessment_observation(
+                player=self.player,
+                evaluation_cycle=self.cycle,
+                evaluator=parent,
+            )
+
+    def test_evaluator_role_for_user_maps_account_roles(self):
+        expectations = [
+            (AccountRole.COACH, ROLE_COACH),
+            (AccountRole.PLAYER, ROLE_PLAYER),
+            (AccountRole.STAFF, ROLE_STAFF),
+            (AccountRole.ADMIN, ROLE_ADMIN),
+            (AccountRole.GUEST_EVALUATOR, ROLE_GUEST_EVALUATOR),
+        ]
+        for account_role, evaluator_role_key in expectations:
+            with self.subTest(account_role=account_role):
+                user = User.objects.create_user(username=f"{account_role}-user", password="testpass")
+                set_account_role(user, account_role)
+
+                evaluator_role = evaluator_role_for_user(user)
+
+                self.assertEqual(evaluator_role.key, evaluator_role_key)
+
+    def test_coach_assessment_snapshots_actual_account_role_by_default(self):
+        role_expectations = [
+            (AccountRole.COACH, ROLE_COACH),
+            (AccountRole.PLAYER, ROLE_PLAYER),
+            (AccountRole.STAFF, ROLE_STAFF),
+            (AccountRole.ADMIN, ROLE_ADMIN),
+            (AccountRole.GUEST_EVALUATOR, ROLE_GUEST_EVALUATOR),
+        ]
+        for index, (account_role, evaluator_role_key) in enumerate(role_expectations, start=1):
+            with self.subTest(account_role=account_role):
+                evaluator = User.objects.create_user(username=f"snapshot-{account_role}", password="testpass")
+                set_account_role(evaluator, account_role)
+                player = Player.objects.create(first_name=f"Snapshot{index}", last_name="Target", division="13U")
+
+                result = create_coach_assessment_observation(
+                    player=player,
+                    evaluation_cycle=self.cycle,
+                    evaluator=evaluator,
+                )
+
+                self.assertEqual(result.observation.evaluator_role_key, evaluator_role_key)
+                self.assertEqual(result.observation.evaluator_role, EvaluatorRole.objects.get(key=evaluator_role_key))
+
+    def test_draft_view_helpers_are_limited_to_own_drafts(self):
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.evaluator,
+        ).observation
+        self.assertTrue(can_view_own_evaluation_draft(self.evaluator, observation))
+        self.assertFalse(can_view_own_evaluation_draft(self.other_evaluator, observation))
+
+        observation.status = OBSERVATION_STATUS_SUBMITTED
+        observation.save(update_fields=["status", "updated_at"])
+        self.assertFalse(can_view_own_evaluation_draft(self.evaluator, observation))
 
     def test_submitted_observation_sets_submitted_at(self):
         result = create_coach_assessment_observation(
