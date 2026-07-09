@@ -29,12 +29,18 @@ from analytics.services.player_service import (
     staff_player_queryset,
 )
 from analytics.services.draft_service import get_draft_contexts_for_player
+from analytics.services.evaluation_access_service import (
+    active_evaluation_cycle,
+    get_evaluation_target_list,
+    get_or_create_evaluation_for_player,
+)
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
 from analytics.services.permissions import (
     can_edit_observation,
     can_evaluate_player,
     can_reopen_observation,
     can_submit_coach_assessment,
+    can_submit_evaluation,
     can_view_observation,
 )
 from analytics.services.metrics_service import normalize_cycle_id
@@ -250,6 +256,93 @@ class PlayerComparisonView(AnalyticsStaffRequiredMixin, TemplateView):
             }
         )
         return context
+
+
+class EvaluationSubmitterRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not can_submit_evaluation(request.user):
+            raise PermissionDenied("You cannot submit evaluations.")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class EvaluationListView(EvaluationSubmitterRequiredMixin, TemplateView):
+    template_name = "analytics/evaluation_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        target_list = get_evaluation_target_list(self.request.user, self.request.GET)
+        context.update(
+            {
+                "target_list": target_list,
+                "cycle": target_list.cycle,
+                "player_statuses": target_list.player_statuses,
+                "query": target_list.query,
+                "division": target_list.division,
+                "team": target_list.team,
+                "cycles": EvaluationCycle.objects.filter(
+                    is_active=True,
+                    coach_assessment_question_set__observation_type__key=OBSERVATION_TYPE_COACH_ASSESSMENT,
+                ),
+            }
+        )
+        return context
+
+
+class EvaluationPlayerView(EvaluationSubmitterRequiredMixin, TemplateView):
+    template_name = "analytics/evaluation_form.html"
+    observation = None
+
+    def dispatch(self, request, *args, **kwargs):
+        cycle = active_evaluation_cycle(request.GET.get("cycle"))
+        if not cycle:
+            messages.error(request, "No active evaluation cycle is available.")
+            return redirect("analytics:evaluation-list")
+        player = get_object_or_404(Player, pk=kwargs["player_id"], is_active=True)
+        if not can_evaluate_player(request.user, player):
+            raise PermissionDenied("You cannot evaluate this player.")
+        self.observation = get_or_create_evaluation_for_player(request.user, player, cycle)
+        if self.observation.status == OBSERVATION_STATUS_SUBMITTED:
+            return redirect("analytics:assessment-detail", observation_id=self.observation.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form(self, data=None, require_required=False):
+        return CoachAssessmentForm(
+            data=data,
+            question_set=self.observation.question_set,
+            observation=self.observation,
+            require_required=require_required,
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = kwargs.get("form") or self.get_form()
+        context.update(
+            {
+                "observation": self.observation,
+                "player": self.observation.player,
+                "cycle": self.observation.evaluation_cycle,
+                "question_set": self.observation.question_set,
+                "form": form,
+                "question_groups": form.question_groups(),
+            }
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get("action", "save_draft")
+        form = self.get_form(data=request.POST, require_required=action == "submit")
+        if form.is_valid():
+            try:
+                save_observation_responses(self.observation, form.response_payload())
+                if action == "submit":
+                    submit_observation(self.observation, actor=request.user)
+                    messages.success(request, "Evaluation submitted.")
+                    return redirect("analytics:assessment-detail", observation_id=self.observation.pk)
+                messages.success(request, "Evaluation draft saved.")
+                return redirect("analytics:evaluation-player", player_id=self.observation.player_id)
+            except ValidationError as exc:
+                form.add_error(None, exc)
+        return self.render_to_response(self.get_context_data(form=form))
 
 
 class CoachAssessmentListView(LoginRequiredMixin, TemplateView):

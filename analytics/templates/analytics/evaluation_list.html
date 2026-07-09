@@ -1,0 +1,66 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Evaluations{% endblock %}
+{% block analytics_subtitle %}Find an active player and submit an evaluation.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Evaluate Player</h2>
+    {% if not cycle %}
+        <p>No active evaluation cycle is available.</p>
+    {% else %}
+        <form method="get" class="pdp-form">
+            <label>
+                Search
+                <input type="search" name="q" value="{{ query }}">
+            </label>
+            <label>
+                Division
+                <input type="text" name="division" value="{{ division }}">
+            </label>
+            <label>
+                Team
+                <input type="text" name="team" value="{{ team }}">
+            </label>
+            <button class="button button--primary" type="submit">Filter</button>
+        </form>
+        <p>{{ cycle.name }}</p>
+        <div class="table-wrap">
+            <table class="pdp-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Division</th>
+                        <th>Team</th>
+                        <th>My draft evaluations</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in player_statuses %}
+                        <tr>
+                            <td>{{ item.player.display_name }}</td>
+                            <td>{{ item.player.division }}</td>
+                            <td>{{ item.player.team_name }}</td>
+                            <td>{% include "analytics/_assessment_status_badge.html" with status=item.status %}</td>
+                            <td>
+                                {% if not item.can_evaluate %}
+                                    <span class="pdp-badge pdp-badge--muted">Self-evaluation blocked</span>
+                                {% elif item.observation and item.status == "submitted" %}
+                                    <a class="button button--ghost" href="{% url 'analytics:assessment-detail' observation_id=item.observation.id %}">View</a>
+                                {% elif item.observation %}
+                                    <a class="button button--primary" href="{% url 'analytics:evaluation-player' player_id=item.player.id %}">Continue</a>
+                                {% else %}
+                                    <a class="button button--primary" href="{% url 'analytics:evaluation-player' player_id=item.player.id %}">Evaluate Player</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5">No active players found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</article>
+{% endblock %}

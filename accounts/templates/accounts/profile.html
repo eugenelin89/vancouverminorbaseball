@@ -25,6 +25,9 @@
                 {% endfor %}
             </ul>
         {% endif %}
+        {% if account_role != "parent" %}
+            <p><a class="button button--primary" href="{% url 'analytics:evaluation-list' %}">Submit Evaluation</a></p>
+        {% endif %}
         {% if request.user.is_staff or request.user.is_superuser %}
             <p><a class="button button--ghost" href="{% url 'accounts:operations-dashboard' %}">Account Operations</a></p>
         {% endif %}

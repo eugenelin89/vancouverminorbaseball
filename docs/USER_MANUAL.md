@@ -341,6 +341,12 @@ Assessment pages are available under:
 /analytics/assessments/
 ```
 
+Evaluation submission pages are available under:
+
+```text
+/analytics/evaluations/
+```
+
 The assessment form uses the active question set for the current assessment cycle. Questions are not hard-coded into the page, so they can evolve over time.
 
 Assessments may include:
@@ -350,12 +356,14 @@ Assessments may include:
 
 When submitting an assessment:
 
-- choose or open the player assessment
+- choose or open the player evaluation
 - enter ratings and notes
 - save a draft if more work is needed
 - submit when finished
 
 Submitted assessments become part of the player's Analytics record.
+
+Players, coaches, staff, and guest evaluators use the evaluation pages to submit evaluations. Staff-only review pages and player result pages are separate workflows.
 
 ## Who Can Evaluate A Player
 

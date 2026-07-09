@@ -968,6 +968,8 @@ Deliverables:
 - self-evaluation handling;
 - permission tests.
 
+Status: implemented.
+
 ### Phase 4: Player "My Evaluations"
 
 Purpose:
