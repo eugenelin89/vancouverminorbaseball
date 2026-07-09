@@ -970,6 +970,8 @@ Deliverables:
 
 Status: implemented.
 
+Review fixes: completed. Submitted evaluation detail remains limited to the evaluator and staff; the evaluation list labels submitted links as "View My Submission"; profile navigation uses service-derived evaluation permission context.
+
 ### Phase 4: Player "My Evaluations"
 
 Purpose:

@@ -279,10 +279,6 @@ class EvaluationListView(EvaluationSubmitterRequiredMixin, TemplateView):
                 "query": target_list.query,
                 "division": target_list.division,
                 "team": target_list.team,
-                "cycles": EvaluationCycle.objects.filter(
-                    is_active=True,
-                    coach_assessment_question_set__observation_type__key=OBSERVATION_TYPE_COACH_ASSESSMENT,
-                ),
             }
         )
         return context
@@ -290,10 +286,10 @@ class EvaluationListView(EvaluationSubmitterRequiredMixin, TemplateView):
 
 class EvaluationPlayerView(EvaluationSubmitterRequiredMixin, TemplateView):
     template_name = "analytics/evaluation_form.html"
-    observation = None
 
     def dispatch(self, request, *args, **kwargs):
-        cycle = active_evaluation_cycle(request.GET.get("cycle"))
+        self.observation = None
+        cycle = active_evaluation_cycle()
         if not cycle:
             messages.error(request, "No active evaluation cycle is available.")
             return redirect("analytics:evaluation-list")

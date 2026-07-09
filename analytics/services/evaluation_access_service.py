@@ -13,7 +13,6 @@ from analytics.services.coach_assessment_service import (
     get_or_create_draft_coach_assessment,
     list_players_for_assessment,
 )
-from analytics.services.metrics_service import normalize_cycle_id
 from analytics.services.permissions import can_evaluate_player, can_submit_evaluation
 from players.models import Player
 
@@ -40,7 +39,7 @@ def get_evaluation_target_list(user, params) -> EvaluationTargetList:
     if not can_submit_evaluation(user):
         raise PermissionDenied("You cannot submit evaluations.")
 
-    cycle = get_active_coach_assessment_cycle(normalize_cycle_id(params.get("cycle")))
+    cycle = get_active_coach_assessment_cycle()
     query = (params.get("q") or "").strip()
     division = (params.get("division") or "").strip()
     team = (params.get("team") or "").strip()
@@ -85,6 +84,6 @@ def get_or_create_evaluation_for_player(user, player: Player, cycle: EvaluationC
     return get_or_create_draft_coach_assessment(player, cycle, user)
 
 
-def active_evaluation_cycle(cycle_id: str | int | None = None) -> EvaluationCycle | None:
+def active_evaluation_cycle() -> EvaluationCycle | None:
     """Return the active evaluation cycle for player-facing evaluation submission."""
-    return get_active_coach_assessment_cycle(normalize_cycle_id(cycle_id))
+    return get_active_coach_assessment_cycle()

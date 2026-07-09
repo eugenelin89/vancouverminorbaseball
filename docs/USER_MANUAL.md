@@ -364,6 +364,7 @@ When submitting an assessment:
 Submitted assessments become part of the player's Analytics record.
 
 Players, coaches, staff, and guest evaluators use the evaluation pages to submit evaluations. Staff-only review pages and player result pages are separate workflows.
+After submitting, an evaluator can view their own submission. Player-facing pages that show all evaluations about a player are not available yet.
 
 ## Who Can Evaluate A Player
 

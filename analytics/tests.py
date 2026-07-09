@@ -1778,6 +1778,16 @@ class EvaluationAccessSubmissionViewTests(TestCase):
                 data[field_name] = "Good teammate."
         return data
 
+    def service_response_payload(self):
+        return {
+            question: 4
+            for question in self.setup_result.question_set.questions.filter(
+                response_type=RESPONSE_TYPE_RATING_1_5,
+                is_required=True,
+                is_active=True,
+            )
+        }
+
     def test_evaluation_list_permissions(self):
         self.assertEqual(self.client.get(reverse("analytics:evaluation-list")).status_code, 302)
         for user in [self.player_user, self.coach, self.guest, self.staff]:
@@ -1798,7 +1808,7 @@ class EvaluationAccessSubmissionViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Evaluate Player")
-        self.assertContains(response, "My draft evaluations")
+        self.assertContains(response, "My submission")
         self.assertContains(response, "Self-evaluation blocked")
         self.assertContains(response, reverse("analytics:evaluation-player", kwargs={"player_id": self.target_player.id}))
 
@@ -1856,6 +1866,43 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.assertEqual(observation.status, OBSERVATION_STATUS_SUBMITTED)
         self.assertEqual(observation.evaluator_role_key, ROLE_PLAYER)
 
+    def test_submitted_evaluation_detail_is_private_to_evaluator_and_staff(self):
+        result = create_coach_assessment_observation(
+            player=self.target_player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.player_user,
+            responses=self.service_response_payload(),
+        )
+        observation = submit_observation(result.observation, actor=self.player_user)
+        detail_url = reverse("analytics:assessment-detail", kwargs={"observation_id": observation.id})
+
+        self.client.force_login(self.player_user)
+        self.assertEqual(self.client.get(detail_url).status_code, 200)
+
+        for user in [self.coach, self.guest]:
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                self.assertEqual(self.client.get(detail_url).status_code, 403)
+
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(detail_url).status_code, 200)
+
+    def test_player_cannot_view_another_evaluators_submitted_detail(self):
+        other_player_user = User.objects.create_user(username="other-player-evaluator", password="testpass")
+        set_account_role(other_player_user, AccountRole.PLAYER)
+        result = create_coach_assessment_observation(
+            player=self.target_player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+            responses=self.service_response_payload(),
+        )
+        observation = submit_observation(result.observation, actor=self.coach)
+
+        self.client.force_login(other_player_user)
+        response = self.client.get(reverse("analytics:assessment-detail", kwargs={"observation_id": observation.id}))
+
+        self.assertEqual(response.status_code, 403)
+
     def test_missing_required_responses_are_blocked(self):
         self.client.force_login(self.player_user)
 
@@ -1881,6 +1928,32 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["Location"], reverse("analytics:assessment-detail", kwargs={"observation_id": observation.id}))
         self.assertEqual(Observation.objects.filter(player=self.target_player, evaluator=self.player_user).count(), 1)
+
+    def test_evaluation_list_submitted_copy_is_own_submission(self):
+        result = create_coach_assessment_observation(
+            player=self.target_player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.player_user,
+            responses=self.service_response_payload(),
+        )
+        submit_observation(result.observation, actor=self.player_user)
+        self.client.force_login(self.player_user)
+
+        response = self.client.get(reverse("analytics:evaluation-list"), {"q": "Target"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "View My Submission")
+        self.assertNotContains(response, ">View<")
+        self.assertNotContains(response, "evaluations about me")
+
+    def test_evaluation_list_uses_current_cycle_without_cycle_selector(self):
+        self.client.force_login(self.player_user)
+
+        response = self.client.get(reverse("analytics:evaluation-list"), {"cycle": "999"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.cycle.name)
+        self.assertNotContains(response, 'name="cycle"')
 
     def test_coach_and_guest_role_snapshots_continue_to_work(self):
         for user, expected_role in [(self.coach, ROLE_COACH), (self.guest, ROLE_GUEST_EVALUATOR)]:

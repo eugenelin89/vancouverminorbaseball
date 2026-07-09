@@ -1586,6 +1586,30 @@ class AccountAuthViewTests(TestCase):
         self.assertContains(response, "Account Profile")
         self.assertContains(response, "Guest Evaluator")
 
+    def test_profile_submit_evaluation_link_uses_service_permissions(self):
+        cases = [
+            (AccountRole.COACH, True),
+            (AccountRole.PLAYER, True),
+            (AccountRole.GUEST_EVALUATOR, True),
+            (AccountRole.PARENT, False),
+        ]
+        for role, should_see_link in cases:
+            with self.subTest(role=role):
+                user = User.objects.create_user(username=f"profile-{role}", password="testpass")
+                set_account_role(user, role)
+                self.client.force_login(user)
+
+                response = self.client.get(reverse("accounts:profile"))
+
+                self.assertEqual(response.context["can_submit_evaluations"], should_see_link)
+                if should_see_link:
+                    self.assertContains(response, reverse("analytics:evaluation-list"))
+                    self.assertContains(response, "Submit Evaluation")
+                else:
+                    self.assertNotContains(response, reverse("analytics:evaluation-list"))
+                    self.assertNotContains(response, "Submit Evaluation")
+                self.client.logout()
+
 
 class CoachImportServiceTests(TestCase):
     def setUp(self):

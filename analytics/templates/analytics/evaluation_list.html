@@ -32,7 +32,7 @@
                         <th>Player</th>
                         <th>Division</th>
                         <th>Team</th>
-                        <th>My draft evaluations</th>
+                        <th>My submission</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -47,7 +47,7 @@
                                 {% if not item.can_evaluate %}
                                     <span class="pdp-badge pdp-badge--muted">Self-evaluation blocked</span>
                                 {% elif item.observation and item.status == "submitted" %}
-                                    <a class="button button--ghost" href="{% url 'analytics:assessment-detail' observation_id=item.observation.id %}">View</a>
+                                    <a class="button button--ghost" href="{% url 'analytics:assessment-detail' observation_id=item.observation.id %}">View My Submission</a>
                                 {% elif item.observation %}
                                     <a class="button button--primary" href="{% url 'analytics:evaluation-player' player_id=item.player.id %}">Continue</a>
                                 {% else %}
