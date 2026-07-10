@@ -1,8 +1,12 @@
 # Evaluation Access V1 Engineering Plan
 
+Status: COMPLETE and FROZEN.
+
+Frozen on: 2026-07-10.
+
 ## 1. Goal
 
-Plan the remaining Platform V1 operational work needed for roster-based evaluations.
+Document the completed Platform V1 operational work needed for roster-based evaluations.
 
 The target stopping point is:
 
@@ -13,7 +17,7 @@ The target stopping point is:
 - players can view evaluations about themselves;
 - coaches can view and filter all evaluations.
 
-This plan extends the frozen Players V1, Analytics V1, Account Management V1, and Platform V1 Account Operations work. It should not introduce a new architecture version. It should complete the practical access and roster workflows needed to pilot evaluations with real teams.
+This plan extends the frozen Players V1, Analytics V1, Account Management V1, and Platform V1 Account Operations work. It does not introduce a new architecture version. It completes the practical access and roster workflows needed to pilot evaluations with real teams.
 
 ## 2. Current Platform Context
 
@@ -27,13 +31,14 @@ Existing completed capabilities:
 - Existing account roles include `coach`, `player`, `staff`, `guest_evaluator`, `parent`, and `admin`.
 - Existing account links support `self`, `parent`, `guardian`, `coach`, and `staff` relationships.
 
-Important current gaps:
+Important completed additions:
 
-- Coach import is explicitly deferred from Platform V1 Account Operations.
-- Player-facing evaluation result pages are not implemented.
-- Coach review of all evaluations is not implemented as a coach-accessible surface; current full review is staff-only.
-- Current coach-assessment creation defaults evaluator role to `coach` unless a caller supplies a different `EvaluatorRole`; player-submitted evaluations need role snapshot behavior based on the user's account role.
-- Current player profile/timeline pages are staff-facing, not private player result pages.
+- Coach import is implemented in `accounts` as a staff-only CSV workflow.
+- Player-facing evaluation submission is implemented for authenticated evaluator roles.
+- Player-facing "My Evaluations" is implemented for active self-linked players with evaluator identity hidden.
+- Coach review of all submitted evaluations is implemented as a coach-accessible, read-only Analytics surface.
+- Evaluator role snapshots are resolved from Account Management role metadata.
+- Staff profile/timeline pages remain staff-facing, while private player result access is handled through "My Evaluations."
 
 ## 3. Phase 0 Decisions
 
@@ -1124,26 +1129,161 @@ Deliverables:
 4. Should Phase 1 expose a coach import history page if no persistent import batch model is added?
 5. What later roadmap should own coach/team/player roster assignment?
 
-## 20. Recommended First Implementation Phase
+## 20. Implementation Sequence
 
-Phase 0 is complete.
+Completed sequence:
 
-The first implementation phase should be Phase 1: Coach Import. It is the cleanest first build because it is accounts-owned, does not require changing Analytics observation behavior, and provides the coach accounts needed for the later evaluation-access pilot.
+1. Phase 0: planning decisions.
+2. Phase 1: coach import.
+3. Phase 2: evaluation permission and role snapshot updates.
+4. Phase 3: player evaluation submission.
+5. Phase 4: player "My Evaluations."
+6. Phase 5: coach review and filtering.
+7. Phase 6: final pilot/freeze documentation.
 
 ## 21. Definition Of Done For This Roadmap
 
 Evaluation Access V1 is complete when:
 
-- staff can import coach accounts safely from CSV;
-- imported coach accounts have role `coach`;
-- temporary password behavior is safe and one-time;
+- [x] staff can import coach accounts safely from CSV;
+- [x] imported coach accounts have role `coach`;
+- [x] temporary password behavior is safe and one-time;
+- [x] coaches can evaluate players;
+- [x] players can evaluate other players, with self-evaluation blocked;
+- [x] evaluator identity and role snapshots are correct;
+- [x] players can view submitted evaluations about themselves only, with evaluator role/category but not evaluator names;
+- [x] coaches can view and filter all submitted evaluations;
+- [x] staff retains existing review and reopen capabilities;
+- [x] players cannot access other players' private evaluation results;
+- [x] coaches do not gain Account Operations access from `AccountProfile.role = coach`;
+- [x] focused and regression tests pass;
+- [x] user-facing documentation is updated.
+
+## 22. Production-Readiness Assessment
+
+Evaluation Access V1 is production-ready for the documented roster-based evaluation pilot scope.
+
+The completed stopping point is:
+
+- players can be imported and optionally provisioned with login accounts;
+- coaches can be imported from CSV;
 - coaches can evaluate players;
-- players can evaluate other players, with self-evaluation blocked;
-- evaluator identity and role snapshots are correct;
-- players can view submitted evaluations about themselves only, with evaluator role/category but not evaluator names;
+- players can evaluate other players;
+- self-evaluation is blocked;
+- evaluator identity and role snapshots are stored;
+- players can privately view submitted evaluations about themselves;
+- player-facing results hide evaluator identity and show evaluator role/category only;
 - coaches can view and filter all submitted evaluations;
-- staff retains existing review and reopen capabilities;
-- players cannot access other players' private evaluation results;
-- coaches do not gain Account Operations access from `AccountProfile.role = coach`;
-- focused and regression tests pass;
-- user-facing documentation is updated.
+- staff review and reopen workflows remain separate and functional.
+
+## 23. Architecture Assessment
+
+Subsystem boundaries remain consistent with the Platform V1 architecture:
+
+- `accounts` owns authentication, account roles, password behavior, account provisioning, user-player links, and coach import.
+- `players` owns canonical player identity, player import, player matching, and player provenance.
+- `analytics` owns evaluation submission, evaluator snapshots, player-safe result views, coach review, filtering, and read models.
+- `drafts` remains separate and continues to own draft workflows.
+- `pdp` remains legacy/transitionary and was not migrated as part of Evaluation Access V1.
+
+No new models or migrations were required for Evaluation Access V1 after the existing Accounts, Players, and Analytics foundations.
+
+## 24. Security And Privacy Assessment
+
+Security and privacy posture:
+
+- unauthenticated users cannot submit or review evaluations;
+- parent accounts cannot submit evaluations by default;
+- player accounts can submit peer evaluations but cannot evaluate themselves;
+- players can view only submitted evaluations about active self-linked player records;
+- inactive self links and inactive players do not grant "My Evaluations" access;
+- player-facing result pages hide evaluator names, usernames, email addresses, and account metadata;
+- coach review exposes evaluator display names and role/category but not evaluator email, password state, import metadata, or account metadata;
+- guest evaluators can submit but cannot access coach review;
+- coach role grants coach evaluation review only, not Django staff access or Account Operations access;
+- staff review and reopen controls remain limited to Django staff/superusers through the existing staff review workflow;
+- temporary passwords remain one-time display values and are not persisted in summaries, metadata, or later pages.
+
+## 25. Performance Assessment
+
+The implemented review and result surfaces use service-owned query construction and `select_related()` for common related objects such as player, cycle, evaluator, and evaluator role.
+
+The current dataset size expected for the production pilot is compatible with server-rendered filtering and table views. Future larger deployments may need pagination, indexes tuned to real usage, or export/reporting workflows, but those are outside Evaluation Access V1.
+
+## 26. End-To-End Workflow Assessment
+
+The implemented workflow supports:
+
+1. staff imports players;
+2. staff optionally provisions and activates player accounts;
+3. staff imports coaches;
+4. coaches and provisioned players complete first-login password changes when required;
+5. coaches submit evaluations;
+6. players submit peer evaluations;
+7. self-evaluation attempts are blocked;
+8. submitted evaluations store evaluator identity and role snapshots;
+9. players view submitted evaluations about themselves without seeing evaluator names;
+10. coaches view and filter all submitted evaluations;
+11. staff review and reopen remain available through the existing staff-only workflow.
+
+## 27. Documentation Assessment
+
+Documentation has been reconciled for the completed Evaluation Access V1 scope:
+
+- `docs/USER_MANUAL.md` describes coach import, evaluation submission, player "My Evaluations," and coach review.
+- this engineering plan records all Evaluation Access V1 phases, decisions, deferred work, and freeze status.
+- top-level architecture continues to define subsystem ownership and dependency direction.
+
+## 28. Manual Pilot Checklist
+
+Use this checklist for a manual production pilot:
+
+- [ ] Import sample players through `/analytics/imports/`.
+- [ ] Provision and activate sample player accounts during player import, when appropriate.
+- [ ] Import sample coaches through `/accounts/imports/coaches/`.
+- [ ] Copy one-time temporary passwords from the immediate result pages.
+- [ ] Log in as a coach and complete forced password change.
+- [ ] Log in as a player and complete forced password change.
+- [ ] Submit an evaluation as a coach.
+- [ ] Submit a peer evaluation as a player.
+- [ ] Attempt self-evaluation as a player and confirm it is blocked.
+- [ ] View `/analytics/my/evaluations/` as a player.
+- [ ] Confirm evaluator identity is hidden from the player-facing result.
+- [ ] View `/analytics/evaluation-review/` as a coach.
+- [ ] Filter coach review by player, evaluator, role, team, division, cycle, and date.
+- [ ] Confirm a player cannot access coach review.
+- [ ] Confirm a guest evaluator cannot access coach review.
+- [ ] Confirm staff review at `/analytics/observations/review/` still works.
+- [ ] Reopen a submitted observation through staff review only.
+
+## 29. Deferred Work
+
+Deferred work remains outside Evaluation Access V1:
+
+- audit logging;
+- account merge;
+- duplicate account resolution;
+- coach-to-player roster assignment;
+- parent import;
+- parent portal;
+- full coach portal;
+- full player portal;
+- email invitations;
+- email verification;
+- self-service password recovery;
+- APIs;
+- JavaScript dashboards;
+- charts;
+- exports;
+- LeagueHub;
+- video;
+- recruiting;
+- new observation types;
+- PDP retirement;
+- self-evaluation workflows with separate labeling/reporting.
+
+## 30. Freeze Declaration
+
+Evaluation Access V1 is COMPLETE and FROZEN as of 2026-07-10.
+
+Future changes should be planned as a new phase or version unless they are bug fixes, security fixes, documentation corrections, or operational support for the frozen V1 scope.

@@ -110,13 +110,14 @@ What it must not own:
 
 Current status:
 
-V1 complete. Implementation status records Phases 1-7 as complete.
+V1 complete. Implementation status records Phases 1-7 as complete. Evaluation Access V1 is complete and frozen for roster-based evaluation access, including coach import, player/coach evaluation submission, player "My Evaluations," and coach evaluation review/filtering.
 
 Documentation:
 
 - [Analytics README](analytics/README.md)
 - [Analytics Architecture Handbook](analytics/architecture/README.md)
 - [Analytics Implementation Status](analytics/implementation/STATUS.md)
+- [Evaluation Access V1 Engineering Plan](evaluations/implementation/engineering/evaluation_access_v1.md)
 
 ### Account Management
 
