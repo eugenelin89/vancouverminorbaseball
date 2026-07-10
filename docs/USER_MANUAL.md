@@ -583,3 +583,17 @@ Users should sign in at:
 ```text
 /accounts/login/
 ```
+
+## Deployment Configuration
+
+Production deployments should configure server-specific settings through environment variables instead of editing the tracked settings file.
+
+The deployment environment should provide:
+
+- `DJANGO_SECRET_KEY`
+- `DJANGO_DEBUG`
+- `DJANGO_ALLOWED_HOSTS`
+- `DJANGO_STATIC_ROOT`
+- `DJANGO_MEDIA_ROOT`
+
+Typical production values include `DJANGO_DEBUG=false`, production domain names in `DJANGO_ALLOWED_HOSTS`, and server-specific static/media paths. These values should be configured through the process manager or hosting environment, such as systemd, Apache, or Nginx plus Gunicorn.

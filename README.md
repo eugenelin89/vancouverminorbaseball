@@ -94,6 +94,37 @@ Prompt archive records should store the user prompt and commit diffs, not full r
 
 ---
 
+## Deployment Configuration
+
+Environment-specific configuration should be provided through environment variables rather than by editing `vancouverminor/settings.py` on the server.
+
+Required:
+
+```bash
+DJANGO_SECRET_KEY="replace-with-a-secure-random-value"
+```
+
+Optional:
+
+```bash
+DJANGO_DEBUG="false"
+DJANGO_ALLOWED_HOSTS="vancouverminor.com,www.vancouverminor.com"
+DJANGO_STATIC_ROOT="/var/www/vancouverminorbaseball/staticfiles"
+DJANGO_MEDIA_ROOT="/var/www/vancouverminorbaseball/media"
+```
+
+Notes:
+
+- `DJANGO_SECRET_KEY` is required. Django will not start without it.
+- `DJANGO_DEBUG` accepts `true`, `1`, `yes`, or `on` as true. Any other value is false. The default is false.
+- `DJANGO_ALLOWED_HOSTS` is comma-separated. Whitespace is trimmed. The default is `localhost,127.0.0.1`.
+- `DJANGO_STATIC_ROOT` defaults to `BASE_DIR / "staticfiles"`.
+- `DJANGO_MEDIA_ROOT` defaults to `BASE_DIR / "media"`.
+
+Production should configure these values through the process manager or shell environment, such as systemd, Apache, Nginx plus Gunicorn, or another deployment supervisor. Do not commit production secrets or server-local settings to Git.
+
+---
+
 ## Production Deployment on DigitalOcean (Ubuntu 20.04+)
 
 The following steps assume you already operate other subdomains (e.g. `dev.vancouverminor.com`) on the same Droplet and that this application should serve the apex domain at `https://vancouverminor.com`. Adjust paths and names to suit your environment.
@@ -187,6 +218,10 @@ Group=www-data
 WorkingDirectory=/var/www/vancouverminor/website
 Environment="PATH=/var/www/vancouverminor/website/venv/bin"
 Environment="DJANGO_SECRET_KEY=replace-with-a-secure-random-value"
+Environment="DJANGO_DEBUG=false"
+Environment="DJANGO_ALLOWED_HOSTS=vancouverminor.com,www.vancouverminor.com"
+Environment="DJANGO_STATIC_ROOT=/var/www/vancouverminor/website/staticfiles"
+Environment="DJANGO_MEDIA_ROOT=/var/www/vancouverminor/website/media"
 ExecStart=/var/www/vancouverminor/website/venv/bin/gunicorn \
           --workers 3 \
           --bind unix:/var/www/vancouverminor/website/vancouverminor.sock \
