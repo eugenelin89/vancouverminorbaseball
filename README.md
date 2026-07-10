@@ -62,12 +62,21 @@ Because the project is simple, most customization happens through data dictionar
 
 1. Create and activate a virtual environment (Python 3.10+ recommended).
 2. Install dependencies (if you add a `requirements.txt`, install from there).
-3. Run migrations if/when models are introduced.
-4. Start the dev server:
+3. Set a local Django secret key in your shell. Use a development-only value locally, and never commit real secrets:
+   ```bash
+   export DJANGO_SECRET_KEY="replace-with-a-secure-random-value"
+   ```
+   You can generate a secure value locally with:
+   ```bash
+   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+   ```
+   If you use a local `.env` file for your shell tooling, keep it untracked. `.env.example` shows the required variable name without containing a real secret.
+4. Run migrations if/when models are introduced.
+5. Start the dev server:
    ```bash
    python manage.py runserver
    ```
-5. Optional – regenerate placeholder imagery:
+6. Optional – regenerate placeholder imagery:
    ```bash
    pip install Pillow
    python scripts/generate_placeholders.py
@@ -177,6 +186,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/vancouverminor/website
 Environment="PATH=/var/www/vancouverminor/website/venv/bin"
+Environment="DJANGO_SECRET_KEY=replace-with-a-secure-random-value"
 ExecStart=/var/www/vancouverminor/website/venv/bin/gunicorn \
           --workers 3 \
           --bind unix:/var/www/vancouverminor/website/vancouverminor.sock \
@@ -194,6 +204,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now vancouverminor
 sudo systemctl status vancouverminor
 ```
+
+Use a real secure random value for `DJANGO_SECRET_KEY` in production. The previously committed development key must be treated as exposed and rotated in any deployed environment that used it. Do not commit production secrets to Git.
 
 ### 5. Configure Nginx
 
