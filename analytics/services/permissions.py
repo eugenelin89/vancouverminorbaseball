@@ -67,8 +67,10 @@ def can_view_my_evaluations(user, player=None) -> bool:
     if not user or not user.is_authenticated:
         return False
     if player is not None:
+        if not getattr(player, "is_active", False):
+            return False
         return is_player_self(user, player)
-    return get_self_linked_players(user).exists()
+    return get_self_linked_players(user).filter(is_active=True).exists()
 
 
 def can_view_my_evaluation_detail(user, observation) -> bool:

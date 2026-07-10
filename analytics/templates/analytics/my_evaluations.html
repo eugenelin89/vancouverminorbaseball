@@ -37,7 +37,7 @@
                             <td>{{ item.cycle_name }}</td>
                             <td>{{ item.evaluator_role_name }}</td>
                             <td>{{ item.submitted_at|date:"M j, Y" }}</td>
-                            <td><a class="button button--ghost" href="{% url 'analytics:my-evaluation-detail' observation_id=item.observation.id %}">View Evaluation</a></td>
+                            <td><a class="button button--ghost" href="{% url 'analytics:my-evaluation-detail' observation_id=item.observation_id %}">View Evaluation</a></td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="5">No submitted evaluations are available yet.</td></tr>

@@ -48,7 +48,6 @@ from accounts.services.permissions import (
 )
 from accounts.services.profile_service import get_account_role
 from accounts.services.role_service import role_label
-from analytics.services.permissions import can_submit_evaluation, can_view_my_evaluations
 
 
 class AccountOperationsStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -101,8 +100,6 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             {
                 "account_role": role,
                 "account_role_label": role_label(role),
-                "can_submit_evaluations": can_submit_evaluation(self.request.user),
-                "can_view_my_evaluations": can_view_my_evaluations(self.request.user),
                 "linked_players": get_players_for_user(self.request.user),
             }
         )

@@ -47,7 +47,7 @@ class EvaluationTargetList:
 
 @dataclass(frozen=True)
 class MyEvaluationSummary:
-    observation: Observation
+    observation_id: int
     player: Player
     evaluator_role_name: str
     submitted_at: object
@@ -64,7 +64,7 @@ class MyEvaluationQuestionResponse:
 
 @dataclass(frozen=True)
 class MyEvaluationDetail:
-    observation: Observation
+    observation_id: int
     player: Player
     evaluator_role_name: str
     submitted_at: object
@@ -150,7 +150,7 @@ def get_my_evaluations(user, player: Player | None = None) -> tuple[list[Player]
     )
     summaries = [
         MyEvaluationSummary(
-            observation=observation,
+            observation_id=observation.id,
             player=observation.player,
             evaluator_role_name=observation.evaluator_role_name or "Evaluator",
             submitted_at=observation.submitted_at,
@@ -165,7 +165,6 @@ def get_my_evaluation_detail(user, observation_id: int) -> MyEvaluationDetail:
     """Return a player-safe submitted evaluation detail view."""
     observation = (
         Observation.objects.select_related("player", "evaluation_cycle", "evaluator_role")
-        .prefetch_related("responses__question")
         .get(pk=observation_id)
     )
     if not can_view_my_evaluation_detail(user, observation):
@@ -177,10 +176,14 @@ def get_my_evaluation_detail(user, observation_id: int) -> MyEvaluationDetail:
             numeric_value=response.numeric_value,
             text_value=response.text_value,
         )
-        for response in observation.responses.all()
+        for response in observation.responses.select_related("question").order_by(
+            "question__display_order",
+            "question_id",
+            "id",
+        )
     ]
     return MyEvaluationDetail(
-        observation=observation,
+        observation_id=observation.id,
         player=observation.player,
         evaluator_role_name=observation.evaluator_role_name or "Evaluator",
         submitted_at=observation.submitted_at,

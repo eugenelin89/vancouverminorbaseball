@@ -368,7 +368,7 @@ After submitting, an evaluator can view their own submission.
 
 ## Player My Evaluations
 
-Players with a linked self player record can view submitted evaluations about themselves:
+Players with an active linked self player record can view submitted evaluations about themselves:
 
 ```text
 /analytics/my/evaluations/
@@ -376,7 +376,7 @@ Players with a linked self player record can view submitted evaluations about th
 
 Player-facing evaluation results show evaluator role/category, submitted date, cycle, ratings, and notes. Evaluator names, usernames, and email addresses are hidden from players.
 
-Draft and reopened evaluations are not shown as final feedback. Coaches still do not have an all-evaluation review page until the coach review phase.
+Draft and reopened evaluations are not shown as final feedback. Inactive player links and inactive player records are not shown in normal My Evaluations lists. Coaches still do not have an all-evaluation review page until the coach review phase.
 
 ## Who Can Evaluate A Player
 

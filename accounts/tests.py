@@ -1601,7 +1601,6 @@ class AccountAuthViewTests(TestCase):
 
                 response = self.client.get(reverse("accounts:profile"))
 
-                self.assertEqual(response.context["can_submit_evaluations"], should_see_link)
                 if should_see_link:
                     self.assertContains(response, reverse("analytics:evaluation-list"))
                     self.assertContains(response, "Submit Evaluation")
@@ -1622,7 +1621,6 @@ class AccountAuthViewTests(TestCase):
 
         self.client.force_login(player_user)
         response = self.client.get(reverse("accounts:profile"))
-        self.assertTrue(response.context["can_view_my_evaluations"])
         self.assertContains(response, reverse("analytics:my-evaluations"))
         self.assertContains(response, "My Evaluations")
 
@@ -1630,7 +1628,6 @@ class AccountAuthViewTests(TestCase):
             with self.subTest(user=user.username):
                 self.client.force_login(user)
                 response = self.client.get(reverse("accounts:profile"))
-                self.assertFalse(response.context["can_view_my_evaluations"])
                 self.assertNotContains(response, reverse("analytics:my-evaluations"))
                 self.client.logout()
 

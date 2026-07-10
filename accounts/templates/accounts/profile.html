@@ -1,4 +1,5 @@
 {% extends "pdp/base.html" %}
+{% load analytics_account_nav %}
 
 {% block pdp_title %}Account Profile{% endblock %}
 {% block pdp_subtitle %}Basic account information.{% endblock %}
@@ -25,12 +26,7 @@
                 {% endfor %}
             </ul>
         {% endif %}
-        {% if can_submit_evaluations %}
-            <p><a class="button button--primary" href="{% url 'analytics:evaluation-list' %}">Submit Evaluation</a></p>
-        {% endif %}
-        {% if can_view_my_evaluations %}
-            <p><a class="button button--ghost" href="{% url 'analytics:my-evaluations' %}">My Evaluations</a></p>
-        {% endif %}
+        {% analytics_account_profile_actions request.user %}
         {% if request.user.is_staff or request.user.is_superuser %}
             <p><a class="button button--ghost" href="{% url 'accounts:operations-dashboard' %}">Account Operations</a></p>
         {% endif %}

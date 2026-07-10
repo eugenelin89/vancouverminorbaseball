@@ -989,6 +989,8 @@ Deliverables:
 
 Status: implemented.
 
+Review fixes: completed. Account Profile no longer imports Analytics permission services in `accounts.views`; Analytics owns profile navigation eligibility through an Analytics template tag. Player-facing My Evaluations read models expose observation IDs and player-safe labels instead of full observations, inactive self links and inactive players do not grant access, forbidden existing details return 403 while missing details return 404, and responses render in deterministic question order.
+
 ### Phase 5: Coach Review And Filtering
 
 Purpose:
