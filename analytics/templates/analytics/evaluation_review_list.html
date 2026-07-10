@@ -1,0 +1,92 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Evaluation Review{% endblock %}
+{% block analytics_subtitle %}Read-only review of submitted evaluations.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Submitted Evaluations</h2>
+    <form method="get" class="pdp-form">
+        <label>
+            Player Search
+            <input type="search" name="q" value="{{ filters.q }}">
+        </label>
+        <label>
+            Player ID
+            <input type="text" name="player" value="{{ filters.player }}">
+        </label>
+        <label>
+            Evaluator
+            <input type="text" name="evaluator" value="{{ filters.evaluator }}">
+        </label>
+        <label>
+            Evaluator Role
+            <select name="evaluator_role">
+                <option value="">All</option>
+                {% for role in evaluator_roles %}
+                    <option value="{{ role.key }}" {% if filters.evaluator_role == role.key %}selected{% endif %}>{{ role.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Team
+            <input type="text" name="team" value="{{ filters.team }}">
+        </label>
+        <label>
+            Division
+            <input type="text" name="division" value="{{ filters.division }}">
+        </label>
+        <label>
+            Cycle
+            <select name="cycle">
+                <option value="">All</option>
+                {% for cycle in cycles %}
+                    <option value="{{ cycle.id }}" {% if filters.cycle == cycle.id|stringformat:"s" %}selected{% endif %}>{{ cycle.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Submitted From
+            <input type="date" name="submitted_from" value="{{ filters.submitted_from }}">
+        </label>
+        <label>
+            Submitted To
+            <input type="date" name="submitted_to" value="{{ filters.submitted_to }}">
+        </label>
+        <button class="button button--primary" type="submit">Filter</button>
+    </form>
+    <p>{{ total_count }} submitted evaluation{{ total_count|pluralize }} found.</p>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th>Division</th>
+                    <th>Evaluator</th>
+                    <th>Role</th>
+                    <th>Cycle</th>
+                    <th>Submitted</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ row.player_name }}</td>
+                        <td>{{ row.player_team }}</td>
+                        <td>{{ row.player_division }}</td>
+                        <td>{{ row.evaluator_name }}</td>
+                        <td>{{ row.evaluator_role_name }}</td>
+                        <td>{{ row.cycle_name }}</td>
+                        <td>{{ row.submitted_at|date:"M j, Y" }}</td>
+                        <td><a class="button button--ghost" href="{% url 'analytics:evaluation-review-detail' observation_id=row.observation_id %}">Review</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8">No submitted evaluations found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

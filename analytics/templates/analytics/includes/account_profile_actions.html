@@ -4,3 +4,6 @@
 {% if can_view_my_evaluations %}
     <p><a class="button button--ghost" href="{% url 'analytics:my-evaluations' %}">My Evaluations</a></p>
 {% endif %}
+{% if can_review_submitted_evaluations %}
+    <p><a class="button button--ghost" href="{% url 'analytics:evaluation-review-list' %}">Review Evaluations</a></p>
+{% endif %}

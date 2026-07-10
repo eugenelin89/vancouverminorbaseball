@@ -376,7 +376,31 @@ Players with an active linked self player record can view submitted evaluations 
 
 Player-facing evaluation results show evaluator role/category, submitted date, cycle, ratings, and notes. Evaluator names, usernames, and email addresses are hidden from players.
 
-Draft and reopened evaluations are not shown as final feedback. Inactive player links and inactive player records are not shown in normal My Evaluations lists. Coaches still do not have an all-evaluation review page until the coach review phase.
+Draft and reopened evaluations are not shown as final feedback. Inactive player links and inactive player records are not shown in normal My Evaluations lists.
+
+## Coach Evaluation Review
+
+Coaches can review submitted evaluations:
+
+```text
+/analytics/evaluation-review/
+```
+
+Coach review is read-only. It shows submitted evaluations only and does not allow coaches to reopen, edit, or delete submitted evaluations.
+
+Coaches can filter submitted evaluations by:
+
+- player name or player ID
+- evaluator
+- evaluator role/category
+- team
+- division
+- evaluation cycle
+- submitted date range
+
+Coach review shows evaluator names and role/category so coaches can understand who submitted each evaluation. It does not show evaluator email addresses, account metadata, passwords, import metadata, or unrelated account details.
+
+Players, parents, and guest evaluators cannot access the coach review page. Staff review remains a separate workflow.
 
 ## Who Can Evaluate A Player
 

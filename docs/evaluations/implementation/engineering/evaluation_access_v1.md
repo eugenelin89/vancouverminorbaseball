@@ -1006,6 +1006,10 @@ Deliverables:
 - staff behavior preserved;
 - tests.
 
+Status: implemented.
+
+Review notes: Coach review is implemented as an Analytics-owned read-only submitted-evaluation surface. It uses explicit coach-review permission helpers, an `evaluation_review_service` for filter parsing/query/read models, thin views, and presentation-only templates. Coach review remains separate from existing staff observation review; coaches cannot reopen submitted observations through the coach review routes.
+
 ### Phase 6: Final Pilot / Freeze
 
 Purpose:

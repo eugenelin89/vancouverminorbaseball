@@ -37,11 +37,13 @@ from analytics.services.evaluation_access_service import (
     get_my_evaluations,
     get_or_create_evaluation_for_player,
 )
+from analytics.services.evaluation_review_service import get_evaluation_review_detail, get_evaluation_review_list
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
 from analytics.services.permissions import (
     can_edit_observation,
     can_evaluate_player,
     can_reopen_observation,
+    can_review_submitted_evaluations,
     can_submit_coach_assessment,
     can_submit_evaluation,
     can_view_my_evaluations,
@@ -391,6 +393,48 @@ class MyEvaluationDetailView(LoginRequiredMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         try:
             self.detail = get_my_evaluation_detail(request.user, kwargs["observation_id"])
+        except Observation.DoesNotExist as exc:
+            raise Http404("Evaluation not found.") from exc
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["detail"] = self.detail
+        return context
+
+
+class EvaluationReviewRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not can_review_submitted_evaluations(request.user):
+            raise PermissionDenied("You cannot review submitted evaluations.")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class EvaluationReviewListView(EvaluationReviewRequiredMixin, TemplateView):
+    template_name = "analytics/evaluation_review_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        review_list = get_evaluation_review_list(self.request.user, self.request.GET)
+        context.update(
+            {
+                "review_list": review_list,
+                "rows": review_list.rows,
+                "filters": review_list.filters,
+                "cycles": review_list.cycles,
+                "evaluator_roles": review_list.evaluator_roles,
+                "total_count": review_list.total_count,
+            }
+        )
+        return context
+
+
+class EvaluationReviewDetailView(EvaluationReviewRequiredMixin, TemplateView):
+    template_name = "analytics/evaluation_review_detail.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.detail = get_evaluation_review_detail(request.user, kwargs["observation_id"])
         except Observation.DoesNotExist as exc:
             raise Http404("Evaluation not found.") from exc
         return super().dispatch(request, *args, **kwargs)

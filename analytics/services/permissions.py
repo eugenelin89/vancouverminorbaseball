@@ -57,6 +57,22 @@ def can_review_observations(user) -> bool:
     return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
 
 
+def can_review_submitted_evaluations(user) -> bool:
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_staff or user.is_superuser:
+        return True
+    return role_for_user(user) in {AccountRole.COACH, AccountRole.STAFF, AccountRole.ADMIN}
+
+
+def can_view_evaluation_review_detail(user, observation) -> bool:
+    return bool(
+        observation
+        and observation.status == OBSERVATION_STATUS_SUBMITTED
+        and can_review_submitted_evaluations(user)
+    )
+
+
 def can_view_observation(user, observation) -> bool:
     if can_review_observations(user):
         return True
