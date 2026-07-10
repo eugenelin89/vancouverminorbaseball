@@ -1,0 +1,36 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}{{ detail.player.display_name }}{% endblock %}
+{% block analytics_subtitle %}{{ detail.cycle_name }} · Submitted evaluation{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Evaluation</h2>
+    <dl class="pdp-definition-list">
+        <dt>Player</dt>
+        <dd>{{ detail.player.display_name }}</dd>
+        <dt>Evaluator Role</dt>
+        <dd>{{ detail.evaluator_role_name }}</dd>
+        <dt>Submitted</dt>
+        <dd>{{ detail.submitted_at|date:"M j, Y" }}</dd>
+    </dl>
+    {% for response in detail.responses %}
+        <section class="pdp-list__item pdp-list__item--stack">
+            <h3>{{ response.category }}</h3>
+            <div>
+                <strong>{{ response.question_prompt }}</strong>
+                {% if response.numeric_value %}
+                    <span>{{ response.numeric_value|floatformat:0 }}</span>
+                {% elif response.text_value %}
+                    <p>{{ response.text_value }}</p>
+                {% else %}
+                    <span>Not answered</span>
+                {% endif %}
+            </div>
+        </section>
+    {% empty %}
+        <p>No responses are available.</p>
+    {% endfor %}
+    <a class="button button--ghost" href="{% url 'analytics:my-evaluations' %}">Back</a>
+</article>
+{% endblock %}

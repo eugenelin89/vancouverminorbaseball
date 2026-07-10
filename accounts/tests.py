@@ -1610,6 +1610,30 @@ class AccountAuthViewTests(TestCase):
                     self.assertNotContains(response, "Submit Evaluation")
                 self.client.logout()
 
+    def test_profile_my_evaluations_link_requires_self_link(self):
+        player = Player.objects.create(first_name="Linked", last_name="Player")
+        player_user = User.objects.create_user(username="linked-player", password="testpass")
+        coach = User.objects.create_user(username="unlinked-coach", password="testpass")
+        parent = User.objects.create_user(username="unlinked-parent", password="testpass")
+        set_account_role(player_user, AccountRole.PLAYER)
+        set_account_role(coach, AccountRole.COACH)
+        set_account_role(parent, AccountRole.PARENT)
+        link_user_to_player(player_user, player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+
+        self.client.force_login(player_user)
+        response = self.client.get(reverse("accounts:profile"))
+        self.assertTrue(response.context["can_view_my_evaluations"])
+        self.assertContains(response, reverse("analytics:my-evaluations"))
+        self.assertContains(response, "My Evaluations")
+
+        for user in [coach, parent]:
+            with self.subTest(user=user.username):
+                self.client.force_login(user)
+                response = self.client.get(reverse("accounts:profile"))
+                self.assertFalse(response.context["can_view_my_evaluations"])
+                self.assertNotContains(response, reverse("analytics:my-evaluations"))
+                self.client.logout()
+
 
 class CoachImportServiceTests(TestCase):
     def setUp(self):

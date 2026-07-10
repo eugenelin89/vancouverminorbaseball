@@ -987,6 +987,8 @@ Deliverables:
 - no access to other players' private results;
 - tests.
 
+Status: implemented.
+
 ### Phase 5: Coach Review And Filtering
 
 Purpose:

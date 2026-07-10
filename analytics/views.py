@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import FormView, ListView, TemplateView, View
@@ -32,6 +33,8 @@ from analytics.services.draft_service import get_draft_contexts_for_player
 from analytics.services.evaluation_access_service import (
     active_evaluation_cycle,
     get_evaluation_target_list,
+    get_my_evaluation_detail,
+    get_my_evaluations,
     get_or_create_evaluation_for_player,
 )
 from analytics.services.observation_service import get_observation_detail, save_observation_responses, submit_observation
@@ -41,6 +44,7 @@ from analytics.services.permissions import (
     can_reopen_observation,
     can_submit_coach_assessment,
     can_submit_evaluation,
+    can_view_my_evaluations,
     can_view_observation,
 )
 from analytics.services.metrics_service import normalize_cycle_id
@@ -339,6 +343,62 @@ class EvaluationPlayerView(EvaluationSubmitterRequiredMixin, TemplateView):
             except ValidationError as exc:
                 form.add_error(None, exc)
         return self.render_to_response(self.get_context_data(form=form))
+
+
+class MyEvaluationsView(LoginRequiredMixin, TemplateView):
+    template_name = "analytics/my_evaluations.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        players, evaluations = get_my_evaluations(self.request.user)
+        context.update(
+            {
+                "players": players,
+                "evaluations": evaluations,
+                "has_self_link": bool(players),
+                "selected_player": None,
+            }
+        )
+        return context
+
+
+class MyEvaluationsPlayerView(LoginRequiredMixin, TemplateView):
+    template_name = "analytics/my_evaluations.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.player = get_object_or_404(Player, pk=kwargs["player_id"])
+        if not can_view_my_evaluations(request.user, player=self.player):
+            raise PermissionDenied("You cannot view evaluations for this player.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        players, evaluations = get_my_evaluations(self.request.user, player=self.player)
+        context.update(
+            {
+                "players": players,
+                "evaluations": evaluations,
+                "has_self_link": bool(players),
+                "selected_player": self.player,
+            }
+        )
+        return context
+
+
+class MyEvaluationDetailView(LoginRequiredMixin, TemplateView):
+    template_name = "analytics/my_evaluation_detail.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.detail = get_my_evaluation_detail(request.user, kwargs["observation_id"])
+        except Observation.DoesNotExist as exc:
+            raise Http404("Evaluation not found.") from exc
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["detail"] = self.detail
+        return context
 
 
 class CoachAssessmentListView(LoginRequiredMixin, TemplateView):

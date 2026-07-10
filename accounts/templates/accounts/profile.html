@@ -28,6 +28,9 @@
         {% if can_submit_evaluations %}
             <p><a class="button button--primary" href="{% url 'analytics:evaluation-list' %}">Submit Evaluation</a></p>
         {% endif %}
+        {% if can_view_my_evaluations %}
+            <p><a class="button button--ghost" href="{% url 'analytics:my-evaluations' %}">My Evaluations</a></p>
+        {% endif %}
         {% if request.user.is_staff or request.user.is_superuser %}
             <p><a class="button button--ghost" href="{% url 'accounts:operations-dashboard' %}">Account Operations</a></p>
         {% endif %}

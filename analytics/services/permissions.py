@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 
 from accounts.models import AccountRole
-from accounts.services.link_service import is_player_self
+from accounts.services.link_service import get_self_linked_players, is_player_self
 from accounts.services.role_service import role_for_user, role_label
 from analytics.models import OBSERVATION_STATUS_DRAFT, OBSERVATION_STATUS_REOPENED, OBSERVATION_STATUS_SUBMITTED, EvaluatorRole
 
@@ -61,6 +61,20 @@ def can_view_observation(user, observation) -> bool:
     if can_review_observations(user):
         return True
     return bool(user and user.is_authenticated and observation.evaluator_id == user.id)
+
+
+def can_view_my_evaluations(user, player=None) -> bool:
+    if not user or not user.is_authenticated:
+        return False
+    if player is not None:
+        return is_player_self(user, player)
+    return get_self_linked_players(user).exists()
+
+
+def can_view_my_evaluation_detail(user, observation) -> bool:
+    if not observation or observation.status != OBSERVATION_STATUS_SUBMITTED:
+        return False
+    return can_view_my_evaluations(user, player=observation.player)
 
 
 def can_edit_observation(user, observation) -> bool:

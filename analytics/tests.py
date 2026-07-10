@@ -1966,3 +1966,184 @@ class EvaluationAccessSubmissionViewTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(observation.evaluator_role_key, expected_role)
                 self.client.logout()
+
+
+class MyEvaluationsViewTests(TestCase):
+    def setUp(self):
+        self.player_user = User.objects.create_user(
+            username="linked-player-user",
+            password="testpass",
+            first_name="Linked",
+            last_name="User",
+            email="linked@example.com",
+        )
+        self.other_player_user = User.objects.create_user(username="other-linked-player", password="testpass")
+        self.coach = User.objects.create_user(
+            username="coach-private-name",
+            password="testpass",
+            first_name="Coach",
+            last_name="Private",
+            email="coach-private@example.com",
+        )
+        self.guest = User.objects.create_user(username="guest-evaluator-private", password="testpass")
+        self.parent = User.objects.create_user(username="parent-no-self", password="testpass")
+        self.staff = User.objects.create_user(username="staff-review", password="testpass", is_staff=True)
+        set_account_role(self.player_user, AccountRole.PLAYER)
+        set_account_role(self.other_player_user, AccountRole.PLAYER)
+        set_account_role(self.coach, AccountRole.COACH)
+        set_account_role(self.guest, AccountRole.GUEST_EVALUATOR)
+        set_account_role(self.parent, AccountRole.PARENT)
+        set_account_role(self.staff, AccountRole.STAFF)
+        self.player = Player.objects.create(first_name="Linked", last_name="Player", division="13U")
+        self.second_player = Player.objects.create(first_name="Second", last_name="Player", division="15U")
+        self.other_player = Player.objects.create(first_name="Other", last_name="Player", division="13U")
+        link_user_to_player(self.player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+        link_user_to_player(self.other_player_user, self.other_player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+        self.setup_result = ensure_default_coach_assessment_setup()
+        self.cycle = EvaluationCycle.objects.create(
+            name="2026 13U Coach Assessment",
+            cycle_type="Coach Assessment",
+            coach_assessment_question_set=self.setup_result.question_set,
+        )
+
+    def service_response_payload(self, value=4, note="Good teammate."):
+        payload = {
+            question: value
+            for question in self.setup_result.question_set.questions.filter(
+                response_type=RESPONSE_TYPE_RATING_1_5,
+                is_required=True,
+                is_active=True,
+            )
+        }
+        text_question = self.setup_result.question_set.questions.get(response_type=RESPONSE_TYPE_TEXT)
+        payload[text_question] = note
+        return payload
+
+    def submitted_observation(self, player=None, evaluator=None, value=4, note="Good teammate."):
+        result = create_coach_assessment_observation(
+            player=player or self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=evaluator or self.coach,
+            responses=self.service_response_payload(value=value, note=note),
+        )
+        return submit_observation(result.observation, actor=evaluator or self.coach)
+
+    def test_my_evaluations_requires_login_and_handles_no_self_link(self):
+        self.assertEqual(self.client.get(reverse("analytics:my-evaluations")).status_code, 302)
+
+        self.client.force_login(self.parent)
+        response = self.client.get(reverse("analytics:my-evaluations"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No player record is linked to your account.")
+
+    def test_player_can_view_submitted_evaluations_about_self(self):
+        observation = self.submitted_observation(note="Shows leadership.")
+        self.client.force_login(self.player_user)
+
+        response = self.client.get(reverse("analytics:my-evaluations"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.player.display_name)
+        self.assertContains(response, self.cycle.name)
+        self.assertContains(response, "Coach")
+        self.assertContains(response, reverse("analytics:my-evaluation-detail", kwargs={"observation_id": observation.id}))
+
+    def test_my_evaluation_detail_hides_evaluator_identity_and_shows_feedback(self):
+        observation = self.submitted_observation(value=5, note="Strong instincts.")
+        self.client.force_login(self.player_user)
+
+        response = self.client.get(reverse("analytics:my-evaluation-detail", kwargs={"observation_id": observation.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.player.display_name)
+        self.assertContains(response, "Evaluator Role")
+        self.assertContains(response, "Coach")
+        self.assertContains(response, self.cycle.name)
+        self.assertContains(response, "Strong instincts.")
+        self.assertContains(response, "5")
+        self.assertNotContains(response, self.coach.username)
+        self.assertNotContains(response, self.coach.email)
+        self.assertNotContains(response, self.coach.get_full_name())
+
+    def test_player_cannot_view_another_players_evaluation_by_url(self):
+        observation = self.submitted_observation(player=self.other_player, evaluator=self.coach)
+        self.client.force_login(self.player_user)
+
+        response = self.client.get(reverse("analytics:my-evaluation-detail", kwargs={"observation_id": observation.id}))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_draft_and_reopened_observations_are_not_player_results(self):
+        draft = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+            responses=self.service_response_payload(),
+        ).observation
+        reopened = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.guest,
+            responses=self.service_response_payload(),
+        ).observation
+        reopened.status = OBSERVATION_STATUS_REOPENED
+        reopened.save(update_fields=["status", "updated_at"])
+        self.client.force_login(self.player_user)
+
+        list_response = self.client.get(reverse("analytics:my-evaluations"))
+        draft_detail = self.client.get(reverse("analytics:my-evaluation-detail", kwargs={"observation_id": draft.id}))
+        reopened_detail = self.client.get(reverse("analytics:my-evaluation-detail", kwargs={"observation_id": reopened.id}))
+
+        self.assertNotContains(list_response, reverse("analytics:my-evaluation-detail", kwargs={"observation_id": draft.id}))
+        self.assertNotContains(list_response, reverse("analytics:my-evaluation-detail", kwargs={"observation_id": reopened.id}))
+        self.assertEqual(draft_detail.status_code, 403)
+        self.assertEqual(reopened_detail.status_code, 403)
+
+    def test_multiple_self_links_are_listed_and_player_specific_route_enforces_ownership(self):
+        link_user_to_player(
+            self.player_user,
+            self.second_player,
+            relationship=UserPlayerRelationship.SELF,
+            is_primary=False,
+        )
+        first_observation = self.submitted_observation(player=self.player, evaluator=self.coach)
+        second_observation = self.submitted_observation(player=self.second_player, evaluator=self.guest)
+        self.client.force_login(self.player_user)
+
+        response = self.client.get(reverse("analytics:my-evaluations"))
+        player_response = self.client.get(reverse("analytics:my-evaluations-player", kwargs={"player_id": self.second_player.id}))
+        forbidden_response = self.client.get(reverse("analytics:my-evaluations-player", kwargs={"player_id": self.other_player.id}))
+
+        self.assertContains(response, self.player.display_name)
+        self.assertContains(response, self.second_player.display_name)
+        self.assertContains(response, reverse("analytics:my-evaluations-player", kwargs={"player_id": self.player.id}))
+        self.assertContains(response, reverse("analytics:my-evaluations-player", kwargs={"player_id": self.second_player.id}))
+        self.assertContains(response, reverse("analytics:my-evaluation-detail", kwargs={"observation_id": first_observation.id}))
+        self.assertContains(player_response, self.second_player.display_name)
+        self.assertContains(player_response, reverse("analytics:my-evaluation-detail", kwargs={"observation_id": second_observation.id}))
+        self.assertNotContains(player_response, reverse("analytics:my-evaluation-detail", kwargs={"observation_id": first_observation.id}))
+        self.assertEqual(forbidden_response.status_code, 403)
+
+    def test_coach_without_self_link_cannot_view_player_result_detail(self):
+        observation = self.submitted_observation()
+        self.client.force_login(self.coach)
+
+        list_response = self.client.get(reverse("analytics:my-evaluations"))
+        detail_response = self.client.get(reverse("analytics:my-evaluation-detail", kwargs={"observation_id": observation.id}))
+
+        self.assertContains(list_response, "No player record is linked to your account.")
+        self.assertEqual(detail_response.status_code, 403)
+
+    def test_staff_review_and_submission_routes_still_work(self):
+        observation = self.submitted_observation()
+        self.client.force_login(self.staff)
+
+        self.assertEqual(self.client.get(reverse("analytics:observation-review-list")).status_code, 200)
+        self.assertEqual(
+            self.client.get(reverse("analytics:observation-review-detail", kwargs={"observation_id": observation.id})).status_code,
+            200,
+        )
+
+        self.client.force_login(self.player_user)
+        self.assertEqual(self.client.get(reverse("analytics:evaluation-list")).status_code, 200)
