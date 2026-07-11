@@ -9,6 +9,8 @@ The project now also includes:
 
 Detailed PDP documentation is in [docs/pdp.md](/Users/eugenelin/dev/vmba0/docs/pdp.md).
 
+Platform product strategy lives in [docs/product/](docs/product/), including the [Platform V2 Roadmap](docs/product/PLATFORM_V2_ROADMAP.md).
+
 The stack is intentionally lightweight:
 
 - **Django** powers templating and routing.

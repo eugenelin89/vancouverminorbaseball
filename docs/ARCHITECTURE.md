@@ -120,6 +120,10 @@ Documentation:
 - [Analytics Implementation Status](analytics/implementation/STATUS.md)
 - [Evaluation Access V1 Engineering Plan](evaluations/implementation/engineering/evaluation_access_v1.md)
 
+Product strategy:
+
+- [Platform V2 Roadmap](product/PLATFORM_V2_ROADMAP.md)
+
 ### Account Management
 
 Purpose:
