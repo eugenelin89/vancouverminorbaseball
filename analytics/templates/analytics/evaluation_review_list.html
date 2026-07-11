@@ -29,6 +29,15 @@
             </select>
         </label>
         <label>
+            Type
+            <select name="perspective">
+                <option value="">All</option>
+                {% for value, label in perspective_choices %}
+                    <option value="{{ value }}" {% if filters.perspective == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
             Team
             <input type="text" name="team" value="{{ filters.team }}">
         </label>
@@ -65,6 +74,7 @@
                     <th>Division</th>
                     <th>Evaluator</th>
                     <th>Role</th>
+                    <th>Type</th>
                     <th>Cycle</th>
                     <th>Submitted</th>
                     <th></th>
@@ -78,12 +88,13 @@
                         <td>{{ row.player_division }}</td>
                         <td>{{ row.evaluator_name }}</td>
                         <td>{{ row.evaluator_role_name }}</td>
+                        <td>{{ row.evaluation_perspective_label }}</td>
                         <td>{{ row.cycle_name }}</td>
                         <td>{{ row.submitted_at|date:"M j, Y" }}</td>
                         <td><a class="button button--ghost" href="{% url 'analytics:evaluation-review-detail' observation_id=row.observation_id %}">Review</a></td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="8">No submitted evaluations found.</td></tr>
+                    <tr><td colspan="9">No submitted evaluations found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

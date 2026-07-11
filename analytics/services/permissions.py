@@ -1,9 +1,19 @@
 from django.core.exceptions import ValidationError
 
 from accounts.models import AccountRole
-from accounts.services.link_service import get_self_linked_players, is_player_self
+from accounts.services.link_service import get_self_linked_players, has_self_link, is_player_self
 from accounts.services.role_service import role_for_user, role_label
-from analytics.models import OBSERVATION_STATUS_DRAFT, OBSERVATION_STATUS_REOPENED, OBSERVATION_STATUS_SUBMITTED, EvaluatorRole
+from analytics.models import (
+    EVALUATION_PERSPECTIVE_COACH,
+    EVALUATION_PERSPECTIVE_GUEST,
+    EVALUATION_PERSPECTIVE_PEER,
+    EVALUATION_PERSPECTIVE_SELF,
+    EVALUATION_PERSPECTIVE_STAFF,
+    OBSERVATION_STATUS_DRAFT,
+    OBSERVATION_STATUS_REOPENED,
+    OBSERVATION_STATUS_SUBMITTED,
+    EvaluatorRole,
+)
 
 
 ACCOUNT_ROLE_TO_EVALUATOR_ROLE = {
@@ -24,19 +34,46 @@ def can_submit_coach_assessment(user) -> bool:
 def can_submit_evaluation(user, target_player=None) -> bool:
     if not user or not user.is_authenticated:
         return False
+    if target_player is not None and not getattr(target_player, "is_active", False):
+        return False
     if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
-        return not (target_player is not None and is_player_self(user, target_player))
+        return True
 
     account_role = role_for_user(user)
     if account_role not in EVALUATION_SUBMITTER_ROLES:
-        return False
-    if target_player is not None and is_player_self(user, target_player):
         return False
     return True
 
 
 def can_evaluate_player(user, target_player) -> bool:
-    return bool(target_player and can_submit_evaluation(user, target_player=target_player))
+    if not target_player or not can_submit_evaluation(user, target_player=target_player):
+        return False
+    if role_for_user(user) == AccountRole.PLAYER and not is_player_self(user, target_player):
+        return not has_self_link(user, target_player, active_only=False)
+    return True
+
+
+def evaluation_perspective_for_user(user, target_player) -> str:
+    """Return the server-derived evaluation perspective for this submission."""
+    if not can_submit_evaluation(user, target_player=target_player):
+        raise ValidationError("This account cannot submit an evaluation for this player.")
+    if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+        return EVALUATION_PERSPECTIVE_STAFF
+
+    account_role = role_for_user(user)
+    if account_role == AccountRole.PLAYER:
+        if is_player_self(user, target_player):
+            return EVALUATION_PERSPECTIVE_SELF
+        if has_self_link(user, target_player, active_only=False):
+            raise ValidationError("An active self player link is required to submit a self evaluation.")
+        return EVALUATION_PERSPECTIVE_PEER
+    if account_role == AccountRole.COACH:
+        return EVALUATION_PERSPECTIVE_COACH
+    if account_role == AccountRole.STAFF or account_role == AccountRole.ADMIN:
+        return EVALUATION_PERSPECTIVE_STAFF
+    if account_role == AccountRole.GUEST_EVALUATOR:
+        return EVALUATION_PERSPECTIVE_GUEST
+    raise ValidationError("This account role cannot submit evaluations.")
 
 
 def evaluator_role_for_user(user) -> EvaluatorRole:

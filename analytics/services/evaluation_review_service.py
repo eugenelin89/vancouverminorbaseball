@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.utils.dateparse import parse_date
 
 from analytics.models import (
+    EVALUATION_PERSPECTIVE_CHOICES,
     OBSERVATION_STATUS_SUBMITTED,
     OBSERVATION_TYPE_COACH_ASSESSMENT,
     EvaluationCycle,
@@ -22,6 +23,7 @@ class EvaluationReviewFilters:
     player: str = ""
     evaluator: str = ""
     evaluator_role: str = ""
+    perspective: str = ""
     team: str = ""
     division: str = ""
     cycle: str = ""
@@ -37,6 +39,7 @@ class EvaluationReviewRow:
     player_division: str
     evaluator_name: str
     evaluator_role_name: str
+    evaluation_perspective_label: str
     cycle_name: str
     submitted_at: object
 
@@ -57,6 +60,7 @@ class EvaluationReviewDetail:
     player_division: str
     evaluator_name: str
     evaluator_role_name: str
+    evaluation_perspective_label: str
     cycle_name: str
     submitted_at: object
     responses: list[EvaluationReviewQuestionResponse]
@@ -69,6 +73,7 @@ class EvaluationReviewList:
     total_count: int
     cycles: object
     evaluator_roles: object
+    perspective_choices: object
 
 
 def parse_evaluation_review_filters(params) -> EvaluationReviewFilters:
@@ -77,6 +82,7 @@ def parse_evaluation_review_filters(params) -> EvaluationReviewFilters:
         player=(params.get("player") or "").strip(),
         evaluator=(params.get("evaluator") or "").strip(),
         evaluator_role=(params.get("evaluator_role") or "").strip(),
+        perspective=(params.get("perspective") or "").strip(),
         team=(params.get("team") or "").strip(),
         division=(params.get("division") or "").strip(),
         cycle=(params.get("cycle") or "").strip(),
@@ -118,6 +124,8 @@ def submitted_evaluation_queryset(filters: EvaluationReviewFilters | None = None
             queryset = queryset.filter(evaluator__username__icontains=filters.evaluator)
     if filters.evaluator_role:
         queryset = queryset.filter(evaluator_role_key=filters.evaluator_role)
+    if filters.perspective:
+        queryset = queryset.filter(evaluation_perspective=filters.perspective)
     if filters.team:
         queryset = queryset.filter(player__team_name__icontains=filters.team)
     if filters.division:
@@ -148,6 +156,7 @@ def get_evaluation_review_list(user, params) -> EvaluationReviewList:
             player_division=observation.player.division,
             evaluator_name=_display_user(observation.evaluator),
             evaluator_role_name=observation.evaluator_role_name or "Evaluator",
+            evaluation_perspective_label=observation.evaluation_perspective_label,
             cycle_name=observation.evaluation_cycle.name,
             submitted_at=observation.submitted_at,
         )
@@ -159,6 +168,7 @@ def get_evaluation_review_list(user, params) -> EvaluationReviewList:
         total_count=len(rows),
         cycles=EvaluationCycle.objects.filter(is_active=True).order_by("-starts_on", "-created_at", "name"),
         evaluator_roles=EvaluatorRole.objects.filter(is_active=True).order_by("name"),
+        perspective_choices=EVALUATION_PERSPECTIVE_CHOICES,
     )
 
 
@@ -186,6 +196,7 @@ def get_evaluation_review_detail(user, observation_id: int) -> EvaluationReviewD
         player_division=observation.player.division,
         evaluator_name=_display_user(observation.evaluator),
         evaluator_role_name=observation.evaluator_role_name or "Evaluator",
+        evaluation_perspective_label=observation.evaluation_perspective_label,
         cycle_name=observation.evaluation_cycle.name,
         submitted_at=observation.submitted_at,
         responses=responses,

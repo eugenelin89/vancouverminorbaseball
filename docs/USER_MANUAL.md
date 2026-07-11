@@ -169,7 +169,7 @@ If your account was imported or reset, you may need to change your password befo
 
 ### Purpose
 
-Use this section when you have a player account and need to submit peer evaluations or view evaluations about yourself.
+Use this section when you have a player account and need to submit peer or self evaluations, or view evaluations about yourself.
 
 ### Where To Log In
 
@@ -189,7 +189,7 @@ If this is your first login, change your temporary password when prompted.
 
 1. Sign in.
 2. Change your password if required.
-3. Submit evaluations for players you know.
+3. Submit evaluations for players you know, including yourself when appropriate.
 4. View submitted evaluations about yourself from My Evaluations.
 5. Sign out when finished.
 
@@ -200,7 +200,7 @@ If this is your first login, change your temporary password when prompted.
 - `/accounts/profile/`
 - `/accounts/password/`
 
-Players cannot evaluate themselves in the current version.
+Player self-evaluations are allowed and are clearly labeled as Self Evaluation.
 
 ## Account Access
 
@@ -381,9 +381,10 @@ Parent accounts do not submit evaluations unless staff gives that user an evalua
 
 - Authenticated coaches, players, staff, and guest evaluators can evaluate players they know.
 - The player does not need to be on the evaluator's own team.
-- Players cannot evaluate themselves.
+- Players can evaluate themselves when their account is actively linked to their own player record.
+- Self evaluations are labeled Self Evaluation.
 - The system records who submitted the evaluation.
-- The evaluator's role/category is recorded for reporting and historical context.
+- The evaluator's role/category and evaluation type are recorded for reporting and historical context.
 - Submitted evaluations become part of the player's Analytics record.
 
 ### Ratings And Notes
@@ -443,7 +444,7 @@ Players, parents, and guest evaluators cannot access the review page.
 ### Typical Workflow
 
 1. Open `/analytics/evaluation-review/`.
-2. Filter by player, evaluator, evaluator role, team, division, cycle, or date.
+2. Filter by player, evaluator, evaluator role, evaluation type, team, division, cycle, or date.
 3. Open an evaluation detail.
 4. Use the information for discussion and decision support.
 
@@ -454,7 +455,7 @@ Players, parents, and guest evaluators cannot access the review page.
 
 Coach review is read-only. It shows submitted evaluations only. Coaches cannot reopen, edit, or delete submitted evaluations from this page.
 
-Coach review shows evaluator names and role/category. It does not show evaluator email addresses, passwords, import metadata, or unrelated account details.
+Coach review shows evaluator names, role/category, and evaluation type. It does not show evaluator email addresses, passwords, import metadata, or unrelated account details.
 
 ## Staff Analytics
 
@@ -728,15 +729,15 @@ Yes, if your account can submit evaluations and you know the player well enough 
 
 ### Can I evaluate myself?
 
-No. Self-evaluation is blocked in the current version.
+Yes. If you have an active player account linked to your own player record, your own submission is labeled Self Evaluation.
 
 ### Is my role recorded when I submit an evaluation?
 
-Yes. The system records your evaluator identity and role/category for reporting and historical context.
+Yes. The system records your evaluator identity, role/category, and evaluation type for reporting and historical context.
 
 ### Can players see who evaluated them?
 
-No. Player-facing My Evaluations pages hide evaluator names, usernames, emails, and account details. Players may see evaluator role/category.
+No. Player-facing My Evaluations pages hide evaluator names, usernames, emails, and account details for external evaluations. Players may see evaluator role/category and evaluation type.
 
 ### Can coaches see all submitted evaluations?
 

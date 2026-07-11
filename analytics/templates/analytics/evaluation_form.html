@@ -6,6 +6,7 @@
 {% block analytics_content %}
 <article class="pdp-card pdp-card--form">
     <h2>Evaluation</h2>
+    <p>{{ observation.evaluation_perspective_label }}</p>
     {% if question_set.rubric.labels %}
         <p>
             {% for value, label in question_set.rubric.labels.items %}

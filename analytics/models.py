@@ -42,6 +42,22 @@ OBSERVATION_STATUS_CHOICES = [
     (OBSERVATION_STATUS_ARCHIVED, "Archived"),
 ]
 
+EVALUATION_PERSPECTIVE_SELF = "self"
+EVALUATION_PERSPECTIVE_PEER = "peer"
+EVALUATION_PERSPECTIVE_COACH = "coach"
+EVALUATION_PERSPECTIVE_STAFF = "staff"
+EVALUATION_PERSPECTIVE_GUEST = "guest"
+
+EVALUATION_PERSPECTIVE_CHOICES = [
+    (EVALUATION_PERSPECTIVE_SELF, "Self Evaluation"),
+    (EVALUATION_PERSPECTIVE_PEER, "Peer Evaluation"),
+    (EVALUATION_PERSPECTIVE_COACH, "Coach Evaluation"),
+    (EVALUATION_PERSPECTIVE_STAFF, "Staff Evaluation"),
+    (EVALUATION_PERSPECTIVE_GUEST, "Guest Evaluation"),
+]
+
+EVALUATION_PERSPECTIVE_LABELS = dict(EVALUATION_PERSPECTIVE_CHOICES)
+
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -237,6 +253,11 @@ class Observation(TimeStampedModel):
     )
     evaluator_role_key = models.CharField(max_length=80, blank=True)
     evaluator_role_name = models.CharField(max_length=120, blank=True)
+    evaluation_perspective = models.CharField(
+        max_length=40,
+        choices=EVALUATION_PERSPECTIVE_CHOICES,
+        default=EVALUATION_PERSPECTIVE_GUEST,
+    )
     status = models.CharField(max_length=40, choices=OBSERVATION_STATUS_CHOICES, default=OBSERVATION_STATUS_DRAFT)
     submitted_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
@@ -247,9 +268,17 @@ class Observation(TimeStampedModel):
         ordering = ["-submitted_at", "-created_at", "-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["player", "evaluation_cycle", "observation_type_key", "evaluator"],
+                fields=["player", "evaluation_cycle", "observation_type_key", "evaluator", "evaluation_perspective"],
                 condition=Q(observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT, evaluator__isnull=False),
-                name="analytics_unique_coach_assessment_per_evaluator",
+                name="analytics_unique_coach_assessment_per_perspective",
+            ),
+            models.UniqueConstraint(
+                fields=["player", "evaluation_cycle", "observation_type_key", "evaluation_perspective"],
+                condition=Q(
+                    observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
+                    evaluation_perspective=EVALUATION_PERSPECTIVE_SELF,
+                ),
+                name="analytics_unique_self_assessment_per_player",
             ),
         ]
         indexes = [
@@ -257,6 +286,7 @@ class Observation(TimeStampedModel):
             models.Index(fields=["evaluation_cycle", "observation_type", "status"]),
             models.Index(fields=["evaluator", "evaluation_cycle"]),
             models.Index(fields=["evaluator_role_key", "evaluation_cycle"]),
+            models.Index(fields=["evaluation_perspective", "evaluation_cycle"]),
             models.Index(fields=["observation_type_key", "status"]),
             models.Index(fields=["submitted_at"]),
         ]
@@ -273,6 +303,10 @@ class Observation(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.observation_type_key} for {self.player}"
+
+    @property
+    def evaluation_perspective_label(self) -> str:
+        return EVALUATION_PERSPECTIVE_LABELS.get(self.evaluation_perspective, "Evaluation")
 
 
 class ObservationResponse(TimeStampedModel):

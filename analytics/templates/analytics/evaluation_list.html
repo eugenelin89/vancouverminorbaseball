@@ -32,6 +32,7 @@
                         <th>Player</th>
                         <th>Division</th>
                         <th>Team</th>
+                        <th>Type</th>
                         <th>My submission</th>
                         <th>Action</th>
                     </tr>
@@ -42,10 +43,11 @@
                             <td>{{ item.player.display_name }}</td>
                             <td>{{ item.player.division }}</td>
                             <td>{{ item.player.team_name }}</td>
+                            <td>{{ item.evaluation_perspective_label }}</td>
                             <td>{% include "analytics/_assessment_status_badge.html" with status=item.status %}</td>
                             <td>
                                 {% if not item.can_evaluate %}
-                                    <span class="pdp-badge pdp-badge--muted">Self-evaluation blocked</span>
+                                    <span class="pdp-badge pdp-badge--muted">Unavailable</span>
                                 {% elif item.observation and item.status == "submitted" %}
                                     <a class="button button--ghost" href="{% url 'analytics:assessment-detail' observation_id=item.observation.id %}">View My Submission</a>
                                 {% elif item.observation %}
@@ -56,7 +58,7 @@
                             </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="5">No active players found.</td></tr>
+                        <tr><td colspan="6">No active players found.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

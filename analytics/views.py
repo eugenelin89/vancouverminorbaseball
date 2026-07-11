@@ -9,7 +9,7 @@ from django.views.generic import FormView, ListView, TemplateView, View
 
 from analytics.assessment_forms import CoachAssessmentForm
 from analytics.forms import PlayerImportMappingForm, PlayerImportUploadForm, parse_conflict_resolutions
-from analytics.models import OBSERVATION_STATUS_SUBMITTED, OBSERVATION_TYPE_COACH_ASSESSMENT, EvaluationCycle, Observation
+from analytics.models import EVALUATION_PERSPECTIVE_CHOICES, OBSERVATION_STATUS_SUBMITTED, OBSERVATION_TYPE_COACH_ASSESSMENT, EvaluationCycle, Observation
 from analytics.services.coach_assessment_service import (
     assessment_status_for_players,
     get_active_coach_assessment_cycle,
@@ -423,6 +423,7 @@ class EvaluationReviewListView(EvaluationReviewRequiredMixin, TemplateView):
                 "filters": review_list.filters,
                 "cycles": review_list.cycles,
                 "evaluator_roles": review_list.evaluator_roles,
+                "perspective_choices": review_list.perspective_choices,
                 "total_count": review_list.total_count,
             }
         )
@@ -585,7 +586,7 @@ class StaffObservationReviewListView(AnalyticsStaffRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        queryset = Observation.objects.select_related("player", "evaluation_cycle", "observation_type", "evaluator", "source").filter(
+        queryset = Observation.objects.select_related("player", "evaluation_cycle", "observation_type", "evaluator", "evaluator_role", "source").filter(
             observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT
         )
         status = self.request.GET.get("status", "").strip()
@@ -606,6 +607,7 @@ class StaffObservationReviewListView(AnalyticsStaffRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["cycles"] = EvaluationCycle.objects.filter(is_active=True)
+        context["perspective_choices"] = EVALUATION_PERSPECTIVE_CHOICES
         return context
 
 

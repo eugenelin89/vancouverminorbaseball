@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from analytics.models import (
+    EVALUATION_PERSPECTIVE_LABELS,
     OBSERVATION_STATUS_DRAFT,
     OBSERVATION_STATUS_REOPENED,
     OBSERVATION_STATUS_SUBMITTED,
@@ -16,6 +17,7 @@ from analytics.models import (
     ObservationQuestionSet,
 )
 from analytics.services.observation_service import create_coach_assessment_observation
+from analytics.services.permissions import can_evaluate_player, evaluation_perspective_for_user
 from analytics.services.question_service import get_active_questions, get_coach_assessment_type, get_question_set_for_cycle
 from players.models import Player
 
@@ -25,6 +27,8 @@ class PlayerAssessmentStatus:
     player: Player
     observation: Observation | None
     status: str
+    evaluation_perspective: str = ""
+    evaluation_perspective_label: str = ""
 
 
 def get_active_coach_assessment_cycle(cycle_id: int | None = None) -> EvaluationCycle | None:
@@ -45,7 +49,13 @@ def list_players_for_assessment(query: str = "", division: str = "", team: str =
     return players
 
 
-def get_existing_coach_assessment(player: Player, cycle: EvaluationCycle, evaluator) -> Observation | None:
+def get_existing_coach_assessment(
+    player: Player,
+    cycle: EvaluationCycle,
+    evaluator,
+    evaluation_perspective: str | None = None,
+) -> Observation | None:
+    evaluation_perspective = evaluation_perspective or evaluation_perspective_for_user(evaluator, player)
     return (
         Observation.objects.select_related("player", "evaluation_cycle", "question_set", "evaluator", "evaluator_role")
         .filter(
@@ -53,6 +63,7 @@ def get_existing_coach_assessment(player: Player, cycle: EvaluationCycle, evalua
             evaluation_cycle=cycle,
             observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
             evaluator=evaluator,
+            evaluation_perspective=evaluation_perspective,
         )
         .first()
     )
@@ -60,13 +71,15 @@ def get_existing_coach_assessment(player: Player, cycle: EvaluationCycle, evalua
 
 @transaction.atomic
 def get_or_create_draft_coach_assessment(player: Player, cycle: EvaluationCycle, evaluator) -> Observation:
-    existing = get_existing_coach_assessment(player, cycle, evaluator)
+    evaluation_perspective = evaluation_perspective_for_user(evaluator, player)
+    existing = get_existing_coach_assessment(player, cycle, evaluator, evaluation_perspective=evaluation_perspective)
     if existing:
         return existing
     result = create_coach_assessment_observation(
         player=player,
         evaluation_cycle=cycle,
         evaluator=evaluator,
+        evaluation_perspective=evaluation_perspective,
         question_set=get_question_set_for_cycle(cycle, get_coach_assessment_type()),
         status=OBSERVATION_STATUS_DRAFT,
     )
@@ -74,19 +87,34 @@ def get_or_create_draft_coach_assessment(player: Player, cycle: EvaluationCycle,
 
 
 def assessment_status_for_players(players, cycle: EvaluationCycle, evaluator) -> list[PlayerAssessmentStatus]:
+    player_list = list(players)
     observations = {
-        observation.player_id: observation
+        (observation.player_id, observation.evaluation_perspective): observation
         for observation in Observation.objects.filter(
-            player__in=players,
+            player__in=player_list,
             evaluation_cycle=cycle,
             observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
             evaluator=evaluator,
         )
     }
     statuses = []
-    for player in players:
-        observation = observations.get(player.id)
-        statuses.append(PlayerAssessmentStatus(player=player, observation=observation, status=observation.status if observation else "not_started"))
+    for player in player_list:
+        perspective = ""
+        label = ""
+        observation = None
+        if can_evaluate_player(evaluator, player):
+            perspective = evaluation_perspective_for_user(evaluator, player)
+            label = EVALUATION_PERSPECTIVE_LABELS.get(perspective, "Evaluation")
+            observation = observations.get((player.id, perspective))
+        statuses.append(
+            PlayerAssessmentStatus(
+                player=player,
+                observation=observation,
+                status=observation.status if observation else "not_started",
+                evaluation_perspective=perspective,
+                evaluation_perspective_label=label,
+            )
+        )
     return statuses
 
 

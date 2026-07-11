@@ -235,6 +235,20 @@ def get_self_linked_players(user, active_only=True):
     return Player.objects.filter(**filters).distinct().order_by("last_name", "first_name", "id")
 
 
+def has_self_link(user, player, active_only=True) -> bool:
+    """Return whether a user has a self relationship to a player."""
+    _validate_user(user)
+    _validate_player(player)
+    filters = {
+        "user": user,
+        "player": player,
+        "relationship": UserPlayerRelationship.SELF,
+    }
+    if active_only:
+        filters["is_active"] = True
+    return UserPlayerLink.objects.filter(**filters).exists()
+
+
 def get_users_for_player(player, active_only=True):
     """Return users linked to a player."""
     _validate_player(player)

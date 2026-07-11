@@ -99,15 +99,17 @@ class ObservationAdmin(TimeStampedAdmin):
         "status",
         "evaluator",
         "evaluator_role_name",
+        "evaluation_perspective",
         "submitted_at",
     )
-    list_filter = ("status", "observation_type", "evaluation_cycle", "evaluator_role_key", "source")
+    list_filter = ("status", "observation_type", "evaluation_cycle", "evaluator_role_key", "evaluation_perspective", "source")
     search_fields = ("player__first_name", "player__last_name", "evaluator__username", "evaluator__email")
     readonly_fields = TimeStampedAdmin.readonly_fields + (
         "submitted_at",
         "observation_type_key",
         "evaluator_role_key",
         "evaluator_role_name",
+        "evaluation_perspective",
     )
     inlines = [ObservationResponseInline]
 

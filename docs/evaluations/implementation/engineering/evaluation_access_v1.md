@@ -4,6 +4,8 @@ Status: COMPLETE and FROZEN.
 
 Frozen on: 2026-07-10.
 
+Self-Evaluation extension added on: 2026-07-11.
+
 ## 1. Goal
 
 Document the completed Platform V1 operational work needed for roster-based evaluations.
@@ -13,7 +15,7 @@ The target stopping point is:
 - players can be imported;
 - coaches can be imported;
 - coaches can evaluate players;
-- players can evaluate one another;
+- players can evaluate one another and themselves with explicit evaluation type labels;
 - players can view evaluations about themselves;
 - coaches can view and filter all evaluations.
 
@@ -51,12 +53,23 @@ These product and architecture decisions are recorded before implementation begi
 Decision:
 
 ```text
-Block self-evaluation for Evaluation Access V1.
+Originally block self-evaluation for Evaluation Access V1.
 ```
 
 Rationale:
 
-The initial goal is coach and peer evaluation. Self-evaluation may be useful later, but it needs separate labeling and reporting to avoid confusing review results.
+The initial goal was coach and peer evaluation. Self-evaluation was deferred until it could be labeled and reported separately.
+
+Updated decision:
+
+```text
+Allow player self-evaluation when the evaluator has an active self link to the target player.
+Store the server-derived evaluation perspective snapshot on every observation.
+```
+
+Rationale:
+
+The platform now supports separate `self`, `peer`, `coach`, `staff`, and `guest` perspectives. Self-evaluations are explicitly labeled as Self Evaluation, are distinct from peer evaluations, and require an active self link.
 
 ### Player-Facing Evaluator Visibility
 
@@ -466,30 +479,31 @@ Proposed flow:
 
 1. Player signs in.
 2. Player opens evaluation list/search.
-3. Player selects another active player.
+3. Player selects another active player, or their own linked player record for self evaluation.
 4. System opens or creates that evaluator's draft observation for the selected player and current cycle.
 5. Player completes ratings and notes.
 6. Player saves draft or submits.
-7. System records evaluator user and role snapshot as player.
+7. System records evaluator user, role snapshot as player, and evaluation perspective snapshot as `self` or `peer`.
 
 ### Self-Evaluation Rule
 
-Decision for Evaluation Access V1:
+Updated decision for Evaluation Access V1:
 
 ```text
-Block self-evaluation.
+Allow self-evaluation with explicit labels and perspective snapshots.
 ```
 
 Reasoning:
 
-- the target use case is peer and coach evaluation;
-- self-evaluations can be valuable but should have explicit labels and reporting treatment;
-- allowing them without UI explanation may confuse coaches reviewing results.
+- self-evaluations are valuable when clearly separated from peer, coach, staff, and guest evaluations;
+- the explicit `evaluation_perspective` snapshot prevents coaches from confusing self feedback with external evaluations;
+- the active self-link requirement prevents unrelated users from creating self-labeled records for another player.
 
 Implementation guidance:
 
-- add a permission/service check that blocks a user from evaluating a player linked to them by active primary or active `self` relationship;
-- if self-evaluation is later desired, make it an explicit cycle setting or observation metadata flag.
+- derive perspective server-side; do not accept a client-controlled perspective field;
+- allow self evaluation only when an active `self` relationship links the evaluator user to the target player;
+- keep self and peer duplicate rules distinct.
 
 ### Form Reuse
 
@@ -909,7 +923,7 @@ Purpose:
 
 Decisions recorded:
 
-- self-evaluation is blocked;
+- self-evaluation is allowed only through an active self link and is labeled separately;
 - player-facing results show evaluator role/category only, not evaluator names;
 - coach import avoids a persistent batch model in Phase 1 unless absolutely necessary;
 - coach-to-player links are not imported in Coach Import Phase 1;
@@ -1064,13 +1078,14 @@ Deliverables:
 - staff can submit;
 - guest evaluator can submit if authenticated;
 - role snapshot matches account profile role;
-- self-evaluation is blocked;
+- self-evaluation requires an active self link and stores `evaluation_perspective=self`;
 - coach review access does not grant Account Operations access;
 - player review access is limited to linked self player.
 
 ### Player Submission Tests
 
 - player can open evaluation form for another active player;
+- player can open evaluation form for their own active self-linked player record;
 - player cannot evaluate inactive player;
 - player cannot create duplicate evaluation for same player/cycle;
 - player can save draft;
@@ -1118,7 +1133,7 @@ Deliverables:
 - Coach review could accidentally grant staff-only abilities such as reopening observations.
 - Temporary passwords can leak if stored in summaries, logs, messages, or metadata.
 - Team and division filtering may become stale if player roster data is outdated.
-- Blocking self-evaluation may disappoint users who expect reflection workflows; future self-evaluation should be explicitly labeled and reported separately.
+- Self-evaluation must remain clearly labeled so coaches do not confuse it with external feedback.
 - No audit logging exists, so staff account operations and coach imports have limited historical operator visibility.
 
 ## 19. Open Questions
@@ -1149,8 +1164,8 @@ Evaluation Access V1 is complete when:
 - [x] imported coach accounts have role `coach`;
 - [x] temporary password behavior is safe and one-time;
 - [x] coaches can evaluate players;
-- [x] players can evaluate other players, with self-evaluation blocked;
-- [x] evaluator identity and role snapshots are correct;
+- [x] players can evaluate other players and themselves with explicit evaluation perspective labels;
+- [x] evaluator identity, role snapshots, and evaluation perspective snapshots are correct;
 - [x] players can view submitted evaluations about themselves only, with evaluator role/category but not evaluator names;
 - [x] coaches can view and filter all submitted evaluations;
 - [x] staff retains existing review and reopen capabilities;
@@ -1169,8 +1184,8 @@ The completed stopping point is:
 - coaches can be imported from CSV;
 - coaches can evaluate players;
 - players can evaluate other players;
-- self-evaluation is blocked;
-- evaluator identity and role snapshots are stored;
+- self-evaluation is allowed and explicitly labeled;
+- evaluator identity, role snapshots, and evaluation perspective snapshots are stored;
 - players can privately view submitted evaluations about themselves;
 - player-facing results hide evaluator identity and show evaluator role/category only;
 - coaches can view and filter all submitted evaluations;
@@ -1186,7 +1201,7 @@ Subsystem boundaries remain consistent with the Platform V1 architecture:
 - `drafts` remains separate and continues to own draft workflows.
 - `pdp` remains legacy/transitionary and was not migrated as part of Evaluation Access V1.
 
-No new models or migrations were required for Evaluation Access V1 after the existing Accounts, Players, and Analytics foundations.
+The Self-Evaluation extension added an Analytics migration for the `Observation.evaluation_perspective` snapshot and related uniqueness/index constraints.
 
 ## 24. Security And Privacy Assessment
 
@@ -1194,9 +1209,9 @@ Security and privacy posture:
 
 - unauthenticated users cannot submit or review evaluations;
 - parent accounts cannot submit evaluations by default;
-- player accounts can submit peer evaluations but cannot evaluate themselves;
+- player accounts can submit peer evaluations and self evaluations when an active self link exists;
 - players can view only submitted evaluations about active self-linked player records;
-- inactive self links and inactive players do not grant "My Evaluations" access;
+- inactive self links and inactive players do not grant self-evaluation or "My Evaluations" access;
 - player-facing result pages hide evaluator names, usernames, email addresses, and account metadata;
 - coach review exposes evaluator display names and role/category but not evaluator email, password state, import metadata, or account metadata;
 - guest evaluators can submit but cannot access coach review;
@@ -1220,8 +1235,8 @@ The implemented workflow supports:
 4. coaches and provisioned players complete first-login password changes when required;
 5. coaches submit evaluations;
 6. players submit peer evaluations;
-7. self-evaluation attempts are blocked;
-8. submitted evaluations store evaluator identity and role snapshots;
+7. players submit self evaluations when they have an active self link;
+8. submitted evaluations store evaluator identity, role snapshots, and evaluation perspective snapshots;
 9. players view submitted evaluations about themselves without seeing evaluator names;
 10. coaches view and filter all submitted evaluations;
 11. staff review and reopen remain available through the existing staff-only workflow.
@@ -1246,7 +1261,7 @@ Use this checklist for a manual production pilot:
 - [ ] Log in as a player and complete forced password change.
 - [ ] Submit an evaluation as a coach.
 - [ ] Submit a peer evaluation as a player.
-- [ ] Attempt self-evaluation as a player and confirm it is blocked.
+- [ ] Submit a self evaluation as a player and confirm it is labeled Self Evaluation.
 - [ ] View `/analytics/my/evaluations/` as a player.
 - [ ] Confirm evaluator identity is hidden from the player-facing result.
 - [ ] View `/analytics/evaluation-review/` as a coach.
@@ -1280,10 +1295,12 @@ Deferred work remains outside Evaluation Access V1:
 - recruiting;
 - new observation types;
 - PDP retirement;
-- self-evaluation workflows with separate labeling/reporting.
+- broader self-evaluation reporting beyond the current explicit perspective label and filters.
 
 ## 30. Freeze Declaration
 
 Evaluation Access V1 is COMPLETE and FROZEN as of 2026-07-10.
+
+The Self-Evaluation extension is complete as of 2026-07-11.
 
 Future changes should be planned as a new phase or version unless they are bug fixes, security fixes, documentation corrections, or operational support for the frozen V1 scope.

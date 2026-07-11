@@ -98,6 +98,7 @@ What it owns:
 - evaluation cycles
 - question sets and questions
 - evaluator snapshots
+- evaluation perspective snapshots
 - analytics metrics, timelines, comparisons, and reports
 
 What it must not own:
@@ -110,7 +111,7 @@ What it must not own:
 
 Current status:
 
-V1 complete. Implementation status records Phases 1-7 as complete. Evaluation Access V1 is complete and frozen for roster-based evaluation access, including coach import, player/coach evaluation submission, player "My Evaluations," and coach evaluation review/filtering.
+V1 complete. Implementation status records Phases 1-7 as complete. Evaluation Access V1 is complete and frozen for roster-based evaluation access, including coach import, player/coach evaluation submission, self-evaluation with explicit perspective labels, player "My Evaluations," and coach evaluation review/filtering.
 
 Documentation:
 

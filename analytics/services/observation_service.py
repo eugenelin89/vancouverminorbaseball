@@ -9,6 +9,8 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from analytics.models import (
+    EVALUATION_PERSPECTIVE_GUEST,
+    EVALUATION_PERSPECTIVE_SELF,
     OBSERVATION_STATUS_DRAFT,
     OBSERVATION_STATUS_SUBMITTED,
     OBSERVATION_TYPE_COACH_ASSESSMENT,
@@ -30,7 +32,7 @@ from analytics.services.question_service import (
     get_default_coach_assessment_question_set,
     get_question_set_for_cycle,
 )
-from analytics.services.permissions import can_evaluate_player, evaluator_role_for_user
+from analytics.services.permissions import can_evaluate_player, evaluation_perspective_for_user, evaluator_role_for_user
 from players.models import Player
 
 
@@ -54,6 +56,7 @@ def _validate_unique_coach_assessment(
     evaluation_cycle: EvaluationCycle,
     observation_type: ObservationType,
     evaluator,
+    evaluation_perspective: str,
     exclude_observation: Observation | None = None,
 ) -> None:
     if observation_type.key != OBSERVATION_TYPE_COACH_ASSESSMENT or evaluator is None:
@@ -63,11 +66,23 @@ def _validate_unique_coach_assessment(
         evaluation_cycle=evaluation_cycle,
         observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
         evaluator=evaluator,
+        evaluation_perspective=evaluation_perspective,
     )
     if exclude_observation:
         queryset = queryset.exclude(pk=exclude_observation.pk)
     if queryset.exists():
         raise ValidationError("This evaluator already has a coach assessment for this player and evaluation cycle.")
+    if evaluation_perspective == EVALUATION_PERSPECTIVE_SELF:
+        self_queryset = Observation.objects.filter(
+            player=player,
+            evaluation_cycle=evaluation_cycle,
+            observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
+            evaluation_perspective=EVALUATION_PERSPECTIVE_SELF,
+        )
+        if exclude_observation:
+            self_queryset = self_queryset.exclude(pk=exclude_observation.pk)
+        if self_queryset.exists():
+            raise ValidationError("This player already has a self evaluation for this evaluation cycle.")
 
 
 def _coerce_rating(value) -> Decimal:
@@ -122,6 +137,7 @@ def create_observation(
     source: ObservationSource,
     evaluator=None,
     evaluator_role: EvaluatorRole | None = None,
+    evaluation_perspective: str | None = None,
     status: str = OBSERVATION_STATUS_DRAFT,
     notes: str = "",
     source_metadata: dict[str, Any] | None = None,
@@ -133,11 +149,15 @@ def create_observation(
         if not can_evaluate_player(evaluator, player):
             raise ValidationError("This evaluator cannot evaluate this player.")
         evaluator_role = evaluator_role or evaluator_role_for_user(evaluator)
+        evaluation_perspective = evaluation_perspective or evaluation_perspective_for_user(evaluator, player)
+    else:
+        evaluation_perspective = evaluation_perspective or EVALUATION_PERSPECTIVE_GUEST
     _validate_unique_coach_assessment(
         player=player,
         evaluation_cycle=evaluation_cycle,
         observation_type=observation_type,
         evaluator=evaluator,
+        evaluation_perspective=evaluation_perspective,
     )
     observation = Observation(
         player=player,
@@ -147,6 +167,7 @@ def create_observation(
         question_set=question_set,
         source=source,
         evaluator=evaluator,
+        evaluation_perspective=evaluation_perspective,
         status=status,
         notes=notes,
         source_metadata=source_metadata or {},
@@ -169,6 +190,7 @@ def create_coach_assessment_observation(
     evaluation_cycle: EvaluationCycle,
     evaluator,
     evaluator_role: EvaluatorRole | None = None,
+    evaluation_perspective: str | None = None,
     source: ObservationSource | None = None,
     question_set: ObservationQuestionSet | None = None,
     status: str = OBSERVATION_STATUS_DRAFT,
@@ -184,6 +206,7 @@ def create_coach_assessment_observation(
     question_set = question_set or get_question_set_for_cycle(evaluation_cycle, observation_type)
     source = source or ObservationSource.objects.get(key=SOURCE_COACH)
     evaluator_role = evaluator_role or evaluator_role_for_user(evaluator)
+    evaluation_perspective = evaluation_perspective or evaluation_perspective_for_user(evaluator, player)
     observation = create_observation(
         player=player,
         evaluation_cycle=evaluation_cycle,
@@ -192,6 +215,7 @@ def create_coach_assessment_observation(
         source=source,
         evaluator=evaluator,
         evaluator_role=evaluator_role,
+        evaluation_perspective=evaluation_perspective,
         status=status,
         notes=notes,
         source_metadata=source_metadata,
@@ -259,7 +283,20 @@ def validate_required_responses(observation: Observation) -> None:
 @transaction.atomic
 def submit_observation(observation: Observation, actor=None) -> Observation:
     """Mark an observation submitted."""
-    locked_observation = Observation.objects.select_for_update().get(pk=observation.pk)
+    locked_observation = (
+        Observation.objects.select_for_update()
+        .select_related("observation_type", "evaluation_cycle", "player", "evaluator")
+        .get(pk=observation.pk)
+    )
+    if locked_observation.observation_type:
+        _validate_unique_coach_assessment(
+            player=locked_observation.player,
+            evaluation_cycle=locked_observation.evaluation_cycle,
+            observation_type=locked_observation.observation_type,
+            evaluator=locked_observation.evaluator,
+            evaluation_perspective=locked_observation.evaluation_perspective,
+            exclude_observation=locked_observation,
+        )
     validate_required_responses(locked_observation)
     locked_observation.status = OBSERVATION_STATUS_SUBMITTED
     locked_observation.submitted_at = timezone.now()

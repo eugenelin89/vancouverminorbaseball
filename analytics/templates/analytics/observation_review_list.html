@@ -29,6 +29,7 @@
                     <th>Player</th>
                     <th>Cycle</th>
                     <th>Evaluator</th>
+                    <th>Type</th>
                     <th>Status</th>
                     <th>Submitted</th>
                     <th></th>
@@ -40,12 +41,13 @@
                         <td>{{ observation.player.display_name }}</td>
                         <td>{{ observation.evaluation_cycle.name }}</td>
                         <td>{{ observation.evaluator }}</td>
+                        <td>{{ observation.evaluation_perspective_label }}</td>
                         <td>{{ observation.get_status_display }}</td>
                         <td>{{ observation.submitted_at|default:"" }}</td>
                         <td><a class="button button--ghost" href="{% url 'analytics:observation-review-detail' observation_id=observation.id %}">Review</a></td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="6">No observations found.</td></tr>
+                    <tr><td colspan="7">No observations found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

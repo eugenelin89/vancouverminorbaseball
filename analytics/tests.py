@@ -15,6 +15,11 @@ from accounts.models import AccountRole, UserPlayerRelationship
 from accounts.services.link_service import activate_link, deactivate_link, link_user_to_player
 from accounts.services.profile_service import set_account_role
 from analytics.models import (
+    EVALUATION_PERSPECTIVE_COACH,
+    EVALUATION_PERSPECTIVE_GUEST,
+    EVALUATION_PERSPECTIVE_PEER,
+    EVALUATION_PERSPECTIVE_SELF,
+    EVALUATION_PERSPECTIVE_STAFF,
     OBSERVATION_STATUS_DRAFT,
     OBSERVATION_STATUS_REOPENED,
     OBSERVATION_STATUS_SUBMITTED,
@@ -67,6 +72,7 @@ from analytics.services.permissions import (
     can_evaluate_player,
     can_submit_evaluation,
     can_view_own_evaluation_draft,
+    evaluation_perspective_for_user,
     evaluator_role_for_user,
 )
 from analytics.services.reporting_service import get_command_center_context
@@ -465,22 +471,38 @@ class AnalyticsObservationFoundationTests(TestCase):
         self.assertTrue(can_submit_evaluation(guest))
         self.assertFalse(can_submit_evaluation(parent))
 
-    def test_self_evaluation_is_blocked_by_active_self_link_only(self):
+    def test_self_evaluation_is_allowed_with_active_self_link_only(self):
         player_user = User.objects.create_user(username="selflinked", password="testpass")
         set_account_role(player_user, AccountRole.PLAYER)
         link = link_user_to_player(player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
 
-        self.assertFalse(can_evaluate_player(player_user, self.player))
+        self.assertTrue(can_evaluate_player(player_user, self.player))
         self.assertTrue(can_evaluate_player(player_user, self.other_player))
-        with self.assertRaises(ValidationError):
-            create_coach_assessment_observation(
-                player=self.player,
-                evaluation_cycle=self.cycle,
-                evaluator=player_user,
-            )
+        result = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=player_user,
+        )
+        self.assertEqual(result.observation.evaluation_perspective, EVALUATION_PERSPECTIVE_SELF)
 
         deactivate_link(link)
-        self.assertTrue(can_evaluate_player(player_user, self.player))
+        self.assertFalse(can_evaluate_player(player_user, self.player))
+        with self.assertRaises(ValidationError):
+            evaluation_perspective_for_user(player_user, self.player)
+
+    def test_evaluation_perspective_is_server_derived_by_role(self):
+        users = [
+            (AccountRole.COACH, EVALUATION_PERSPECTIVE_COACH),
+            (AccountRole.PLAYER, EVALUATION_PERSPECTIVE_PEER),
+            (AccountRole.STAFF, EVALUATION_PERSPECTIVE_STAFF),
+            (AccountRole.ADMIN, EVALUATION_PERSPECTIVE_STAFF),
+            (AccountRole.GUEST_EVALUATOR, EVALUATION_PERSPECTIVE_GUEST),
+        ]
+        for account_role, expected_perspective in users:
+            with self.subTest(account_role=account_role):
+                evaluator = User.objects.create_user(username=f"perspective-{account_role}", password="testpass")
+                set_account_role(evaluator, account_role)
+                self.assertEqual(evaluation_perspective_for_user(evaluator, self.other_player), expected_perspective)
 
     def test_parent_role_cannot_create_observation(self):
         parent = User.objects.create_user(username="parent", password="testpass")
@@ -679,6 +701,46 @@ class AnalyticsObservationFoundationTests(TestCase):
                 evaluation_cycle=self.cycle,
                 evaluator=self.evaluator,
             )
+
+    def test_duplicate_self_evaluation_is_prevented_for_player_cycle(self):
+        first_player_user = User.objects.create_user(username="self-one", password="testpass")
+        second_player_user = User.objects.create_user(username="self-two", password="testpass")
+        set_account_role(first_player_user, AccountRole.PLAYER)
+        set_account_role(second_player_user, AccountRole.PLAYER)
+        link_user_to_player(first_player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+        link_user_to_player(second_player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=False)
+
+        create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=first_player_user,
+        )
+
+        with self.assertRaises(ValidationError):
+            create_coach_assessment_observation(
+                player=self.player,
+                evaluation_cycle=self.cycle,
+                evaluator=second_player_user,
+            )
+
+    def test_self_and_peer_evaluations_from_same_player_are_distinct(self):
+        player_user = User.objects.create_user(username="self-peer", password="testpass")
+        set_account_role(player_user, AccountRole.PLAYER)
+        link_user_to_player(player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+
+        self_result = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=player_user,
+        )
+        peer_result = create_coach_assessment_observation(
+            player=self.other_player,
+            evaluation_cycle=self.cycle,
+            evaluator=player_user,
+        )
+
+        self.assertEqual(self_result.observation.evaluation_perspective, EVALUATION_PERSPECTIVE_SELF)
+        self.assertEqual(peer_result.observation.evaluation_perspective, EVALUATION_PERSPECTIVE_PEER)
 
     def test_multiple_evaluators_can_assess_same_player_cycle(self):
         create_coach_assessment_observation(
@@ -1734,6 +1796,7 @@ class CoachAssessmentWorkflowTests(TestCase):
             responses={question: 4 for question in self.setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5)},
         )
         submit_observation(result.observation)
+        original_perspective = result.observation.evaluation_perspective
         self.client.force_login(self.staff)
 
         response = self.client.post(
@@ -1744,6 +1807,7 @@ class CoachAssessmentWorkflowTests(TestCase):
         result.observation.refresh_from_db()
         self.assertEqual(response.status_code, 302)
         self.assertEqual(result.observation.status, OBSERVATION_STATUS_REOPENED)
+        self.assertEqual(result.observation.evaluation_perspective, original_perspective)
 
 
 class EvaluationAccessSubmissionViewTests(TestCase):
@@ -1802,7 +1866,7 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.client.force_login(self.parent)
         self.assertEqual(self.client.get(reverse("analytics:evaluation-list")).status_code, 403)
 
-    def test_evaluation_list_blocks_self_and_uses_evaluation_copy(self):
+    def test_evaluation_list_allows_self_and_uses_evaluation_copy(self):
         self.client.force_login(self.player_user)
 
         response = self.client.get(reverse("analytics:evaluation-list"), {"q": "Player"})
@@ -1810,7 +1874,8 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Evaluate Player")
         self.assertContains(response, "My submission")
-        self.assertContains(response, "Self-evaluation blocked")
+        self.assertContains(response, "Self Evaluation")
+        self.assertContains(response, reverse("analytics:evaluation-player", kwargs={"player_id": self.self_player.id}))
         self.assertContains(response, reverse("analytics:evaluation-player", kwargs={"player_id": self.target_player.id}))
 
     def test_player_can_open_evaluation_form_for_another_player(self):
@@ -1822,16 +1887,19 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f"Evaluate {self.target_player.display_name}")
         self.assertContains(response, "Submit Evaluation")
+        self.assertContains(response, "Peer Evaluation")
         self.assertEqual(observation.status, OBSERVATION_STATUS_DRAFT)
         self.assertEqual(observation.evaluator_role_key, ROLE_PLAYER)
+        self.assertEqual(observation.evaluation_perspective, EVALUATION_PERSPECTIVE_PEER)
 
-    def test_player_cannot_evaluate_self_or_inactive_player(self):
+    def test_player_can_evaluate_self_but_not_inactive_player(self):
         self.client.force_login(self.player_user)
 
-        self.assertEqual(
-            self.client.get(reverse("analytics:evaluation-player", kwargs={"player_id": self.self_player.id})).status_code,
-            403,
-        )
+        self_response = self.client.get(reverse("analytics:evaluation-player", kwargs={"player_id": self.self_player.id}))
+        self_observation = Observation.objects.get(player=self.self_player, evaluator=self.player_user)
+        self.assertEqual(self_response.status_code, 200)
+        self.assertContains(self_response, "Self Evaluation")
+        self.assertEqual(self_observation.evaluation_perspective, EVALUATION_PERSPECTIVE_SELF)
         self.assertEqual(
             self.client.get(reverse("analytics:evaluation-player", kwargs={"player_id": self.inactive_player.id})).status_code,
             404,
@@ -1866,6 +1934,28 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.assertEqual(response["Location"], reverse("analytics:assessment-detail", kwargs={"observation_id": observation.id}))
         self.assertEqual(observation.status, OBSERVATION_STATUS_SUBMITTED)
         self.assertEqual(observation.evaluator_role_key, ROLE_PLAYER)
+        self.assertEqual(observation.evaluation_perspective, EVALUATION_PERSPECTIVE_PEER)
+
+    def test_player_self_evaluation_draft_resumes_and_submitted_duplicate_redirects(self):
+        self.client.force_login(self.player_user)
+        first_response = self.client.get(reverse("analytics:evaluation-player", kwargs={"player_id": self.self_player.id}))
+        second_response = self.client.get(reverse("analytics:evaluation-player", kwargs={"player_id": self.self_player.id}))
+        observation = Observation.objects.get(player=self.self_player, evaluator=self.player_user)
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 200)
+        self.assertEqual(observation.evaluation_perspective, EVALUATION_PERSPECTIVE_SELF)
+        self.assertEqual(Observation.objects.filter(player=self.self_player, evaluator=self.player_user).count(), 1)
+
+        data = {"action": "submit"}
+        data.update(self.response_payload())
+        self.client.post(reverse("analytics:evaluation-player", kwargs={"player_id": self.self_player.id}), data)
+        response = self.client.get(reverse("analytics:evaluation-player", kwargs={"player_id": self.self_player.id}))
+        observation.refresh_from_db()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("analytics:assessment-detail", kwargs={"observation_id": observation.id}))
+        self.assertEqual(observation.status, OBSERVATION_STATUS_SUBMITTED)
 
     def test_submitted_evaluation_detail_is_private_to_evaluator_and_staff(self):
         result = create_coach_assessment_observation(
@@ -2048,6 +2138,7 @@ class MyEvaluationsViewTests(TestCase):
         self.assertContains(response, self.player.display_name)
         self.assertContains(response, self.cycle.name)
         self.assertContains(response, "Coach")
+        self.assertContains(response, "Coach Evaluation")
         self.assertContains(response, reverse("analytics:my-evaluation-detail", kwargs={"observation_id": observation.id}))
 
     def test_my_evaluation_detail_hides_evaluator_identity_and_shows_feedback(self):
@@ -2058,6 +2149,7 @@ class MyEvaluationsViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.player.display_name)
+        self.assertContains(response, "Coach Evaluation")
         self.assertContains(response, "Evaluator Role")
         self.assertContains(response, "Coach")
         self.assertContains(response, self.cycle.name)
@@ -2074,6 +2166,17 @@ class MyEvaluationsViewTests(TestCase):
         self.assertFalse(hasattr(summaries[0], "observation"))
         self.assertEqual(detail.observation_id, observation.id)
         self.assertFalse(hasattr(detail, "observation"))
+
+    def test_my_evaluations_show_self_label_without_external_identity(self):
+        self_observation = self.submitted_observation(player=self.player, evaluator=self.player_user, note="My reflection.")
+        self.client.force_login(self.player_user)
+
+        list_response = self.client.get(reverse("analytics:my-evaluations"))
+        detail_response = self.client.get(reverse("analytics:my-evaluation-detail", kwargs={"observation_id": self_observation.id}))
+
+        self.assertContains(list_response, "Self Evaluation")
+        self.assertContains(detail_response, "Self Evaluation")
+        self.assertContains(detail_response, "My reflection.")
 
     def test_nonexistent_my_evaluation_detail_returns_404(self):
         self.client.force_login(self.player_user)
@@ -2343,6 +2446,8 @@ class EvaluationReviewViewTests(TestCase):
     def test_coach_can_review_all_submitted_evaluations(self):
         first = self.submitted_observation(player=self.player, evaluator=self.coach, note="First submitted.")
         second = self.submitted_observation(player=self.second_player, evaluator=self.second_coach, cycle=self.second_cycle, note="Second submitted.")
+        link_user_to_player(self.player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+        self_observation = self.submitted_observation(player=self.player, evaluator=self.player_user, note="Self submitted.")
         self.client.force_login(self.coach)
 
         response = self.client.get(reverse("analytics:evaluation-review-list"))
@@ -2352,8 +2457,10 @@ class EvaluationReviewViewTests(TestCase):
         self.assertContains(response, self.second_player.display_name)
         self.assertContains(response, "Casey Coach")
         self.assertContains(response, "Sam Coach")
+        self.assertContains(response, "Self Evaluation")
         self.assertContains(response, reverse("analytics:evaluation-review-detail", kwargs={"observation_id": first.id}))
         self.assertContains(response, reverse("analytics:evaluation-review-detail", kwargs={"observation_id": second.id}))
+        self.assertContains(response, reverse("analytics:evaluation-review-detail", kwargs={"observation_id": self_observation.id}))
         self.assertNotContains(response, self.coach.email)
 
     def test_coach_review_access_rules(self):
@@ -2380,6 +2487,8 @@ class EvaluationReviewViewTests(TestCase):
     def test_coach_review_filters_individually_and_in_combination(self):
         first = self.submitted_observation(player=self.player, evaluator=self.coach, note="Reds note.")
         second = self.submitted_observation(player=self.second_player, evaluator=self.second_coach, cycle=self.second_cycle, note="Blues note.")
+        link_user_to_player(self.player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
+        self_observation = self.submitted_observation(player=self.player, evaluator=self.player_user, note="Self note.")
         today = timezone.localdate().isoformat()
         self.client.force_login(self.coach)
 
@@ -2389,6 +2498,8 @@ class EvaluationReviewViewTests(TestCase):
             ({"evaluator": str(self.coach.id)}, first, second),
             ({"evaluator": "second-coach"}, second, first),
             ({"evaluator_role": ROLE_COACH}, first, None),
+            ({"perspective": EVALUATION_PERSPECTIVE_SELF}, self_observation, first),
+            ({"perspective": EVALUATION_PERSPECTIVE_COACH}, first, self_observation),
             ({"team": "Reds"}, first, second),
             ({"division": "15U"}, second, first),
             ({"cycle": str(self.second_cycle.id)}, second, first),

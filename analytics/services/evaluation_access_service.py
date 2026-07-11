@@ -34,6 +34,7 @@ class EvaluationTargetStatus:
     observation: Observation | None
     status: str
     can_evaluate: bool
+    evaluation_perspective_label: str = ""
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,7 @@ class EvaluationTargetList:
 class MyEvaluationSummary:
     observation_id: int
     player: Player
+    evaluation_perspective_label: str
     evaluator_role_name: str
     submitted_at: object
     cycle_name: str
@@ -66,6 +68,7 @@ class MyEvaluationQuestionResponse:
 class MyEvaluationDetail:
     observation_id: int
     player: Player
+    evaluation_perspective_label: str
     evaluator_role_name: str
     submitted_at: object
     cycle_name: str
@@ -94,6 +97,7 @@ def get_evaluation_target_list(user, params) -> EvaluationTargetList:
             observation=statuses_by_player_id[player.id].observation,
             status=statuses_by_player_id[player.id].status,
             can_evaluate=can_evaluate_player(user, player),
+            evaluation_perspective_label=statuses_by_player_id[player.id].evaluation_perspective_label,
         )
         for player in players
     ]
@@ -152,6 +156,7 @@ def get_my_evaluations(user, player: Player | None = None) -> tuple[list[Player]
         MyEvaluationSummary(
             observation_id=observation.id,
             player=observation.player,
+            evaluation_perspective_label=observation.evaluation_perspective_label,
             evaluator_role_name=observation.evaluator_role_name or "Evaluator",
             submitted_at=observation.submitted_at,
             cycle_name=observation.evaluation_cycle.name,
@@ -185,6 +190,7 @@ def get_my_evaluation_detail(user, observation_id: int) -> MyEvaluationDetail:
     return MyEvaluationDetail(
         observation_id=observation.id,
         player=observation.player,
+        evaluation_perspective_label=observation.evaluation_perspective_label,
         evaluator_role_name=observation.evaluator_role_name or "Evaluator",
         submitted_at=observation.submitted_at,
         cycle_name=observation.evaluation_cycle.name,

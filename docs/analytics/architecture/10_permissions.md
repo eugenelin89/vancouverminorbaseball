@@ -22,11 +22,17 @@ Coaches may edit their own draft/unsubmitted observations. Staff/admin users con
 
 Coaches do not manage player tags unless future permissions allow it.
 
-## Future Player And Parent Access
+## Player Access
 
-Future player and parent portals are supported by the long-term architecture but are not implemented in Version 1.
+Authenticated player users can submit evaluations for active players. When evaluating their own active self-linked player record, the submission is labeled Self Evaluation. When evaluating another player, the submission is labeled Peer Evaluation.
 
-Future permissions may allow players or parents to view selected timeline entries, reports, or development feedback. Do not implement those surfaces in Version 1.
+Players can view submitted evaluations about their own active self-linked player records through the player-facing My Evaluations pages. Player-facing result pages hide evaluator names, usernames, emails, and account metadata for external evaluations.
+
+## Future Parent Access
+
+Future parent portals are supported by the long-term architecture but are not implemented in Version 1.
+
+Future permissions may allow parents to view selected timeline entries, reports, or development feedback. Do not implement those surfaces in Version 1.
 
 ## Sensitive Data
 
