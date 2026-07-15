@@ -1,13 +1,16 @@
-# Vancouver Minor Baseball – Main Site (https://vancouverminor.com)
+# Vancouver Minor Baseball / VCB Platform
 
-This repository contains the primary public-facing site for Vancouver Minor Baseball. It highlights the club’s philosophy, programs, and achievements, and lives alongside other apps that occupy their own subdomains (for example `dev.vancouverminor.com`).
+This repository contains the public-facing Vancouver Minor Baseball site and the VCB Platform used for baseball operations.
 
 The project now also includes:
 
+- `players`: canonical player identity, imports, matching, provenance, and tags
+- `accounts`: account management, authentication workflows, account operations, and user-player links
+- `analytics`: evaluations, review workflows, command center summaries, player profiles, timelines, comparison, and draft context
 - `drafts`: staff-facing draft operations
-- `pdp`: a reusable Player Development Platform for evaluations, goals, snapshots, roadmaps, report cards, drills, and future AI integrations
+- `pdp`: legacy/transitionary player-development functionality that remains installed until an explicit migration/retirement plan is approved
 
-Detailed PDP documentation is in [docs/pdp.md](/Users/eugenelin/dev/vmba0/docs/pdp.md).
+Platform architecture is documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Legacy PDP notes live in [docs/archive/pdp.md](docs/archive/pdp.md).
 
 Platform product strategy lives in [docs/product/](docs/product/), including the [Platform V2 Roadmap](docs/product/PLATFORM_V2_ROADMAP.md).
 
@@ -17,11 +20,11 @@ The stack is intentionally lightweight:
 - **Plain HTML/CSS** (no frontend build tooling) keeps the site easy to maintain.
 - **Static assets** (images, CSS) live under `static/`.
 
-Because the project is simple, most customization happens through data dictionaries and templates rather than a database.
+For the public-facing home site, most content customization happens through data dictionaries and templates. Operational platform apps such as `accounts`, `players`, `analytics`, and `drafts` use Django models, migrations, services, and templates documented under `docs/`.
 
 ---
 
-## Project Layout
+## Public Site Layout
 
 ```
 ├── README.md                     # You are here
@@ -336,22 +339,13 @@ Because the apex domain shares infrastructure with other subdomains:
 3. Run through the site on mobile and desktop whenever you touch CSS.
 4. Document any new deployment steps in this README so future developers stay aligned.
 
-## Prompt Registry
+## Prompt Archive
 
-Reusable project prompts live in `prompts/`.
+Historical and reusable Codex prompts live in [docs/prompts/](docs/prompts/).
 
-- Store each prompt as a Markdown file.
-- Name prompt files with the format `[new app name]_prompt_[id].md`.
-- Use lowercase app names and underscores when the app name has multiple words.
-- Start prompt IDs at `0` and increment by `1` for each new prompt.
-- Use the next unused integer ID when creating a new prompt.
+- Name prompt files with the format `prompt_[ID]_[app_name].md`.
+- Use the next unused zero-padded integer ID.
+- Use `platform` when a prompt spans multiple subsystems.
+- Treat prompt files as historical execution records; current architecture and user guidance live under `docs/`.
 
-Example: `analytics_prompt_0.md`
-
-Current analytics prompt session:
-
-```bash
-codex resume 019f15b0-39b4-75a2-97ff-26808c125814
-```
-
-With this structure and deployment workflow, future developers can confidently maintain the `home.vancouverminor.com` subdomain alongside the organization’s other applications. 
+With this structure and deployment workflow, future developers can maintain the public site and the VCB Platform from the same repository.

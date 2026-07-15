@@ -4,15 +4,17 @@ Date: 2026-07-10
 
 Scope: engineering review only. This document does not deploy code, modify settings, create migrations, or reproduce the production-only `vancouverminor/settings.py`.
 
+Status: historical pre-deployment review. The production upgrade described as a future action in this document was completed on 2026-07-11 and is recorded in [Production Deployment - 2026-07-11](production_deployment_2026_07_11.md). Keep this document as the readiness record that informed that deployment.
+
 ## Executive Summary
 
-The current repository should not replace the production code in a direct `git pull` without preparation.
+At the time of this review, the repository should not replace the production code in a direct `git pull` without preparation.
 
-The production deployment is currently based on commit `551dd0de458ba09628dc85183ef04f9e778fa98f` with local, uncommitted production edits to `vancouverminor/settings.py`. The repository has advanced substantially since that revision. It now includes completed Players V1, Analytics V1, Account Management V1, Platform V1 Account Operations, and Evaluation Access V1.
+At the time of this review, production was based on commit `551dd0de458ba09628dc85183ef04f9e778fa98f` with local, uncommitted production edits to `vancouverminor/settings.py`. The repository had advanced substantially since that revision and included completed Players V1, Analytics V1, Account Management V1, Platform V1 Account Operations, and Evaluation Access V1.
 
-The main blockers are configuration and migration readiness, not a need for a different database engine. Production must preserve domain/static/media settings, rotate and externalize the Django secret key, install the new apps in settings, add the account password-change middleware, update login settings, install current dependencies, run all new migrations, and collect static files before switching traffic to the new code.
+The main blockers were configuration and migration readiness, not a need for a different database engine. Production needed to preserve domain/static/media settings, rotate and externalize the Django secret key, install the new apps in settings, add the account password-change middleware, update login settings, install current dependencies, run all new migrations, and collect static files before switching traffic to the new code.
 
-Go/no-go recommendation: **NO-GO for direct replacement today. GO only after the required production changes and a rehearsed backup/migration/rollback sequence are completed.**
+Historical go/no-go recommendation: **NO-GO for direct replacement at review time. GO only after the required production changes and a rehearsed backup/migration/rollback sequence were completed.**
 
 ## Repository Status
 
@@ -381,9 +383,9 @@ Secret rotation rollback:
 
 ## Final Go/No-Go Recommendation
 
-Recommendation: **NO-GO for direct replacement by pulling current `main` over the production checkout.**
+Historical recommendation: **NO-GO for direct replacement by pulling then-current `main` over the production checkout.**
 
-Recommendation: **GO for a planned deployment only after blockers are resolved.**
+Historical recommendation: **GO for a planned deployment only after blockers were resolved.**
 
 Required conditions for GO:
 

@@ -40,11 +40,11 @@ The prompt record should include:
 The normal workflow is:
 
 1. Complete the requested file changes.
-2. Update `project_flat_file.txt`.
-3. Commit the requested work with a concise message based on the work completed.
-4. Generate the commit diff.
-5. Add the diff to the prompt record.
-6. Update `project_flat_file.txt` again.
-7. Commit the prompt record separately.
+2. Commit the requested work with a concise message based on the work completed.
+3. Generate the commit diff.
+4. Add the diff to the prompt record.
+5. Commit the prompt record separately.
 
 Do not include unrelated user changes in either commit.
+
+Do not regenerate or update `project_flat_file.txt` during normal prompt archival. The flat file is an on-request artifact only.

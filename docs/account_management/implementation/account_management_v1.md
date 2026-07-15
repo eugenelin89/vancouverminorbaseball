@@ -69,7 +69,7 @@ Do not implement these in Account Management v1:
 - `docs/analytics/architecture/03_analytics.md`
 - `docs/analytics/architecture/04_imports.md`
 - `docs/analytics/implementation/repository_assessment.md`
-- `docs/pdp.md`
+- `docs/archive/pdp.md`
 - `docs/archive/prompts/pdp_prompt.md`
 - `docs/archive/prompts/scholarship.md`
 
