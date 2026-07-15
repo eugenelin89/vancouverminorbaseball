@@ -17,5 +17,20 @@ The VCB platform already has permanent player identity, account identity, evalua
 
 ## Current Status
 
-Planning only. No application code, models, migrations, services, views, templates, or tests have been implemented for Seasonal Participation V1.
+Phase 0 planning decisions are complete.
 
+Verified production state on July 15, 2026:
+
+```text
+Players: 0
+Coach profiles: 0
+Observations: 0
+```
+
+Because production is empty for Platform V1 roster/evaluation data, the migration strategy is schema-only first. No fake legacy season, player roster backfill, coach assignment backfill, or observation context backfill is planned for production.
+
+Next phase:
+
+- Phase 1 - Season And Roster Foundation.
+
+No application code, models, migrations, services, views, templates, URLs, settings, or tests have been implemented for Seasonal Participation V1 yet.
