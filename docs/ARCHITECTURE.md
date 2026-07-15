@@ -11,6 +11,7 @@ The platform is intended to become the central baseball operations system for Va
 Long-term capabilities may include:
 
 - player management
+- season-aware roster participation
 - player imports and identity matching
 - evaluations and coach assessments
 - analytics, reporting, timelines, and comparisons
@@ -123,6 +124,7 @@ Documentation:
 Product strategy:
 
 - [Platform V2 Roadmap](product/PLATFORM_V2_ROADMAP.md)
+- [Seasonal Participation V1 Engineering Plan](seasons/implementation/engineering/seasonal_participation_v1.md)
 
 ### Account Management
 
