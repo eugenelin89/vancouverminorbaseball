@@ -1,0 +1,41 @@
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | __pycache__
+  | migrations
+  | media
+  | staticfiles
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+py_version = 39
+skip = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "migrations",
+    "media",
+    "staticfiles",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+extend-exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "migrations",
+    "media",
+    "staticfiles",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

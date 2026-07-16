@@ -92,6 +92,32 @@ DJANGO_SECRET_KEY=test python manage.py test
 DJANGO_SECRET_KEY=test python manage.py test accounts analytics players seasons drafts
 ```
 
+## Development Tooling
+
+Runtime dependencies are pinned in `requirements.txt`. Developer tooling is pinned separately in `requirements-dev.txt`.
+
+Install development tools when you want local formatting, linting, or pre-commit checks:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Repository-wide tooling configuration lives in:
+
+- `pyproject.toml` for Black, isort, and Ruff settings.
+- `.pre-commit-config.yaml` for pre-commit hook definitions.
+
+Use conservative checks on files changed by the current task:
+
+```bash
+ruff check path/to/file.py
+black --check path/to/file.py
+isort --check-only path/to/file.py
+pre-commit run --files path/to/file.py
+```
+
+Avoid whole-repository formatting unless the task explicitly calls for it. Prefer formatting only files that are already part of the current change. The repository now has shared tooling configuration, but historical Python files have not been bulk reformatted.
+
 ## Repository Structure
 
 ```text

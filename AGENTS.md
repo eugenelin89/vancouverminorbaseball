@@ -67,6 +67,17 @@ When a user prompt causes any file to be created, modified, moved, or deleted:
 - Use `select_related()` and `prefetch_related()` where practical to avoid obvious N+1 queries.
 - Do not introduce new models, migrations, APIs, JavaScript, charts, exports, background jobs, caching, or AI functionality unless the task explicitly calls for them.
 
+## Repository Tooling
+
+- Runtime dependencies live in `requirements.txt`.
+- Development tooling lives in `requirements-dev.txt`.
+- Black, isort, and Ruff configuration lives in `pyproject.toml`.
+- Pre-commit hook configuration lives in `.pre-commit-config.yaml`.
+- Use Ruff primarily for correctness checks. Do not expand lint rules aggressively without a specific cleanup task.
+- Avoid whole-repository formatting unless explicitly requested. Prefer formatting only files already touched by the current task.
+- Run Black, isort, Ruff, and pre-commit on touched Python files when practical. Do not treat existing untouched formatting drift as part of an unrelated task.
+- Do not modify historical migration headers or generated files solely to satisfy formatting tools.
+
 ## Documentation
 
 - Keep subsystem documentation consistent with implementation changes.
