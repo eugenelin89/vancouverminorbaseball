@@ -1,5 +1,8 @@
 # Phase 4 Engineering Plan: Coach Assessment Workflow
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current behavior, use [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the relevant subsystem summaries.
+
 ## Overview
 
 Phase 4 implements the Version 1 coach assessment workflow on top of the completed Phase 3 observation foundation.

@@ -1,5 +1,8 @@
 # Account Management v1 Phase 2 Engineering Plan: User Player Linking
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current Account Management behavior, use [../../V1_SUMMARY.md](../../V1_SUMMARY.md), [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), and [../../../USER_MANUAL.md](../../../USER_MANUAL.md).
+
 ## Phase Goal
 
 Create the foundation for linking Django `User` accounts to canonical `players.Player` records.

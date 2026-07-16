@@ -1,5 +1,8 @@
 # Phase 2 Engineering Plan: Player Import Workflow
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current behavior, use [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the relevant subsystem summaries.
+
 ## Overview
 
 Phase 2 builds the staff/admin player import workflow that turns roster/member CSV files into canonical `players.Player` records with conservative matching, preview, conflict review, and provenance.

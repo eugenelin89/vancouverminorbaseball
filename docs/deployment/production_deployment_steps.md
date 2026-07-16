@@ -1,5 +1,8 @@
 # Updating Production
 
+> Historical helper.
+> This file preserves an earlier deployment checklist. The authoritative deployment process is [RUNBOOK.md](RUNBOOK.md). Use the runbook for current production deployments and treat this file as historical context only.
+
 ## 1. Become the deployment user
 
 ```bash

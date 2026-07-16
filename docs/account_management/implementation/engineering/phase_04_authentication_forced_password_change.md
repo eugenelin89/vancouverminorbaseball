@@ -1,5 +1,8 @@
 # Account Management v1 Phase 4 Engineering Plan: Authentication and Forced Password Change
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current Account Management behavior, use [../../V1_SUMMARY.md](../../V1_SUMMARY.md), [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), and [../../../USER_MANUAL.md](../../../USER_MANUAL.md).
+
 ## Phase Goal
 
 Define the platform-forward authentication flow for Account Management v1 and enforce password changes for users with `accounts.AccountProfile.must_change_password=True`.

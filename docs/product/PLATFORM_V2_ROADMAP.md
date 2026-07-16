@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-Platform V1 is the stable operational foundation for the VCB Platform. It supports player identity, imports, account management, authentication, user-player links, coach import, evaluations, player My Evaluations, coach review, staff review, Analytics Command Center, player search/profile/timeline/comparison, draft context, draft workflows, deployment documentation, and role-based user documentation.
+Platform V1 is the stable operational foundation for the VCB Platform. It supports player identity, imports, account management, authentication, user-player links, coach import, season-aware roster participation, evaluations, player My Evaluations, coach review, staff review, Analytics Command Center, player search/profile/timeline/comparison, draft context, draft workflows, deployment documentation, and role-based user documentation.
 
 The recommended next product milestone is:
 
@@ -10,7 +10,7 @@ The recommended next product milestone is:
 Platform V2: Player Development Intelligence
 ```
 
-Before deeper player-development intelligence work, the platform needs season-aware roster participation so permanent players and coach accounts can be reused across seasons while evaluations retain historical team/division context. See [Seasonal Participation V1 Engineering Plan](../seasons/implementation/engineering/seasonal_participation_v1.md).
+Seasonal Participation V1 is complete and frozen. It allows permanent players and coach accounts to be reused across seasons while evaluations retain historical team/division context. See [Seasonal Participation V1](../seasons/README.md).
 
 Platform V2 should turn collected evaluation data into useful player-development decision support. It should not begin with large dashboards, AI, rankings, or parent-facing raw data. The next immediate activity should be a real-world pilot using the completed Platform V1 workflows. Product decisions for Platform V2 should be driven by pilot evidence, data quality, privacy requirements, and user value.
 
@@ -29,6 +29,7 @@ Platform V1 currently includes:
 - canonical player identity and player records;
 - player CSV import and player account provisioning;
 - coach account import;
+- season-aware teams, player roster memberships, coach assignments, and evaluation context;
 - account management and Account Operations;
 - user-player relationships;
 - authentication and forced password change;
@@ -49,6 +50,7 @@ Current subsystem ownership remains:
 
 - `accounts` owns authentication, account metadata, roles, links, provisioning, and account operations.
 - `players` owns canonical player identity, player imports, matching, and player provenance.
+- `seasons` owns season-aware teams, player roster memberships, coach assignments, and roster context.
 - `analytics` owns observations, evaluation cycles, responses, evaluator snapshots, perspective snapshots, metrics, timelines, comparisons, command center summaries, and reporting surfaces.
 - `drafts` owns draft workflows and draft actions.
 - `pdp` remains legacy/transitionary.

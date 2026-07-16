@@ -256,7 +256,7 @@ PDP retirement requires a dedicated migration and regression plan. Do not remove
 
 Documentation:
 
-- [PDP Notes](pdp.md)
+- [PDP Notes](archive/pdp.md)
 
 ## Ownership Matrix
 
@@ -408,8 +408,8 @@ Drafts:
 
 PDP:
 
-- [PDP Notes](pdp.md)
-- [PDP Import Discovery Log](pdp_import_discovery_log.md)
+- [PDP Notes](archive/pdp.md)
+- [PDP Import Discovery Log](archive/pdp_import_discovery_log.md)
 
 Future documentation areas:
 

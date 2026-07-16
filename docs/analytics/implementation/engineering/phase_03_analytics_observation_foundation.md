@@ -1,5 +1,8 @@
 # Phase 3 Engineering Plan: Analytics Observation Foundation
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current behavior, use [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the relevant subsystem summaries.
+
 ## Overview
 
 Phase 3 creates the Analytics observation foundation required for Version 1 coach assessments.

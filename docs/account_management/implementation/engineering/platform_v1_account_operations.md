@@ -1,5 +1,8 @@
 # Platform V1 Account Operations Engineering Plan
 
+> Historical implementation record.
+> This document preserves the plan and decisions used to implement Platform V1 Account Operations. For current behavior, use [../../V1_SUMMARY.md](../../V1_SUMMARY.md), [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), and [../../../USER_MANUAL.md](../../../USER_MANUAL.md).
+
 ## 1. Objectives
 
 Players V1, Analytics V1, Account Management V1, Platform V1 Account Operations, and the platform architecture documentation are complete and frozen. This document records the operational account-management plan that was used to complete the staff-facing production workflows for managing accounts, links, passwords, and bulk account actions.

@@ -1,5 +1,8 @@
 # Phase 1 Engineering Plan: Players Foundation
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current behavior, use [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the relevant subsystem summaries.
+
 ## Overview
 
 Phase 1 creates the independent `players` app as the canonical future player identity foundation for Analytics and future VCB systems.

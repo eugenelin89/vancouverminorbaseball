@@ -1,5 +1,8 @@
 # Evaluation Access V1 Engineering Plan
 
+> Historical implementation record.
+> This document preserves the plan and decisions used to implement Evaluation Access V1. For current behavior, use [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the relevant subsystem summaries.
+
 Status: COMPLETE and FROZEN.
 
 Frozen on: 2026-07-10.

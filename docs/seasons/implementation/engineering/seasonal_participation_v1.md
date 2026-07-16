@@ -1,5 +1,8 @@
 # Seasonal Participation V1 Engineering Plan
 
+> Historical implementation record.
+> This document preserves the plan and decisions used to implement Seasonal Participation V1. For current behavior, use [../../README.md](../../README.md), [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the deployment runbook.
+
 Status: Seasonal Participation V1 is Feature Complete, Production Ready, and Frozen. Phase 1 foundation, Phase 2 season-aware player import, Phase 3 season-aware coach import, Phase 4 season-aware evaluation context, Phase 5 season and roster operations UI, and Phase 6 production review/freeze are complete.
 
 Created: 2026-07-15.

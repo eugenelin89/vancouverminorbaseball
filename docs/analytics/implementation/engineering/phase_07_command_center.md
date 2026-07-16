@@ -1,5 +1,8 @@
 # Phase 7 Engineering Plan: Command Center And Reporting
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current behavior, use [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the relevant subsystem summaries.
+
 ## Phase Goal
 
 Provide staff/admin users with the Version 1 Analytics Command Center and simple reporting summaries.

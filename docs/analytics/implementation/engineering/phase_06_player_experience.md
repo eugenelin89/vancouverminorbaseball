@@ -1,5 +1,8 @@
 # Phase 6 Engineering Plan: Player Experience
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current behavior, use [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../../USER_MANUAL.md](../../../USER_MANUAL.md), and the relevant subsystem summaries.
+
 ## Phase Goal
 
 Create the practical staff-facing player experience for Version 1 of Analytics:

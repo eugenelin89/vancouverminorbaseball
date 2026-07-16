@@ -1,5 +1,8 @@
 # Account Management v1 Phase 3 Engineering Plan: Player Import Account Provisioning
 
+> Historical implementation record.
+> This document preserves the plan and decisions used during implementation. For current Account Management behavior, use [../../V1_SUMMARY.md](../../V1_SUMMARY.md), [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md), and [../../../USER_MANUAL.md](../../../USER_MANUAL.md).
+
 ## Phase Goal
 
 Allow staff/admin player imports to optionally provision linked Django login accounts for committed `players.Player` records.
