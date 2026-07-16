@@ -7,6 +7,7 @@ Product documents describe what the platform should become, why the work matters
 ## Documents
 
 - [Platform V2 Roadmap](PLATFORM_V2_ROADMAP.md)
+- [Platform V2 Product Planning](platform_v2/README.md)
 
 ## How To Use These Documents
 

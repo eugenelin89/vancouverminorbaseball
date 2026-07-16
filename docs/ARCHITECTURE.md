@@ -333,6 +333,23 @@ Dependency guidance:
 | LeagueHub | Planned | Planned |
 | Video | Planned | Planned |
 
+## Platform V2 Planning
+
+Platform V2 planning is underway as Player Development Intelligence. The Phase 0 product plan recommends a future `development` bounded context for player-development summaries and later development-plan workflows.
+
+No `development` app has been implemented yet. Until a reviewed implementation phase creates it, current ownership remains unchanged:
+
+- `analytics` owns submitted evaluations, responses, evaluator snapshots, timelines, comparisons, metrics, and review surfaces.
+- `players` owns canonical player identity.
+- `accounts` owns login identity, roles, and user-player links.
+- `seasons` owns season, team, roster, and coach assignment context.
+- `pdp` remains legacy/transitionary and should not become the dependency target for new Platform V2 work.
+
+Documentation:
+
+- [Platform V2 Roadmap](product/PLATFORM_V2_ROADMAP.md)
+- [Platform V2 Product Planning](product/platform_v2/README.md)
+
 ## Current Platform State
 
 The platform currently has:

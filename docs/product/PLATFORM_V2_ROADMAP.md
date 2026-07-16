@@ -10,6 +10,8 @@ The recommended next product milestone is:
 Platform V2: Player Development Intelligence
 ```
 
+Phase 0 product and implementation planning is recorded in [Platform V2 Product Planning](platform_v2/README.md). That plan recommends Player Development Summary V1 as the first implementation phase, using deterministic computed read models before AI, reports, parent access, or persisted development-plan workflows.
+
 Seasonal Participation V1 is complete and frozen. It allows permanent players and coach accounts to be reused across seasons while evaluations retain historical team/division context. See [Seasonal Participation V1](../seasons/README.md).
 
 Platform V2 should turn collected evaluation data into useful player-development decision support. It should not begin with large dashboards, AI, rankings, or parent-facing raw data. The next immediate activity should be a real-world pilot using the completed Platform V1 workflows. Product decisions for Platform V2 should be driven by pilot evidence, data quality, privacy requirements, and user value.
