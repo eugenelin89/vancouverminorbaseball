@@ -14,6 +14,7 @@
             <thead>
                 <tr>
                     <th>File</th>
+                    <th>Season</th>
                     <th>Source</th>
                     <th>Status</th>
                     <th>Rows</th>
@@ -25,6 +26,7 @@
                 {% for batch in import_batches %}
                     <tr>
                         <td><a href="{% url 'analytics:import-detail' pk=batch.pk %}">{{ batch.original_filename }}</a></td>
+                        <td>{% if batch.season %}{{ batch.season }}{% else %}Legacy / No Season{% endif %}</td>
                         <td>{{ batch.source }}</td>
                         <td>{{ batch.get_status_display }}</td>
                         <td>{{ batch.rows_processed }}</td>
@@ -32,7 +34,7 @@
                         <td>{{ batch.rows_updated }}</td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="6">No imports yet.</td></tr>
+                    <tr><td colspan="7">No imports yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -1,12 +1,22 @@
 from django import forms
 
 from players.services.import_service import SOURCE_CHOICES, build_column_choices
+from seasons.models import Season
+from seasons.services.season_service import get_current_season
 
 
 class PlayerImportUploadForm(forms.Form):
+    season = forms.ModelChoiceField(queryset=Season.objects.none(), help_text="Choose the season for this roster import.")
     csv_file = forms.FileField(help_text="Upload a player member-list or roster-detail CSV.")
     source = forms.ChoiceField(choices=SOURCE_CHOICES)
     provision_player_accounts = forms.BooleanField(required=False, initial=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["season"].queryset = Season.objects.filter(is_active=True).order_by("-is_current", "-starts_on", "name")
+        current = get_current_season()
+        if current and current.is_active:
+            self.fields["season"].initial = current
 
     def clean_csv_file(self):
         csv_file = self.cleaned_data["csv_file"]
@@ -35,6 +45,11 @@ class PlayerImportMappingForm(forms.Form):
     team_id = forms.ChoiceField(required=False)
     source_player_id = forms.ChoiceField(required=False)
     account_email = forms.ChoiceField(required=False)
+    roster_status = forms.ChoiceField(required=False)
+    jersey_number = forms.ChoiceField(required=False)
+    membership_start_date = forms.ChoiceField(required=False)
+    membership_end_date = forms.ChoiceField(required=False)
+    roster_source_id = forms.ChoiceField(required=False)
 
     def __init__(self, *args, parsed=None, **kwargs):
         super().__init__(*args, **kwargs)

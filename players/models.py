@@ -130,6 +130,13 @@ class PlayerImportBatch(TimeStampedModel):
         on_delete=models.SET_NULL,
         related_name="player_import_batches",
     )
+    season = models.ForeignKey(
+        "seasons.Season",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="player_import_batches",
+    )
     status = models.CharField(max_length=40, choices=PlayerImportStatus.choices, default=PlayerImportStatus.UPLOADED)
     mapping_config = models.JSONField(default=dict, blank=True)
     preview_snapshot = models.JSONField(default=dict, blank=True)
@@ -149,6 +156,7 @@ class PlayerImportBatch(TimeStampedModel):
             models.Index(fields=["status", "-created_at"]),
             models.Index(fields=["source", "-created_at"]),
             models.Index(fields=["uploaded_by", "-created_at"]),
+            models.Index(fields=["season", "-created_at"]),
         ]
 
     def save(self, *args, **kwargs):

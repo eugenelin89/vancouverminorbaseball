@@ -11,6 +11,8 @@
         {% for row in review_rows %}
             <section class="pdp-list__item pdp-list__item--stack">
                 <h3>Row {{ row.row_number }} · {{ row.identity.first_name }} {{ row.identity.last_name }}</h3>
+                <p>Roster: {{ row.roster.division }} {{ row.roster.team_name }} · {{ row.membership.label }}</p>
+                {% if row.membership.existing_primary %}<p>Existing primary membership: {{ row.membership.existing_primary }}</p>{% endif %}
                 {% if row.candidate_names %}<p>Ambiguous candidates: {{ row.candidate_names|join:", " }}</p>{% endif %}
                 {% if row.errors %}<p>{{ row.errors|join:", " }}</p>{% endif %}
                 <label>

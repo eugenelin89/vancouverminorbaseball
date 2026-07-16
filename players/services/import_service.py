@@ -26,6 +26,9 @@ from players.services.matching_service import (
     find_player_match,
     match_by_identifier,
 )
+from seasons.models import PlayerRosterMembership, RosterStatus, SeasonTeam
+from seasons.services.membership_service import create_membership, sync_player_current_team_fields, update_membership
+from seasons.services.team_service import get_or_create_season_team, normalize_division_value, normalize_team_value
 
 
 SOURCE_MEMBER_LIST = "vcb_member_list_csv"
@@ -73,6 +76,20 @@ PLAYER_FIELD_KEYS = [
     "graduation_year",
 ]
 
+PERMANENT_PLAYER_FIELD_KEYS = [
+    "first_name",
+    "last_name",
+    "preferred_name",
+    "birthdate",
+    "birth_year",
+    "gender",
+    "primary_positions",
+    "bats",
+    "throws",
+    "school",
+    "graduation_year",
+]
+
 CONFLICT_FIELDS = [
     "first_name",
     "last_name",
@@ -80,8 +97,6 @@ CONFLICT_FIELDS = [
     "birthdate",
     "birth_year",
     "gender",
-    "division",
-    "team_name",
     "primary_positions",
     "bats",
     "throws",
@@ -106,6 +121,11 @@ HEADER_ALIASES = {
     "gender": {"gender", "sex"},
     "division": {"division", "level", "program"},
     "team_name": {"team", "team name", "current team"},
+    "roster_status": {"roster status", "status", "membership status"},
+    "jersey_number": {"jersey", "jersey number", "number", "uniform number"},
+    "membership_start_date": {"membership start date", "start date", "starts on", "roster start"},
+    "membership_end_date": {"membership end date", "end date", "ends on", "roster end"},
+    "roster_source_id": {"roster source id", "membership id", "roster id"},
     "primary_positions": {"position", "positions", "primary position", "primary positions"},
     "bats": {"bats", "batting", "hits"},
     "throws": {"throws", "throwing"},
@@ -167,6 +187,9 @@ class ImportPreviewRow:
     field_conflicts: list[dict[str, str]] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     action: str = ACTION_CREATE
+    roster: dict[str, Any] = field(default_factory=dict)
+    season_team: dict[str, Any] = field(default_factory=dict)
+    membership: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -176,6 +199,10 @@ class ImportCommitResult:
     updated: int = 0
     skipped: int = 0
     conflicts: int = 0
+    season_teams_created: int = 0
+    season_teams_reused: int = 0
+    memberships_created: int = 0
+    memberships_updated: int = 0
     errors: list[str] = field(default_factory=list)
     account_provisioning: dict[str, Any] = field(default_factory=dict)
 
@@ -325,6 +352,30 @@ def parse_birthdate(value: str):
     return None
 
 
+def parse_import_date(value: str):
+    """Parse optional roster date values from CSV input."""
+    return parse_birthdate(value)
+
+
+ROSTER_STATUS_ALIASES = {
+    "": RosterStatus.ACTIVE,
+    "active": RosterStatus.ACTIVE,
+    "inactive": RosterStatus.INACTIVE,
+    "transferred": RosterStatus.TRANSFERRED,
+    "transfer": RosterStatus.TRANSFERRED,
+    "guest": RosterStatus.GUEST,
+    "removed": RosterStatus.REMOVED,
+    "remove": RosterStatus.REMOVED,
+}
+
+
+def parse_roster_status(value: str) -> str:
+    cleaned = normalize_header(value)
+    if cleaned in ROSTER_STATUS_ALIASES:
+        return ROSTER_STATUS_ALIASES[cleaned]
+    raise ValidationError(f"Unknown roster status '{clean_cell(value)}'.")
+
+
 def parse_birth_year(value: str):
     """Parse a birth year from a string."""
     cleaned = clean_cell(value)
@@ -365,7 +416,7 @@ def _identity_for_storage(identity: dict[str, Any]) -> dict[str, Any]:
 
 def _identity_for_model(identity: dict[str, Any]) -> dict[str, Any]:
     model_identity = {}
-    for field_name in PLAYER_FIELD_KEYS:
+    for field_name in PERMANENT_PLAYER_FIELD_KEYS:
         value = identity.get(field_name)
         if field_name == "birthdate" and value:
             value = parse_birthdate(value) if not isinstance(value, date) else value
@@ -374,6 +425,42 @@ def _identity_for_model(identity: dict[str, Any]) -> dict[str, Any]:
         if value not in {"", None}:
             model_identity[field_name] = value
     return model_identity
+
+
+def build_roster_payload(row: dict[str, Any], mapping: dict[str, str] | None = None) -> dict[str, Any]:
+    """Build season roster context from a source row and optional column mapping."""
+    mapping = mapping or {}
+    status_column = mapping.get("roster_status", "")
+    starts_column = mapping.get("membership_start_date", "")
+    ends_column = mapping.get("membership_end_date", "")
+    try:
+        roster_status = parse_roster_status(row.get(status_column, "")) if status_column else RosterStatus.ACTIVE
+    except ValidationError as exc:
+        roster_status = ""
+        status_errors = list(exc.messages)
+    else:
+        status_errors = []
+
+    starts_on = parse_import_date(row.get(starts_column, "")) if starts_column else None
+    ends_on = parse_import_date(row.get(ends_column, "")) if ends_column else None
+    errors = status_errors
+    if starts_column and clean_cell(row.get(starts_column)) and starts_on is None:
+        errors.append("Membership start date is invalid.")
+    if ends_column and clean_cell(row.get(ends_column)) and ends_on is None:
+        errors.append("Membership end date is invalid.")
+    if starts_on and ends_on and ends_on < starts_on:
+        errors.append("Membership end date cannot be before start date.")
+
+    return {
+        "team_name": clean_cell(row.get(mapping.get("team_name", "team_name"))),
+        "division": clean_cell(row.get(mapping.get("division", "division"))),
+        "roster_status": roster_status,
+        "jersey_number": clean_cell(row.get(mapping.get("jersey_number", ""))) if mapping.get("jersey_number") else "",
+        "starts_on": starts_on.isoformat() if starts_on else "",
+        "ends_on": ends_on.isoformat() if ends_on else "",
+        "roster_source_id": clean_cell(row.get(mapping.get("roster_source_id", ""))) if mapping.get("roster_source_id") else "",
+        "errors": errors,
+    }
 
 
 def build_identity_payload(row: dict[str, Any], mapping: dict[str, str] | None = None) -> dict[str, Any]:
@@ -434,11 +521,16 @@ def create_import_batch(
     file_obj,
     source: str,
     uploaded_by,
+    season=None,
     provision_player_accounts: bool = False,
     activate_player_accounts: bool = True,
 ) -> PlayerImportBatch:
     """Create a persisted player import batch from a CSV upload."""
     _ensure_staff(uploaded_by)
+    if season is None:
+        raise ValidationError("Select an active season for this player import.")
+    if not getattr(season, "is_active", False):
+        raise ValidationError("Select an active season for this player import.")
     parsed = parse_player_csv(file_obj)
     normalized_source = _normalize_source(source or detect_source_from_filename(parsed.file_name))
     mapping_config = suggest_mapping(parsed.headers, source=normalized_source)
@@ -448,6 +540,7 @@ def create_import_batch(
         source=normalized_source,
         original_filename=parsed.file_name,
         uploaded_by=uploaded_by,
+        season=season,
         status=PlayerImportStatus.UPLOADED,
         mapping_config=mapping_config,
         preview_snapshot={"parsed_csv": _parsed_to_snapshot(parsed)},
@@ -464,7 +557,7 @@ def _match_identity(identity: dict[str, Any], source_identifiers: list[dict[str,
         "last_name": model_identity.get("last_name", ""),
         "birthdate": model_identity.get("birthdate"),
         "birth_year": model_identity.get("birth_year"),
-        "division": model_identity.get("division", ""),
+        "division": identity.get("division", ""),
     }
     if source_identifiers:
         exact_matches = []
@@ -523,16 +616,91 @@ def _field_conflicts(player: Player | None, identity: dict[str, Any]) -> list[di
     return conflicts
 
 
-def preview_row(*, row: dict[str, Any], mapping_config: dict[str, str], source: str) -> ImportPreviewRow:
+def _team_preview(roster: dict[str, Any], season) -> dict[str, Any]:
+    team_name = roster.get("team_name", "")
+    division = roster.get("division", "")
+    if not team_name or not division:
+        return {"action": "invalid_roster_context", "label": "Invalid Roster Context"}
+    normalized_name = normalize_team_value(team_name)
+    normalized_division = normalize_division_value(division)
+    existing = SeasonTeam.objects.filter(
+        season=season,
+        normalized_name=normalized_name,
+        normalized_division=normalized_division,
+    ).first()
+    return {
+        "id": existing.id if existing else None,
+        "name": existing.name if existing else team_name,
+        "division": existing.division if existing else division,
+        "action": "reuse" if existing else "create",
+        "label": "Reuse Season Team" if existing else "Create Season Team",
+    }
+
+
+def _membership_preview(player: Player | None, season_team_preview: dict[str, Any], season, roster: dict[str, Any]) -> dict[str, Any]:
+    if not player:
+        return {"action": "create", "label": "Create Membership", "is_primary": roster.get("roster_status") == RosterStatus.ACTIVE}
+    existing_same_team = None
+    if season_team_preview.get("id"):
+        existing_same_team = PlayerRosterMembership.objects.filter(
+            player=player,
+            season_team_id=season_team_preview["id"],
+        ).first()
+    if existing_same_team:
+        return {
+            "id": existing_same_team.id,
+            "action": "update",
+            "label": "Update Membership",
+            "is_primary": existing_same_team.is_primary,
+        }
+    primary = PlayerRosterMembership.objects.select_related("season_team").filter(
+        player=player,
+        season_team__season=season,
+        is_active=True,
+        is_primary=True,
+    ).first()
+    if primary:
+        return {
+            "id": None,
+            "action": "review_team_change",
+            "label": "Review Team Change",
+            "is_primary": False,
+            "existing_primary": str(primary.season_team),
+        }
+    return {"id": None, "action": "new_season_membership", "label": "New Season Membership", "is_primary": roster.get("roster_status") == RosterStatus.ACTIVE}
+
+
+def preview_row(*, row: dict[str, Any], mapping_config: dict[str, str], source: str, season=None) -> ImportPreviewRow:
     """Build preview data for a single CSV row."""
     cleaned_row = row["cleaned_row"]
     identity = build_identity_payload(cleaned_row, mapping_config)
+    roster = build_roster_payload(cleaned_row, mapping_config)
     source_identifiers = build_source_identifiers(cleaned_row, mapping_config, source)
-    errors = []
+    errors = list(roster.get("errors", []))
     if not (identity.get("first_name") and identity.get("last_name")):
         errors.append("Map either a full name column or both first and last name columns.")
+    if not season:
+        errors.append("Select an active season for this import.")
+    if not roster.get("team_name"):
+        errors.append("Team is required for season-aware player import.")
+    if not roster.get("division"):
+        errors.append("Division is required for season-aware player import.")
     match_result = _match_identity(identity, source_identifiers) if not errors else None
     field_conflicts = _field_conflicts(getattr(match_result, "player", None), identity) if match_result else []
+    season_team_preview = _team_preview(roster, season) if season and not (not roster.get("team_name") or not roster.get("division")) else {
+        "action": "invalid_roster_context",
+        "label": "Invalid Roster Context",
+    }
+    matched_player = getattr(match_result, "player", None) if match_result else None
+    membership_preview = _membership_preview(matched_player, season_team_preview, season, roster) if season and not errors else {
+        "action": "invalid_roster_context",
+        "label": "Invalid Roster Context",
+        "is_primary": False,
+    }
+    if membership_preview.get("action") == "review_team_change":
+        errors.append(
+            "Player already has an active primary membership in this season. Resolve the team change manually or skip this row."
+        )
 
     if errors:
         action = ACTION_ERROR
@@ -551,7 +719,6 @@ def preview_row(*, row: dict[str, Any], mapping_config: dict[str, str], source: 
         match_status = MATCH_NO_MATCH
 
     candidates = getattr(match_result, "candidates", []) if match_result else []
-    matched_player = getattr(match_result, "player", None) if match_result else None
     return ImportPreviewRow(
         row_number=row["row_number"],
         identity=identity,
@@ -567,6 +734,9 @@ def preview_row(*, row: dict[str, Any], mapping_config: dict[str, str], source: 
         field_conflicts=field_conflicts,
         errors=errors,
         action=action,
+        roster={key: value for key, value in roster.items() if key != "errors"},
+        season_team=season_team_preview,
+        membership=membership_preview,
     )
 
 
@@ -575,12 +745,19 @@ def build_import_preview(*, import_batch: PlayerImportBatch, mapping_config: dic
     """Build and persist an import preview for a batch."""
     parsed = _snapshot_to_parsed(import_batch.preview_snapshot)
     mapping_config = mapping_config or import_batch.mapping_config or suggest_mapping(parsed.headers, source=import_batch.source)
-    rows = [_json_preview_row(preview_row(row=row, mapping_config=mapping_config, source=import_batch.source)) for row in parsed.rows]
+    rows = [
+        _json_preview_row(preview_row(row=row, mapping_config=mapping_config, source=import_batch.source, season=import_batch.season))
+        for row in parsed.rows
+    ]
     row_errors = [row for row in rows if row["errors"]]
     conflicted_rows = [row for row in rows if row["action"] == ACTION_NEEDS_REVIEW]
     preview = {
         "file_name": parsed.file_name,
         "source": import_batch.source,
+        "season": {
+            "id": import_batch.season_id,
+            "name": import_batch.season.name if import_batch.season_id else "Legacy / No Season",
+        },
         "headers": parsed.headers,
         "mapping_config": mapping_config,
         "account_provisioning": {
@@ -595,6 +772,10 @@ def build_import_preview(*, import_batch: PlayerImportBatch, mapping_config: dic
             "rows_update": sum(1 for row in rows if row["action"] == ACTION_UPDATE),
             "rows_needs_review": len(conflicted_rows),
             "rows_error": len(row_errors),
+            "season_teams_create": sum(1 for row in rows if row.get("season_team", {}).get("action") == "create"),
+            "season_teams_reuse": sum(1 for row in rows if row.get("season_team", {}).get("action") == "reuse"),
+            "memberships_create": sum(1 for row in rows if row.get("membership", {}).get("action") in {"create", "new_season_membership"}),
+            "memberships_update": sum(1 for row in rows if row.get("membership", {}).get("action") == "update"),
         },
     }
     import_batch.mapping_config = mapping_config
@@ -694,6 +875,86 @@ def record_import_source_row(player: Player, import_batch: PlayerImportBatch, pr
     )
 
 
+def _parse_iso_date(value: str):
+    cleaned = clean_cell(value)
+    if not cleaned:
+        return None
+    try:
+        return datetime.strptime(cleaned, "%Y-%m-%d").date()
+    except ValueError:
+        raise ValidationError("Roster date is invalid.") from None
+
+
+def _membership_update_values(roster: dict[str, Any]) -> dict[str, Any]:
+    values = {}
+    if roster.get("roster_status"):
+        values["status"] = roster["roster_status"]
+        values["is_active"] = roster["roster_status"] in {RosterStatus.ACTIVE, RosterStatus.GUEST}
+        if not values["is_active"]:
+            values["is_primary"] = False
+    if roster.get("jersey_number"):
+        values["jersey_number"] = roster["jersey_number"]
+    if roster.get("starts_on"):
+        values["starts_on"] = _parse_iso_date(roster["starts_on"])
+    if roster.get("ends_on"):
+        values["ends_on"] = _parse_iso_date(roster["ends_on"])
+    if roster.get("roster_source_id"):
+        values["source_identifier"] = roster["roster_source_id"]
+    return values
+
+
+def _commit_membership(player: Player, import_batch: PlayerImportBatch, preview_row_data: dict[str, Any]) -> tuple[str, bool]:
+    if not import_batch.season_id:
+        raise ValidationError("Import batch requires a season before memberships can be committed.")
+    roster = preview_row_data.get("roster", {})
+    team_name = roster.get("team_name", "")
+    division = roster.get("division", "")
+    if not team_name or not division:
+        raise ValidationError("Team and division are required for roster membership.")
+    season_team, team_created = get_or_create_season_team(
+        season=import_batch.season,
+        name=team_name,
+        division=division,
+        external_source=import_batch.source if roster.get("roster_source_id") else "",
+        external_identifier=roster.get("roster_source_id", ""),
+        metadata={"import_batch_id": import_batch.id},
+    )
+    existing = PlayerRosterMembership.objects.select_for_update().filter(player=player, season_team=season_team).first()
+    values = _membership_update_values(roster)
+    values.setdefault("source", import_batch.source)
+    if existing:
+        was_primary = existing.is_primary
+        update_membership(existing, sync_player_fields=was_primary, **values)
+        return "updated", team_created
+
+    primary = PlayerRosterMembership.objects.select_for_update().filter(
+        player=player,
+        season_team__season=import_batch.season,
+        is_active=True,
+        is_primary=True,
+    ).first()
+    if primary:
+        raise ValidationError("Player already has an active primary membership in this season.")
+    status = values.pop("status", roster.get("roster_status") or RosterStatus.ACTIVE)
+    is_active = values.pop("is_active", status in {RosterStatus.ACTIVE, RosterStatus.GUEST})
+    membership = create_membership(
+        player=player,
+        season_team=season_team,
+        status=status,
+        is_primary=is_active,
+        is_active=is_active,
+        source=values.pop("source", import_batch.source),
+        source_identifier=values.pop("source_identifier", roster.get("roster_source_id", "")),
+        import_batch=import_batch,
+        metadata={"row_number": preview_row_data["row_number"]},
+        sync_player_fields=is_active,
+        **values,
+    )
+    if membership.is_primary:
+        sync_player_current_team_fields(player, import_batch.season)
+    return "created", team_created
+
+
 def _resolutions_for_row(resolutions: dict[str, Any], row_number: int) -> tuple[str, dict[str, str]]:
     row_key = str(row_number)
     row_resolution = resolutions.get(row_key, {}) if resolutions else {}
@@ -747,6 +1008,8 @@ def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: 
     locked_batch = PlayerImportBatch.objects.select_for_update().get(pk=import_batch.pk)
     if locked_batch.status == PlayerImportStatus.COMMITTED:
         raise ValidationError("This import batch has already been committed.")
+    if not locked_batch.season_id:
+        raise ValidationError("Select an active season before committing this player import.")
 
     preview = current_preview(locked_batch)
     if not preview:
@@ -797,6 +1060,15 @@ def commit_import_batch(*, import_batch: PlayerImportBatch, actor, resolutions: 
         )
         result.errors.extend([f"Row {row_number}: {error}" for error in identifier_errors])
         record_import_source_row(player, locked_batch, preview_row_data, actor)
+        membership_action, team_created = _commit_membership(player, locked_batch, preview_row_data)
+        if team_created:
+            result.season_teams_created += 1
+        else:
+            result.season_teams_reused += 1
+        if membership_action == "created":
+            result.memberships_created += 1
+        else:
+            result.memberships_updated += 1
         committed_rows.append(
             {
                 "player": player,

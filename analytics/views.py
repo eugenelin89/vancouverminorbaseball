@@ -100,6 +100,9 @@ class PlayerImportListView(AnalyticsStaffRequiredMixin, ListView):
     context_object_name = "import_batches"
     paginate_by = 25
 
+    def get_queryset(self):
+        return PlayerImportBatch.objects.select_related("season", "uploaded_by")
+
 
 class PlayerImportUploadView(AnalyticsStaffRequiredMixin, FormView):
     template_name = "analytics/import_upload.html"
@@ -110,6 +113,7 @@ class PlayerImportUploadView(AnalyticsStaffRequiredMixin, FormView):
             file_obj=form.cleaned_data["csv_file"],
             source=form.cleaned_data["source"],
             uploaded_by=self.request.user,
+            season=form.cleaned_data["season"],
             provision_player_accounts=form.cleaned_data.get("provision_player_accounts", False),
         )
         messages.success(self.request, "CSV uploaded. Review the import preview before committing.")

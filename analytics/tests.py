@@ -98,6 +98,7 @@ from drafts.models import Draft, DraftAction, DraftActionType, DraftPlayer, Draf
 from players.models import Player, PlayerImportBatch, PlayerImportStatus, PlayerSourceRow, PlayerTag
 from players.services.import_service import SOURCE_MEMBER_LIST
 from players.services.tag_service import assign_tag
+from seasons.services.season_service import create_season
 
 
 User = get_user_model()
@@ -107,11 +108,12 @@ class AnalyticsImportViewTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
         self.user = User.objects.create_user(username="user", password="testpass")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
 
     def upload(self):
         return SimpleUploadedFile(
             "member list for 13u house.csv",
-            b"First,Last,Gender,Team\nEugene,Lin,M,Expos\n",
+            b"First,Last,Gender,Division,Team\nEugene,Lin,M,13U,Expos\n",
             content_type="text/csv",
         )
 
@@ -136,7 +138,7 @@ class AnalyticsImportViewTests(TestCase):
 
         response = self.client.post(
             reverse("analytics:import-new"),
-            {"source": SOURCE_MEMBER_LIST, "csv_file": self.upload()},
+            {"season": str(self.season.pk), "source": SOURCE_MEMBER_LIST, "csv_file": self.upload()},
         )
 
         self.assertEqual(response.status_code, 302)
@@ -150,9 +152,10 @@ class AnalyticsImportViewTests(TestCase):
             reverse("analytics:import-new"),
             {
                 "source": SOURCE_MEMBER_LIST,
+                "season": str(self.season.pk),
                 "csv_file": SimpleUploadedFile(
                     "member.csv",
-                    b"First,Last,DOB,Email\nEugene,Lin,2012-05-01,eugene@example.com\n",
+                    b"First,Last,DOB,Email,Division,Team\nEugene,Lin,2012-05-01,eugene@example.com,13U,Expos\n",
                     content_type="text/csv",
                 ),
                 "provision_player_accounts": "on",
@@ -170,17 +173,18 @@ class AnalyticsImportViewTests(TestCase):
             source=SOURCE_MEMBER_LIST,
             original_filename="member.csv",
             uploaded_by=self.staff,
+            season=self.season,
             mapping_config={"_provision_player_accounts": True, "_activate_player_accounts": False},
             preview_snapshot={
                 "parsed_csv": {
                     "file_name": "member.csv",
-                    "headers": ["First", "Last", "DOB", "Email"],
-                    "normalized_headers": {"first": "First", "last": "Last", "dob": "DOB", "email": "Email"},
+                    "headers": ["First", "Last", "DOB", "Email", "Division", "Team"],
+                    "normalized_headers": {"first": "First", "last": "Last", "dob": "DOB", "email": "Email", "division": "Division", "team": "Team"},
                     "rows": [
                         {
                             "row_number": 2,
-                            "original_row": {"First": "Eugene", "Last": "Lin", "DOB": "2012-05-01", "Email": "eugene@example.com"},
-                            "cleaned_row": {"First": "Eugene", "Last": "Lin", "DOB": "2012-05-01", "Email": "eugene@example.com"},
+                            "original_row": {"First": "Eugene", "Last": "Lin", "DOB": "2012-05-01", "Email": "eugene@example.com", "Division": "13U", "Team": "Expos"},
+                            "cleaned_row": {"First": "Eugene", "Last": "Lin", "DOB": "2012-05-01", "Email": "eugene@example.com", "Division": "13U", "Team": "Expos"},
                         }
                     ],
                 }
@@ -189,7 +193,7 @@ class AnalyticsImportViewTests(TestCase):
 
         response = self.client.post(
             reverse("analytics:import-preview", kwargs={"pk": batch.pk}),
-            {"first_name": "First", "last_name": "Last", "birthdate": "DOB", "account_email": "Email"},
+            {"first_name": "First", "last_name": "Last", "birthdate": "DOB", "account_email": "Email", "division": "Division", "team_name": "Team"},
         )
 
         batch.refresh_from_db()
@@ -205,16 +209,17 @@ class AnalyticsImportViewTests(TestCase):
             source=SOURCE_MEMBER_LIST,
             original_filename="member.csv",
             uploaded_by=self.staff,
+            season=self.season,
             preview_snapshot={
                 "parsed_csv": {
                     "file_name": "member.csv",
-                    "headers": ["First", "Last", "Team"],
-                    "normalized_headers": {"first": "First", "last": "Last", "team": "Team"},
+                    "headers": ["First", "Last", "Division", "Team"],
+                    "normalized_headers": {"first": "First", "last": "Last", "division": "Division", "team": "Team"},
                     "rows": [
                         {
                             "row_number": 2,
-                            "original_row": {"First": "Eugene", "Last": "Lin", "Team": "Expos"},
-                            "cleaned_row": {"First": "Eugene", "Last": "Lin", "Team": "Expos"},
+                            "original_row": {"First": "Eugene", "Last": "Lin", "Division": "13U", "Team": "Expos"},
+                            "cleaned_row": {"First": "Eugene", "Last": "Lin", "Division": "13U", "Team": "Expos"},
                         }
                     ],
                 }
@@ -223,7 +228,7 @@ class AnalyticsImportViewTests(TestCase):
 
         preview_response = self.client.post(
             reverse("analytics:import-preview", kwargs={"pk": batch.pk}),
-            {"first_name": "First", "last_name": "Last", "team_name": "Team"},
+            {"first_name": "First", "last_name": "Last", "division": "Division", "team_name": "Team"},
         )
         self.assertEqual(preview_response.status_code, 302)
 
@@ -239,9 +244,10 @@ class AnalyticsImportViewTests(TestCase):
             reverse("analytics:import-new"),
             {
                 "source": SOURCE_MEMBER_LIST,
+                "season": str(self.season.pk),
                 "csv_file": SimpleUploadedFile(
                     "member.csv",
-                    b"First,Last,DOB\nEugene,Lin,2012-05-01\n",
+                    b"First,Last,DOB,Division,Team\nEugene,Lin,2012-05-01,13U,Expos\n",
                     content_type="text/csv",
                 ),
                 "provision_player_accounts": "on",
@@ -258,14 +264,15 @@ class AnalyticsImportViewTests(TestCase):
 
     def test_conflict_page_displays_review_rows(self):
         self.client.force_login(self.staff)
-        Player.objects.create(first_name="Eugene", last_name="Lin", birthdate="2012-05-01", team_name="Old")
+        Player.objects.create(first_name="Eugene", last_name="Lin", birthdate="2012-05-01", preferred_name="Old")
         upload_response = self.client.post(
             reverse("analytics:import-new"),
             {
                 "source": SOURCE_MEMBER_LIST,
+                "season": str(self.season.pk),
                 "csv_file": SimpleUploadedFile(
                     "member.csv",
-                    b"First,Last,DOB,Team\nEugene,Lin,2012-05-01,New\n",
+                    b"First,Last,DOB,Preferred Name,Division,Team\nEugene,Lin,2012-05-01,New,13U,Expos\n",
                     content_type="text/csv",
                 ),
             },
@@ -276,18 +283,19 @@ class AnalyticsImportViewTests(TestCase):
 
         self.assertEqual(upload_response.status_code, 302)
         self.assertContains(response, "Row 2")
-        self.assertContains(response, "team_name")
+        self.assertContains(response, "preferred_name")
 
     def test_preview_routes_review_rows_through_conflict_review(self):
         self.client.force_login(self.staff)
-        Player.objects.create(first_name="Eugene", last_name="Lin", birthdate="2012-05-01", team_name="Old")
+        Player.objects.create(first_name="Eugene", last_name="Lin", birthdate="2012-05-01", preferred_name="Old")
         self.client.post(
             reverse("analytics:import-new"),
             {
                 "source": SOURCE_MEMBER_LIST,
+                "season": str(self.season.pk),
                 "csv_file": SimpleUploadedFile(
                     "member.csv",
-                    b"First,Last,DOB,Team\nEugene,Lin,2012-05-01,New\n",
+                    b"First,Last,DOB,Preferred Name,Division,Team\nEugene,Lin,2012-05-01,New,13U,Expos\n",
                     content_type="text/csv",
                 ),
             },
@@ -307,6 +315,7 @@ class AnalyticsImportViewTests(TestCase):
             reverse("analytics:import-new"),
             {
                 "source": SOURCE_MEMBER_LIST,
+                "season": str(self.season.pk),
                 "csv_file": SimpleUploadedFile(
                     "member.csv",
                     b"First,Last,Birth Year,Division,Team\nEugene,Lin,2012,13U,Expos\n",

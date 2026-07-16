@@ -15,7 +15,7 @@ The platform helps Vancouver Community Baseball manage:
 
 This is a user manual, not a technical deployment guide. Deployment information lives in [docs/deployment/](deployment/README.md).
 
-Season-aware roster foundations now exist in the system, but normal player import, coach import, and evaluation pages are not season-aware yet. Staff should continue using the current import and evaluation workflows until the next seasonal import phase is implemented.
+Season-aware roster foundations now exist in the system. Player imports are now season-aware: staff choose an active season, and imported team/division information creates roster participation records for that season. Coach import and evaluation pages are not season-aware yet, so staff should continue using the current coach import and evaluation workflows until those seasonal phases are implemented.
 
 ## Start Here
 
@@ -569,7 +569,7 @@ Staff and administrators.
 
 1. Open `/analytics/imports/`.
 2. Upload a CSV file.
-3. Choose source information.
+3. Choose the active season and source information.
 4. Map CSV columns to player fields.
 5. Preview the import.
 6. Review conflicts or ambiguous matches.
@@ -597,6 +597,9 @@ Player imports can include:
 - birth year
 - division
 - team
+- roster status
+- jersey number
+- roster start/end dates
 - positions
 - bats/throws
 - school
@@ -604,6 +607,8 @@ Player imports can include:
 - source identifiers
 
 Birthdate is supported and is important for player identity and account provisioning.
+
+Season, division, and team are required for the current player import workflow. Division and team are used as roster context for the selected season rather than as permanent player identity.
 
 ### Account Provisioning From Player Imports
 

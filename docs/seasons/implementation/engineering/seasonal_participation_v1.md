@@ -1,6 +1,6 @@
 # Seasonal Participation V1 Engineering Plan
 
-Status: Phase 1 foundation complete. Phase 2 is the next implementation phase.
+Status: Phase 1 foundation complete. Phase 2 season-aware player import complete. Phase 3 is the next implementation phase.
 
 Created: 2026-07-15.
 
@@ -678,6 +678,8 @@ Phase 1 must not:
 
 ### Phase 2 - Season-Aware Player Import
 
+Status: complete.
+
 - Add season selection to player import.
 - Map team/division to `SeasonTeam`.
 - Create/update `PlayerRosterMembership`.
@@ -811,13 +813,13 @@ Rollback considerations:
 - Should the exact one-current-season rule be database-enforced on SQLite, service-enforced, or both?
 - Should compatibility writes to `Player.team_name` and `Player.division` happen automatically when primary membership changes, or only during import/service workflows?
 
-## 27. Recommended First Implementation Phase
+## 27. Recommended Next Implementation Phase
 
-Start with Phase 2 - Season-Aware Player Import.
+Start with Phase 3 - Coach Seasonal Assignment.
 
-Phase 1 decisions and implementation are complete. Phase 2 should update player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services.
+Phase 1 decisions and implementation are complete. Phase 2 updated player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services.
 
-Before implementing Phase 2, verify that Phase 1 production migration completed with empty seasonal tables and no fabricated history.
+Before implementing Phase 3, verify that Phase 2 production migration completed successfully and that imported player rows are creating expected season teams and roster memberships.
 
 ## 28. Acceptance Criteria
 

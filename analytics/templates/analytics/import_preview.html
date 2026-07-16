@@ -15,7 +15,7 @@
 
 <article class="pdp-card">
     <h2>{{ import_batch.original_filename }}</h2>
-    <p>{{ import_batch.source }} · {{ import_batch.get_status_display }}</p>
+    <p>{{ import_batch.source }} · {{ import_batch.get_status_display }} · Season: {% if import_batch.season %}{{ import_batch.season }}{% else %}Legacy / No Season{% endif %}</p>
     {% if preview.account_provisioning.enabled %}
         <p>
             Account provisioning enabled; new accounts will be activated immediately and must change password on first login.
@@ -29,6 +29,10 @@
             <div><strong>{{ preview.summary.rows_update }}</strong><span>Update</span></div>
             <div><strong>{{ preview.summary.rows_needs_review }}</strong><span>Review</span></div>
             <div><strong>{{ preview.summary.rows_error }}</strong><span>Errors</span></div>
+            <div><strong>{{ preview.summary.season_teams_create }}</strong><span>Teams Create</span></div>
+            <div><strong>{{ preview.summary.season_teams_reuse }}</strong><span>Teams Reuse</span></div>
+            <div><strong>{{ preview.summary.memberships_create }}</strong><span>Memberships Create</span></div>
+            <div><strong>{{ preview.summary.memberships_update }}</strong><span>Memberships Update</span></div>
         </div>
     {% endif %}
     <div class="table-wrap">
@@ -37,7 +41,9 @@
                 <tr>
                     <th>Row</th>
                     <th>Player</th>
+                    <th>Roster</th>
                     <th>Action</th>
+                    <th>Membership</th>
                     <th>Match</th>
                     <th>Issues</th>
                 </tr>
@@ -47,7 +53,9 @@
                     <tr>
                         <td>{{ row.row_number }}</td>
                         <td>{{ row.identity.first_name }} {{ row.identity.last_name }}</td>
+                        <td>{{ row.roster.division }} {{ row.roster.team_name }}</td>
                         <td>{{ row.action }}</td>
+                        <td>{{ row.membership.label }}</td>
                         <td>{% if row.matched_player_name %}{{ row.matched_player_name }}{% else %}{{ row.match_status }}{% endif %}</td>
                         <td>
                             {% if row.errors %}{{ row.errors|join:", " }}{% endif %}

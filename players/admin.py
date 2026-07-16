@@ -60,6 +60,7 @@ class PlayerImportBatchAdmin(TimeStampedAdmin):
     list_display = (
         "original_filename",
         "source",
+        "season",
         "status",
         "uploaded_by",
         "rows_processed",
@@ -68,8 +69,9 @@ class PlayerImportBatchAdmin(TimeStampedAdmin):
         "rows_conflicted",
         "created_at",
     )
-    list_filter = ("status", "source", "created_at")
+    list_filter = ("status", "source", "season", "created_at")
     search_fields = ("original_filename", "uploaded_by__username", "uploaded_by__email")
+    autocomplete_fields = ("season", "uploaded_by")
     readonly_fields = TimeStampedAdmin.readonly_fields + (
         "committed_at",
         "preview_snapshot",

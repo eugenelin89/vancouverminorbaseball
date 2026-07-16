@@ -21,6 +21,8 @@ Phase 0 planning decisions are complete.
 
 Phase 1 - Season And Roster Foundation is implemented.
 
+Phase 2 - Season-Aware Player Import is implemented.
+
 Verified production state on July 15, 2026:
 
 ```text
@@ -42,15 +44,25 @@ Implemented foundation:
 - schema-only migration
 - tests for current-season, roster membership, coach assignment, compatibility, and admin behavior
 
+Implemented player import integration:
+
+- player imports require a selected active season;
+- import batches store the selected season;
+- imported rows require team and division roster context;
+- player identity matching remains permanent-player based;
+- season teams are created or reused through `seasons` services;
+- player roster memberships are created or updated through `seasons` services;
+- same-season active primary team changes are blocked for manual review;
+- prior-season memberships are preserved.
+
 Current limitations:
 
-- player import does not require or create seasonal memberships yet;
 - coach import does not require or create seasonal assignments yet;
 - evaluations do not yet store season/team/membership context;
 - there are no first-class roster-management pages yet.
 
 Next phase:
 
-- Phase 2 - Season-Aware Player Import.
+- Phase 3 - Season-Aware Coach Import.
 
-No user-facing import or evaluation workflow changes were made in Phase 1.
+No coach import or evaluation workflow changes were made in Phase 2.
