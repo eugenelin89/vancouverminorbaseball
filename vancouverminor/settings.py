@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'leaguehub',
     'scholarships',
     'players',
+    'seasons',
     'analytics',
     'accounts',
 ]

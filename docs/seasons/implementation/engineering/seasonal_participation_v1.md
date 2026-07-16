@@ -1,6 +1,6 @@
 # Seasonal Participation V1 Engineering Plan
 
-Status: Phase 0 complete. Phase 1 is the next implementation phase.
+Status: Phase 1 foundation complete. Phase 2 is the next implementation phase.
 
 Created: 2026-07-15.
 
@@ -648,19 +648,23 @@ Decisions recorded:
 
 ### Phase 1 - Season And Roster Foundation
 
-- Add `seasons` app and models.
-- Add `Season`.
-- Add `SeasonTeam`.
-- Add `PlayerRosterMembership`.
-- Add `CoachSeasonAssignment`.
-- Add transactional domain services for season lookup, team lookup, player membership creation/update, coach assignment creation/update, current season handling, and current team/division compatibility.
-- Add admin configuration.
-- Add migrations.
-- Add comprehensive tests.
-- Add compatibility helpers for current team/division.
-- Register the app in settings.
-- Update architecture and user/admin documentation as needed.
-- Keep existing import/UI behavior unchanged except compatibility helpers if required.
+Status: complete.
+
+Completed:
+
+- Added `seasons` app and models.
+- Added `Season`.
+- Added `SeasonTeam`.
+- Added `PlayerRosterMembership`.
+- Added `CoachSeasonAssignment`.
+- Added transactional domain services for season lookup, team lookup, player membership creation/update, coach assignment creation/update, current season handling, and current team/division compatibility.
+- Added admin configuration.
+- Added schema-only migration.
+- Added comprehensive tests.
+- Added compatibility helpers for current team/division.
+- Registered the app in settings.
+- Updated architecture, seasonal, user/admin, and deployment documentation as needed.
+- Kept existing import/UI behavior unchanged except compatibility helpers.
 
 Phase 1 must not:
 
@@ -809,11 +813,11 @@ Rollback considerations:
 
 ## 27. Recommended First Implementation Phase
 
-Start with Phase 1 - Season And Roster Foundation.
+Start with Phase 2 - Season-Aware Player Import.
 
-Phase 0 decisions are complete. Phase 1 should add the model foundation, transactional domain services, admin support, migrations, tests, and compatibility helpers without changing player import UI, coach import UI, evaluation context, team-based permissions, roster dashboards, or Platform V2 summaries.
+Phase 1 decisions and implementation are complete. Phase 2 should update player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services.
 
-Before implementing Phase 1, re-run the production-readiness verification counts so the migration remains empty-state-first.
+Before implementing Phase 2, verify that Phase 1 production migration completed with empty seasonal tables and no fabricated history.
 
 ## 28. Acceptance Criteria
 

@@ -19,6 +19,8 @@ The VCB platform already has permanent player identity, account identity, evalua
 
 Phase 0 planning decisions are complete.
 
+Phase 1 - Season And Roster Foundation is implemented.
+
 Verified production state on July 15, 2026:
 
 ```text
@@ -29,8 +31,26 @@ Observations: 0
 
 Because production is empty for Platform V1 roster/evaluation data, the migration strategy is schema-only first. No fake legacy season, player roster backfill, coach assignment backfill, or observation context backfill is planned for production.
 
+Implemented foundation:
+
+- `Season`
+- `SeasonTeam`
+- `PlayerRosterMembership`
+- `CoachSeasonAssignment`
+- transactional domain services
+- Django admin registration
+- schema-only migration
+- tests for current-season, roster membership, coach assignment, compatibility, and admin behavior
+
+Current limitations:
+
+- player import does not require or create seasonal memberships yet;
+- coach import does not require or create seasonal assignments yet;
+- evaluations do not yet store season/team/membership context;
+- there are no first-class roster-management pages yet.
+
 Next phase:
 
-- Phase 1 - Season And Roster Foundation.
+- Phase 2 - Season-Aware Player Import.
 
-No application code, models, migrations, services, views, templates, URLs, settings, or tests have been implemented for Seasonal Participation V1 yet.
+No user-facing import or evaluation workflow changes were made in Phase 1.

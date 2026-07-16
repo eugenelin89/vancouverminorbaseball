@@ -171,6 +171,44 @@ Documentation:
 - [Account Management V1 Summary](account_management/V1_SUMMARY.md)
 - [Account Management V1 Engineering Plan](account_management/implementation/account_management_v1.md)
 
+### Seasons
+
+Purpose:
+
+`seasons` owns season-aware roster participation.
+
+Responsibilities:
+
+- seasons and current-season state
+- season-specific teams
+- player roster memberships
+- coach season assignments
+- compatibility helpers for current player team/division display
+
+What it owns:
+
+- seasonal participation records
+- current-season transition services
+- primary roster membership and primary coach assignment services
+
+What it must not own:
+
+- permanent player identity
+- Django login identity
+- account roles or permissions
+- player import parsing/matching
+- coach account provisioning
+- Analytics observations or evaluation context snapshots
+
+Current status:
+
+Seasonal Participation V1 Phase 1 foundation is implemented. The schema, services, admin registration, and tests exist, but player imports, coach imports, and evaluations are not season-aware yet.
+
+Documentation:
+
+- [Seasons README](seasons/README.md)
+- [Seasonal Participation V1 Engineering Plan](seasons/implementation/engineering/seasonal_participation_v1.md)
+
 ### Drafts
 
 Purpose:
@@ -229,6 +267,10 @@ Documentation:
 | Player source identifiers | Players |
 | Player imports | Players |
 | Player matching | Players |
+| Seasons | Seasons |
+| Season-specific teams | Seasons |
+| Player roster memberships | Seasons |
+| Coach season assignments | Seasons |
 | Authentication | Accounts |
 | Login/logout/password change | Accounts |
 | Account metadata | Accounts |
@@ -257,8 +299,12 @@ Documentation:
 
 Analytics ─────► Players
 Analytics ─────► Accounts
+Analytics ─────► Seasons
 
 Drafts ────────► Players
+
+Players ───────► Seasons
+Accounts ──────► Seasons
 
 PDP (legacy, transitionary)
 ```
@@ -269,6 +315,7 @@ Dependency guidance:
 - Do not directly manipulate another subsystem's models when an owning service exists.
 - `players` owns player identity and imports.
 - `accounts` owns account identity and user-player relationships.
+- `seasons` owns season-specific teams, player roster memberships, and coach assignments.
 - `analytics` may consume `players` and `accounts`, but must not own their business rules.
 - `drafts` may reference player identity, but draft workflow remains in `drafts`.
 - PDP is legacy and should not become the dependency target for new platform work.
@@ -280,6 +327,7 @@ Dependency guidance:
 | Players | V1 | Complete |
 | Analytics | V1 | Complete |
 | Account Management | V1 | Complete / Frozen |
+| Seasons | V1 Phase 1 | Foundation complete |
 | Drafts | Active | Active development |
 | PDP | Legacy | Transitionary |
 | LeagueHub | Planned | Planned |
@@ -294,6 +342,7 @@ The platform currently has:
 - production-ready Analytics V1 workflow
 - production-ready Account Management V1 foundation
 - production-ready staff-facing Account Operations
+- season-aware roster participation foundation
 - account provisioning from player imports
 - forced password-change account flow
 - staff-only Analytics command center and reporting tables
@@ -310,6 +359,7 @@ Likely future areas:
 
 - Account Management V2
 - Analytics V2
+- Seasonal Participation Phase 2
 - Drafts expansion
 - LeagueHub
 - Video
@@ -338,6 +388,11 @@ Analytics:
 - [Analytics Implementation Handbook](analytics/implementation/README.md)
 - [Analytics Implementation Status](analytics/implementation/STATUS.md)
 - [Analytics Local Development](analytics/local_development.md)
+
+Seasons:
+
+- [Seasons README](seasons/README.md)
+- [Seasonal Participation V1 Engineering Plan](seasons/implementation/engineering/seasonal_participation_v1.md)
 
 Prompts and archives:
 

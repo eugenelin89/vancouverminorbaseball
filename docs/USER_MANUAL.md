@@ -7,12 +7,15 @@ The platform helps Vancouver Community Baseball manage:
 - player records
 - account access
 - player and coach imports
+- season and roster foundations
 - evaluations
 - player history
 - draft preparation
 - draft room workflows
 
 This is a user manual, not a technical deployment guide. Deployment information lives in [docs/deployment/](deployment/README.md).
+
+Season-aware roster foundations now exist in the system, but normal player import, coach import, and evaluation pages are not season-aware yet. Staff should continue using the current import and evaluation workflows until the next seasonal import phase is implemented.
 
 ## Start Here
 
