@@ -48,6 +48,7 @@ from accounts.services.permissions import (
 )
 from accounts.services.profile_service import get_account_role
 from accounts.services.role_service import role_label
+from seasons.models import Season
 
 
 class AccountOperationsStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -186,7 +187,8 @@ class CoachImportUploadView(AccountOperationsStaffRequiredMixin, FormView):
     def form_valid(self, form):
         try:
             csv_file = form.cleaned_data["csv_file"]
-            preview_coach_import_file(csv_file)
+            season = form.cleaned_data["season"]
+            preview_coach_import_file(csv_file, season=season)
             csv_file.seek(0)
             raw = csv_file.read()
             csv_text = raw if isinstance(raw, str) else raw.decode("utf-8-sig")
@@ -194,6 +196,7 @@ class CoachImportUploadView(AccountOperationsStaffRequiredMixin, FormView):
             form.add_error(None, exc)
             return self.form_invalid(form)
         self.request.session["coach_import_csv"] = csv_text
+        self.request.session["coach_import_season_id"] = season.id
         self.request.session.modified = True
         return redirect("accounts:coach-import-preview")
 
@@ -206,13 +209,18 @@ class CoachImportPreviewView(AccountOperationsStaffRequiredMixin, FormView):
         if not request.user.is_authenticated or not self.test_func():
             return super().dispatch(request, *args, **kwargs)
         self.csv_text = request.session.get("coach_import_csv", "")
+        self.season_id = request.session.get("coach_import_season_id")
         if not self.csv_text:
             messages.error(request, "Upload a coach CSV before previewing an import.")
+            return redirect("accounts:coach-import-new")
+        self.season = Season.objects.filter(pk=self.season_id, is_active=True).first()
+        if not self.season:
+            messages.error(request, "Select an active season before previewing a coach import.")
             return redirect("accounts:coach-import-new")
         return super().dispatch(request, *args, **kwargs)
 
     def get_preview(self):
-        return preview_coach_import(self.csv_text)
+        return preview_coach_import(self.csv_text, season=self.season)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -235,15 +243,21 @@ class CoachImportConfirmView(AccountOperationsStaffRequiredMixin, TemplateView):
             messages.error(request, "Confirm the coach import before continuing.")
             return redirect("accounts:coach-import-preview")
         csv_text = request.session.get("coach_import_csv", "")
+        season_id = request.session.get("coach_import_season_id")
         if not csv_text:
             messages.error(request, "Upload a coach CSV before confirming an import.")
             return redirect("accounts:coach-import-new")
+        season = Season.objects.filter(pk=season_id, is_active=True).first()
+        if not season:
+            messages.error(request, "Select an active season before confirming a coach import.")
+            return redirect("accounts:coach-import-new")
         try:
-            result = commit_coach_import(request.user, csv_text)
+            result = commit_coach_import(request.user, csv_text, season=season)
         except ValidationError as exc:
             messages.error(request, "; ".join(exc.messages))
             return redirect("accounts:coach-import-preview")
         request.session.pop("coach_import_csv", None)
+        request.session.pop("coach_import_season_id", None)
         request.session.modified = True
         return self.render_to_response(self.get_context_data(result=result))
 

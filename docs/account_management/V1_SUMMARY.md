@@ -286,10 +286,11 @@ Deferred from Platform V1 Account Operations:
 - account merge;
 - duplicate account resolution;
 - invitation and email verification flows;
-- coach import;
 - parent import;
 - portal dashboards;
 - self-service password recovery email flow.
+
+Season-aware coach import is implemented separately under Seasonal Participation V1 Phase 3. It reuses Account Management services for account creation/reuse, while seasonal team assignments belong to the `seasons` app.
 
 ## Service Boundaries
 

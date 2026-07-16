@@ -11,6 +11,11 @@
             {% csrf_token %}
             {{ form.non_field_errors }}
             <label>
+                Season
+                {{ form.season }}
+                {{ form.season.errors }}
+            </label>
+            <label>
                 Coach CSV
                 {{ form.csv_file }}
                 {{ form.csv_file.errors }}

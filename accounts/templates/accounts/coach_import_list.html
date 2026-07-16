@@ -8,7 +8,8 @@
     <article class="pdp-card">
         <h2>Coach CSV</h2>
         <p>Required columns: first_name, last_name, email.</p>
-        <p>Optional columns: username, team, division, is_active, notes, source_id.</p>
+        <p>Season is selected during upload. Required assignment columns: team and division.</p>
+        <p>Optional columns: username, is_active, notes, source_id, assignment_role, assignment_start_date, assignment_end_date, assignment_source_id.</p>
         <div class="pdp-actions">
             <a class="button button--primary" href="{% url 'accounts:coach-import-new' %}">Upload Coach CSV</a>
             <a class="button button--ghost" href="{% url 'accounts:operations-dashboard' %}">Account Operations</a>

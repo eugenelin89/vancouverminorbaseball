@@ -23,6 +23,8 @@ Phase 1 - Season And Roster Foundation is implemented.
 
 Phase 2 - Season-Aware Player Import is implemented.
 
+Phase 3 - Season-Aware Coach Import is implemented.
+
 Verified production state on July 15, 2026:
 
 ```text
@@ -55,14 +57,25 @@ Implemented player import integration:
 - same-season active primary team changes are blocked for manual review;
 - prior-season memberships are preserved.
 
+Implemented coach import integration:
+
+- coach imports require a selected active season;
+- imported rows require team, division, and an assignment role;
+- new coach accounts receive one-time temporary passwords and must change them on first login;
+- existing coach accounts are reused without password reset or activation changes;
+- existing non-coach accounts remain conflicts;
+- season teams are created or reused through `seasons` services;
+- coach season assignments are created or updated through `seasons` services;
+- prior-season assignments are preserved;
+- coaches may have multiple teams and roles in the same season.
+
 Current limitations:
 
-- coach import does not require or create seasonal assignments yet;
 - evaluations do not yet store season/team/membership context;
 - there are no first-class roster-management pages yet.
 
 Next phase:
 
-- Phase 3 - Season-Aware Coach Import.
+- Phase 4 - Evaluation Context.
 
-No coach import or evaluation workflow changes were made in Phase 2.
+No evaluation workflow changes were made in Phase 3.

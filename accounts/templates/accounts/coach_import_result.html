@@ -8,9 +8,14 @@
     <article class="pdp-card">
         <h2>Summary</h2>
         <dl class="pdp-definition-list">
+            <dt>Season</dt><dd>{{ result.season_name|default:"-" }}</dd>
             <dt>Rows processed</dt><dd>{{ result.rows_processed }}</dd>
             <dt>Users created</dt><dd>{{ result.users_created }}</dd>
             <dt>Existing coaches reused</dt><dd>{{ result.existing_coaches_reused }}</dd>
+            <dt>Season teams created</dt><dd>{{ result.season_teams_created }}</dd>
+            <dt>Season teams reused</dt><dd>{{ result.season_teams_reused }}</dd>
+            <dt>Assignments created</dt><dd>{{ result.assignments_created }}</dd>
+            <dt>Assignments updated/reused</dt><dd>{{ result.assignments_updated }}</dd>
             <dt>Conflicts</dt><dd>{{ result.conflicts }}</dd>
             <dt>Errors</dt><dd>{{ result.errors }}</dd>
             <dt>Skipped rows</dt><dd>{{ result.skipped_rows }}</dd>
@@ -29,6 +34,10 @@
                         <th>Row</th>
                         <th>Status</th>
                         <th>Username</th>
+                        <th>Team</th>
+                        <th>Role</th>
+                        <th>Assignment</th>
+                        <th>Password</th>
                         <th>Active</th>
                         <th>Temporary password</th>
                         <th>Messages</th>
@@ -46,6 +55,10 @@
                                     {{ row.username|default:"-" }}
                                 {% endif %}
                             </td>
+                            <td>{{ row.division }} {{ row.team }}</td>
+                            <td>{{ row.assignment_role_label|default:"-" }}</td>
+                            <td>{{ row.assignment_status|default:"-" }}</td>
+                            <td>{{ row.password_behavior|default:"-" }}</td>
                             <td>{% if row.user_id %}{{ row.is_active|yesno:"Yes,No" }}{% else %}-{% endif %}</td>
                             <td><strong>{{ row.temporary_password|default:"-" }}</strong></td>
                             <td>
@@ -57,7 +70,7 @@
                             </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="6">No rows processed.</td></tr>
+                        <tr><td colspan="10">No rows processed.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

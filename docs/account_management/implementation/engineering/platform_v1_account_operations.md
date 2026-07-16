@@ -651,6 +651,8 @@ Bulk coach import is outside the current Platform V1 Account Operations roadmap.
 
 That future plan should define CSV format, matching rules, duplicate detection, role assignment, password reset behavior, and safety checks before implementation begins.
 
+Status note: Seasonal Participation V1 Phase 3 later implemented season-aware coach import through the existing `accounts` coach import service while storing seasonal team assignments in `seasons`. Account Operations itself remains frozen.
+
 ## 10. Risks
 
 - Incorrect role assignment could make reporting and evaluator snapshots misleading.

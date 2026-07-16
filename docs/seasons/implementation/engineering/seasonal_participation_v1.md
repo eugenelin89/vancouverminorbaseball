@@ -1,6 +1,6 @@
 # Seasonal Participation V1 Engineering Plan
 
-Status: Phase 1 foundation complete. Phase 2 season-aware player import complete. Phase 3 is the next implementation phase.
+Status: Phase 1 foundation complete. Phase 2 season-aware player import complete. Phase 3 season-aware coach import complete. Phase 4 is the next implementation phase.
 
 Created: 2026-07-15.
 
@@ -689,6 +689,8 @@ Status: complete.
 
 ### Phase 3 - Coach Seasonal Assignment
 
+Status: complete.
+
 - Add season selection to coach import.
 - Map team/division to `SeasonTeam`.
 - Create/update `CoachSeasonAssignment`.
@@ -815,11 +817,11 @@ Rollback considerations:
 
 ## 27. Recommended Next Implementation Phase
 
-Start with Phase 3 - Coach Seasonal Assignment.
+Start with Phase 4 - Evaluation Context.
 
-Phase 1 decisions and implementation are complete. Phase 2 updated player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services.
+Phase 1 decisions and implementation are complete. Phase 2 updated player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services. Phase 3 updated coach import to require a selected season, create or reuse `SeasonTeam`, and create/update `CoachSeasonAssignment` through `seasons` services while preserving existing coach passwords.
 
-Before implementing Phase 3, verify that Phase 2 production migration completed successfully and that imported player rows are creating expected season teams and roster memberships.
+Before implementing Phase 4, verify that Phase 3 production rollout completed successfully and that imported coach rows are creating expected season teams and coach assignments.
 
 ## 28. Acceptance Criteria
 

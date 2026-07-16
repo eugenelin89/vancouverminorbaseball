@@ -15,7 +15,7 @@ The platform helps Vancouver Community Baseball manage:
 
 This is a user manual, not a technical deployment guide. Deployment information lives in [docs/deployment/](deployment/README.md).
 
-Season-aware roster foundations now exist in the system. Player imports are now season-aware: staff choose an active season, and imported team/division information creates roster participation records for that season. Coach import and evaluation pages are not season-aware yet, so staff should continue using the current coach import and evaluation workflows until those seasonal phases are implemented.
+Season-aware roster foundations now exist in the system. Player and coach imports are now season-aware: staff choose an active season, and imported team/division information creates roster participation records or coach assignments for that season. Evaluation pages are not season-aware yet, so staff should continue using the current evaluation workflows until that seasonal phase is implemented.
 
 ## Start Here
 
@@ -330,10 +330,16 @@ Optional CSV columns:
 - `is_active`
 - `notes`
 - `source_id`
+- `assignment_role`
+- `assignment_start_date`
+- `assignment_end_date`
+- `assignment_source_id`
+
+Staff must select an active season when uploading the coach CSV. Team and division are required for the seasonal coach assignment.
 
 Coach import creates or reuses coach login accounts. It does not create player records and does not create coach-to-player links.
 
-Imported coach accounts are active by default and must change password on first login.
+New imported coach accounts are active by default and must change password on first login. Returning coach accounts are reused without changing their password or activation status.
 
 ### User-Player Links
 

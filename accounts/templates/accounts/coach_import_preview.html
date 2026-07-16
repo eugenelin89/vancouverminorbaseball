@@ -8,11 +8,16 @@
     <article class="pdp-card">
         <h2>Summary</h2>
         <dl class="pdp-definition-list">
+            <dt>Season</dt><dd>{{ preview.season_name|default:"-" }}</dd>
             <dt>Rows processed</dt><dd>{{ preview.rows_processed }}</dd>
             <dt>Ready to create</dt><dd>{{ preview.ready_count }}</dd>
             <dt>Existing coaches to reuse</dt><dd>{{ preview.reuse_count }}</dd>
             <dt>Conflicts</dt><dd>{{ preview.conflict_count }}</dd>
             <dt>Errors</dt><dd>{{ preview.error_count }}</dd>
+            <dt>Season teams to create</dt><dd>{{ preview.season_teams_create }}</dd>
+            <dt>Season teams to reuse</dt><dd>{{ preview.season_teams_reuse }}</dd>
+            <dt>Assignments to create</dt><dd>{{ preview.assignments_create }}</dd>
+            <dt>Assignments to update/reuse</dt><dd>{{ preview.assignments_update }}</dd>
         </dl>
         {% if preview.row_errors %}
             <ul>
@@ -33,6 +38,11 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Username</th>
+                        <th>Team</th>
+                        <th>Role</th>
+                        <th>Account</th>
+                        <th>Assignment</th>
+                        <th>Password</th>
                         <th>Active</th>
                         <th>Status</th>
                         <th>Messages</th>
@@ -45,6 +55,11 @@
                             <td>{{ row.first_name }} {{ row.last_name }}</td>
                             <td>{{ row.email }}</td>
                             <td>{{ row.final_username|default:"-" }}</td>
+                            <td>{{ row.division }} {{ row.team }}</td>
+                            <td>{{ row.assignment_role_label }}</td>
+                            <td>{{ row.account_label|default:"-" }}</td>
+                            <td>{{ row.assignment_label|default:"-" }}</td>
+                            <td>{{ row.password_behavior|default:"-" }}</td>
                             <td>{{ row.is_active|yesno:"Yes,No" }}</td>
                             <td>{{ row.status }}</td>
                             <td>
@@ -56,7 +71,7 @@
                             </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="7">No rows found.</td></tr>
+                        <tr><td colspan="12">No rows found.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -65,8 +80,8 @@
 
     <article class="pdp-card">
         <h2>Confirm</h2>
-        <p>Only rows marked ready or reuse will be processed. Rows marked reuse will use the existing coach account and reset that coach's temporary password. The coach must change the password on next login.</p>
-        <p>Temporary passwords are shown once on the result page.</p>
+        <p>Only rows marked ready or reuse will be processed. Reused coach accounts keep their existing passwords unchanged.</p>
+        <p>Temporary passwords are generated and shown once only for newly created coach accounts.</p>
         <form method="post" action="{% url 'accounts:coach-import-confirm' %}" class="pdp-form">
             {% csrf_token %}
             <label>

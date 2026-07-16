@@ -8,6 +8,8 @@ from accounts.services.account_operations_service import (
     BULK_ACTION_REQUIRE_PASSWORD_CHANGE,
 )
 from players.models import Player
+from seasons.models import Season
+from seasons.services.season_service import get_current_season
 
 
 ACCOUNT_ONLY_ROLE_CHOICES = (
@@ -89,7 +91,15 @@ class BulkAccountOperationForm(forms.Form):
 
 
 class CoachImportUploadForm(forms.Form):
+    season = forms.ModelChoiceField(queryset=Season.objects.none(), help_text="Choose the season for this coach import.")
     csv_file = forms.FileField(label="Coach CSV")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["season"].queryset = Season.objects.filter(is_active=True).order_by("-is_current", "-starts_on", "name")
+        current = get_current_season()
+        if current and current.is_active:
+            self.fields["season"].initial = current
 
 
 class CoachImportConfirmForm(forms.Form):
