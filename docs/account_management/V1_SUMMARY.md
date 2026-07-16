@@ -248,7 +248,8 @@ Main staff workflows:
 Service ownership:
 
 - `account_query_service` owns account list query/filter behavior.
-- `account_operations_service` owns staff Account Operations orchestration and read models.
+- `account_operations_service` is the stable public facade for staff Account Operations.
+- `accounts.services.account_operations.*` contains the internal Account Operations implementation modules for result contracts, read models, creation, updates, lifecycle, password operations, link orchestration, and bulk operations.
 - `username_service` owns username normalization and collision rules.
 - `password_service` owns temporary-password generation and password-change flags.
 - `link_service` owns all user-player link rules.
