@@ -34,6 +34,8 @@ from analytics.services.question_service import (
 )
 from analytics.services.permissions import can_evaluate_player, evaluation_perspective_for_user, evaluator_role_for_user
 from players.models import Player
+from seasons.models import CoachSeasonAssignment, PlayerRosterMembership
+from analytics.services.evaluation_context_service import apply_evaluation_context, resolve_evaluation_context
 
 
 @dataclass
@@ -138,6 +140,8 @@ def create_observation(
     evaluator=None,
     evaluator_role: EvaluatorRole | None = None,
     evaluation_perspective: str | None = None,
+    player_roster_membership: PlayerRosterMembership | None = None,
+    evaluator_coach_assignment: CoachSeasonAssignment | None = None,
     status: str = OBSERVATION_STATUS_DRAFT,
     notes: str = "",
     source_metadata: dict[str, Any] | None = None,
@@ -159,6 +163,15 @@ def create_observation(
         evaluator=evaluator,
         evaluation_perspective=evaluation_perspective,
     )
+    context = resolve_evaluation_context(
+        player=player,
+        evaluation_cycle=evaluation_cycle,
+        evaluator=evaluator,
+        evaluation_perspective=evaluation_perspective,
+        player_roster_membership=player_roster_membership,
+        evaluator_coach_assignment=evaluator_coach_assignment,
+        require_season=False,
+    )
     observation = Observation(
         player=player,
         evaluation_cycle=evaluation_cycle,
@@ -174,6 +187,7 @@ def create_observation(
         metadata=metadata or {},
     )
     _snapshot_role(observation, evaluator_role)
+    apply_evaluation_context(observation, context, refresh_snapshots=True)
     if status == OBSERVATION_STATUS_SUBMITTED:
         observation.submitted_at = timezone.now()
     try:
@@ -191,6 +205,8 @@ def create_coach_assessment_observation(
     evaluator,
     evaluator_role: EvaluatorRole | None = None,
     evaluation_perspective: str | None = None,
+    player_roster_membership: PlayerRosterMembership | None = None,
+    evaluator_coach_assignment: CoachSeasonAssignment | None = None,
     source: ObservationSource | None = None,
     question_set: ObservationQuestionSet | None = None,
     status: str = OBSERVATION_STATUS_DRAFT,
@@ -216,6 +232,8 @@ def create_coach_assessment_observation(
         evaluator=evaluator,
         evaluator_role=evaluator_role,
         evaluation_perspective=evaluation_perspective,
+        player_roster_membership=player_roster_membership,
+        evaluator_coach_assignment=evaluator_coach_assignment,
         status=status,
         notes=notes,
         source_metadata=source_metadata,
@@ -298,9 +316,35 @@ def submit_observation(observation: Observation, actor=None) -> Observation:
             exclude_observation=locked_observation,
         )
     validate_required_responses(locked_observation)
+    context = resolve_evaluation_context(
+        player=locked_observation.player,
+        evaluation_cycle=locked_observation.evaluation_cycle,
+        evaluator=locked_observation.evaluator,
+        evaluation_perspective=locked_observation.evaluation_perspective,
+        player_roster_membership=locked_observation.player_roster_membership,
+        evaluator_coach_assignment=locked_observation.evaluator_coach_assignment,
+        require_season=True,
+    )
+    apply_evaluation_context(locked_observation, context, refresh_snapshots=True)
     locked_observation.status = OBSERVATION_STATUS_SUBMITTED
     locked_observation.submitted_at = timezone.now()
-    locked_observation.save(update_fields=["status", "submitted_at", "updated_at"])
+    locked_observation.save(
+        update_fields=[
+            "season",
+            "player_roster_membership",
+            "evaluator_coach_assignment",
+            "season_name_snapshot",
+            "season_key_snapshot",
+            "player_team_name_snapshot",
+            "player_division_snapshot",
+            "evaluator_team_name_snapshot",
+            "evaluator_division_snapshot",
+            "evaluator_assignment_role_snapshot",
+            "status",
+            "submitted_at",
+            "updated_at",
+        ]
+    )
     return locked_observation
 
 
@@ -310,6 +354,11 @@ def get_observation_detail(observation_id: int) -> Observation:
         Observation.objects.select_related(
             "player",
             "evaluation_cycle",
+            "season",
+            "player_roster_membership",
+            "player_roster_membership__season_team",
+            "evaluator_coach_assignment",
+            "evaluator_coach_assignment__season_team",
             "observation_type",
             "question_set",
             "source",

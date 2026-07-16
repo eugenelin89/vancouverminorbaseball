@@ -15,6 +15,7 @@ from analytics.models import (
     Observation,
 )
 from analytics.services.permissions import can_review_submitted_evaluations, can_view_evaluation_review_detail
+from seasons.models import Season
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class EvaluationReviewFilters:
     perspective: str = ""
     team: str = ""
     division: str = ""
+    season: str = ""
     cycle: str = ""
     submitted_from: str = ""
     submitted_to: str = ""
@@ -35,6 +37,7 @@ class EvaluationReviewFilters:
 class EvaluationReviewRow:
     observation_id: int
     player_name: str
+    season_name: str
     player_team: str
     player_division: str
     evaluator_name: str
@@ -56,6 +59,7 @@ class EvaluationReviewQuestionResponse:
 class EvaluationReviewDetail:
     observation_id: int
     player_name: str
+    season_name: str
     player_team: str
     player_division: str
     evaluator_name: str
@@ -71,6 +75,7 @@ class EvaluationReviewList:
     filters: EvaluationReviewFilters
     rows: list[EvaluationReviewRow]
     total_count: int
+    seasons: object
     cycles: object
     evaluator_roles: object
     perspective_choices: object
@@ -85,6 +90,7 @@ def parse_evaluation_review_filters(params) -> EvaluationReviewFilters:
         perspective=(params.get("perspective") or "").strip(),
         team=(params.get("team") or "").strip(),
         division=(params.get("division") or "").strip(),
+        season=(params.get("season") or "").strip(),
         cycle=(params.get("cycle") or "").strip(),
         submitted_from=(params.get("submitted_from") or "").strip(),
         submitted_to=(params.get("submitted_to") or "").strip(),
@@ -99,7 +105,7 @@ def _display_user(user) -> str:
 
 def submitted_evaluation_queryset(filters: EvaluationReviewFilters | None = None):
     queryset = (
-        Observation.objects.select_related("player", "evaluation_cycle", "evaluator", "evaluator_role")
+        Observation.objects.select_related("player", "evaluation_cycle", "season", "evaluator", "evaluator_role")
         .filter(
             observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
             status=OBSERVATION_STATUS_SUBMITTED,
@@ -127,9 +133,17 @@ def submitted_evaluation_queryset(filters: EvaluationReviewFilters | None = None
     if filters.perspective:
         queryset = queryset.filter(evaluation_perspective=filters.perspective)
     if filters.team:
-        queryset = queryset.filter(player__team_name__icontains=filters.team)
+        queryset = queryset.filter(
+            Q(player_team_name_snapshot__gt="", player_team_name_snapshot__icontains=filters.team)
+            | Q(player_team_name_snapshot="", player__team_name__icontains=filters.team)
+        )
     if filters.division:
-        queryset = queryset.filter(player__division__icontains=filters.division)
+        queryset = queryset.filter(
+            Q(player_division_snapshot__gt="", player_division_snapshot__icontains=filters.division)
+            | Q(player_division_snapshot="", player__division__icontains=filters.division)
+        )
+    if filters.season.isdigit():
+        queryset = queryset.filter(season_id=int(filters.season))
     if filters.cycle.isdigit():
         queryset = queryset.filter(evaluation_cycle_id=int(filters.cycle))
 
@@ -152,8 +166,9 @@ def get_evaluation_review_list(user, params) -> EvaluationReviewList:
         EvaluationReviewRow(
             observation_id=observation.id,
             player_name=observation.player.display_name,
-            player_team=observation.player.team_name,
-            player_division=observation.player.division,
+            season_name=observation.season_name_snapshot or (observation.season.name if observation.season_id else "Legacy / No Season"),
+            player_team=observation.player_team_name_snapshot or observation.player.team_name,
+            player_division=observation.player_division_snapshot or observation.player.division,
             evaluator_name=_display_user(observation.evaluator),
             evaluator_role_name=observation.evaluator_role_name or "Evaluator",
             evaluation_perspective_label=observation.evaluation_perspective_label,
@@ -166,6 +181,7 @@ def get_evaluation_review_list(user, params) -> EvaluationReviewList:
         filters=filters,
         rows=rows,
         total_count=len(rows),
+        seasons=Season.objects.filter(is_active=True).order_by("-is_current", "-starts_on", "name"),
         cycles=EvaluationCycle.objects.filter(is_active=True).order_by("-starts_on", "-created_at", "name"),
         evaluator_roles=EvaluatorRole.objects.filter(is_active=True).order_by("name"),
         perspective_choices=EVALUATION_PERSPECTIVE_CHOICES,
@@ -192,8 +208,9 @@ def get_evaluation_review_detail(user, observation_id: int) -> EvaluationReviewD
     return EvaluationReviewDetail(
         observation_id=observation.id,
         player_name=observation.player.display_name,
-        player_team=observation.player.team_name,
-        player_division=observation.player.division,
+        season_name=observation.season_name_snapshot or (observation.season.name if observation.season_id else "Legacy / No Season"),
+        player_team=observation.player_team_name_snapshot or observation.player.team_name,
+        player_division=observation.player_division_snapshot or observation.player.division,
         evaluator_name=_display_user(observation.evaluator),
         evaluator_role_name=observation.evaluator_role_name or "Evaluator",
         evaluation_perspective_label=observation.evaluation_perspective_label,

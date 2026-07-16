@@ -160,6 +160,13 @@ class EvaluationCycle(TimeStampedModel):
     name = models.CharField(max_length=160)
     slug = models.SlugField(max_length=180, unique=True, blank=True)
     cycle_type = models.CharField(max_length=80)
+    season = models.ForeignKey(
+        "seasons.Season",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="evaluation_cycles",
+    )
     description = models.TextField(blank=True)
     starts_on = models.DateField(null=True, blank=True)
     ends_on = models.DateField(null=True, blank=True)
@@ -177,6 +184,7 @@ class EvaluationCycle(TimeStampedModel):
         ordering = ["-starts_on", "-created_at", "name"]
         indexes = [
             models.Index(fields=["is_active", "starts_on"]),
+            models.Index(fields=["season", "is_active"]),
             models.Index(fields=["cycle_type", "is_active"]),
             models.Index(fields=["slug"]),
         ]
@@ -233,6 +241,27 @@ class ObservationQuestion(TimeStampedModel):
 class Observation(TimeStampedModel):
     player = models.ForeignKey("players.Player", on_delete=models.CASCADE, related_name="observations")
     evaluation_cycle = models.ForeignKey(EvaluationCycle, on_delete=models.PROTECT, related_name="observations")
+    season = models.ForeignKey(
+        "seasons.Season",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="observations",
+    )
+    player_roster_membership = models.ForeignKey(
+        "seasons.PlayerRosterMembership",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="observations",
+    )
+    evaluator_coach_assignment = models.ForeignKey(
+        "seasons.CoachSeasonAssignment",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="observations",
+    )
     observation_type = models.ForeignKey(ObservationType, on_delete=models.PROTECT, related_name="observations")
     observation_type_key = models.CharField(max_length=80, editable=False)
     question_set = models.ForeignKey(ObservationQuestionSet, on_delete=models.PROTECT, related_name="observations")
@@ -260,6 +289,13 @@ class Observation(TimeStampedModel):
     )
     status = models.CharField(max_length=40, choices=OBSERVATION_STATUS_CHOICES, default=OBSERVATION_STATUS_DRAFT)
     submitted_at = models.DateTimeField(null=True, blank=True)
+    season_name_snapshot = models.CharField(max_length=120, blank=True, editable=False)
+    season_key_snapshot = models.CharField(max_length=80, blank=True, editable=False)
+    player_team_name_snapshot = models.CharField(max_length=120, blank=True, editable=False)
+    player_division_snapshot = models.CharField(max_length=80, blank=True, editable=False)
+    evaluator_team_name_snapshot = models.CharField(max_length=120, blank=True, editable=False)
+    evaluator_division_snapshot = models.CharField(max_length=80, blank=True, editable=False)
+    evaluator_assignment_role_snapshot = models.CharField(max_length=80, blank=True, editable=False)
     notes = models.TextField(blank=True)
     source_metadata = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
@@ -284,12 +320,33 @@ class Observation(TimeStampedModel):
         indexes = [
             models.Index(fields=["player", "-created_at"]),
             models.Index(fields=["evaluation_cycle", "observation_type", "status"]),
+            models.Index(fields=["season", "status"]),
+            models.Index(fields=["season", "player_roster_membership", "status"]),
+            models.Index(fields=["evaluator_coach_assignment", "status"]),
             models.Index(fields=["evaluator", "evaluation_cycle"]),
             models.Index(fields=["evaluator_role_key", "evaluation_cycle"]),
             models.Index(fields=["evaluation_perspective", "evaluation_cycle"]),
             models.Index(fields=["observation_type_key", "status"]),
             models.Index(fields=["submitted_at"]),
         ]
+
+    def clean(self):
+        errors = {}
+        if self.evaluation_cycle_id and self.season_id and self.evaluation_cycle.season_id:
+            if self.evaluation_cycle.season_id != self.season_id:
+                errors["season"] = "Observation season must match the evaluation cycle season."
+        if self.player_roster_membership_id:
+            if self.player_roster_membership.player_id != self.player_id:
+                errors["player_roster_membership"] = "Player roster membership must belong to the observation player."
+            if self.season_id and self.player_roster_membership.season.id != self.season_id:
+                errors["player_roster_membership"] = "Player roster membership must belong to the observation season."
+        if self.evaluator_coach_assignment_id:
+            if self.evaluator_id and self.evaluator_coach_assignment.user_id != self.evaluator_id:
+                errors["evaluator_coach_assignment"] = "Evaluator coach assignment must belong to the evaluator."
+            if self.season_id and self.evaluator_coach_assignment.season.id != self.season_id:
+                errors["evaluator_coach_assignment"] = "Evaluator coach assignment must belong to the observation season."
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         if self.observation_type_id:

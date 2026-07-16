@@ -17,7 +17,7 @@ from analytics.services.coach_assessment_service import (
     get_active_coach_assessment_cycle,
     get_existing_coach_assessment,
     get_or_create_draft_coach_assessment,
-    list_players_for_assessment,
+    list_memberships_for_assessment,
 )
 from analytics.services.permissions import (
     can_evaluate_player,
@@ -34,6 +34,9 @@ class EvaluationTargetStatus:
     observation: Observation | None
     status: str
     can_evaluate: bool
+    player_roster_membership: object = None
+    player_team: str = ""
+    player_division: str = ""
     evaluation_perspective_label: str = ""
 
 
@@ -87,19 +90,19 @@ def get_evaluation_target_list(user, params) -> EvaluationTargetList:
     if not cycle:
         return EvaluationTargetList(cycle=None, player_statuses=[], query=query, division=division, team=team)
 
-    players = list(list_players_for_assessment(query=query, division=division, team=team))
-    statuses_by_player_id = {
-        item.player.id: item for item in assessment_status_for_players(players, cycle, user)
-    }
+    targets = list(list_memberships_for_assessment(cycle, query=query, division=division, team=team))
     player_statuses = [
         EvaluationTargetStatus(
-            player=player,
-            observation=statuses_by_player_id[player.id].observation,
-            status=statuses_by_player_id[player.id].status,
-            can_evaluate=can_evaluate_player(user, player),
-            evaluation_perspective_label=statuses_by_player_id[player.id].evaluation_perspective_label,
+            player=item.player,
+            observation=item.observation,
+            status=item.status,
+            can_evaluate=item.status != "unavailable" and can_evaluate_player(user, item.player),
+            player_roster_membership=item.player_roster_membership,
+            player_team=item.player_team,
+            player_division=item.player_division,
+            evaluation_perspective_label=item.evaluation_perspective_label,
         )
-        for player in players
+        for item in assessment_status_for_players(targets, cycle, user)
     ]
     return EvaluationTargetList(
         cycle=cycle,
@@ -116,14 +119,14 @@ def get_existing_evaluation_for_player(user, player: Player, cycle: EvaluationCy
 
 
 @transaction.atomic
-def get_or_create_evaluation_for_player(user, player: Player, cycle: EvaluationCycle) -> Observation:
+def get_or_create_evaluation_for_player(user, player: Player, cycle: EvaluationCycle, player_roster_membership=None) -> Observation:
     """Return or create the evaluator's draft evaluation for a target player."""
     if not can_evaluate_player(user, player):
         raise PermissionDenied("You cannot evaluate this player.")
     existing = get_existing_evaluation_for_player(user, player, cycle)
     if existing and existing.status == OBSERVATION_STATUS_SUBMITTED:
         return existing
-    return get_or_create_draft_coach_assessment(player, cycle, user)
+    return get_or_create_draft_coach_assessment(player, cycle, user, player_roster_membership=player_roster_membership)
 
 
 def active_evaluation_cycle() -> EvaluationCycle | None:

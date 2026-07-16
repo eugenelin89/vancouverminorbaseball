@@ -18,8 +18,8 @@ class TimeStampedAdmin(admin.ModelAdmin):
 
 @admin.register(EvaluationCycle)
 class EvaluationCycleAdmin(TimeStampedAdmin):
-    list_display = ("name", "cycle_type", "is_active", "starts_on", "ends_on", "coach_assessment_question_set")
-    list_filter = ("is_active", "cycle_type")
+    list_display = ("name", "cycle_type", "season", "is_active", "starts_on", "ends_on", "coach_assessment_question_set")
+    list_filter = ("is_active", "cycle_type", "season")
     search_fields = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
 
@@ -95,6 +95,7 @@ class ObservationAdmin(TimeStampedAdmin):
     list_display = (
         "player",
         "evaluation_cycle",
+        "season",
         "observation_type",
         "status",
         "evaluator",
@@ -102,7 +103,7 @@ class ObservationAdmin(TimeStampedAdmin):
         "evaluation_perspective",
         "submitted_at",
     )
-    list_filter = ("status", "observation_type", "evaluation_cycle", "evaluator_role_key", "evaluation_perspective", "source")
+    list_filter = ("status", "season", "observation_type", "evaluation_cycle", "evaluator_role_key", "evaluation_perspective", "source")
     search_fields = ("player__first_name", "player__last_name", "evaluator__username", "evaluator__email")
     readonly_fields = TimeStampedAdmin.readonly_fields + (
         "submitted_at",
@@ -110,6 +111,13 @@ class ObservationAdmin(TimeStampedAdmin):
         "evaluator_role_key",
         "evaluator_role_name",
         "evaluation_perspective",
+        "season_name_snapshot",
+        "season_key_snapshot",
+        "player_team_name_snapshot",
+        "player_division_snapshot",
+        "evaluator_team_name_snapshot",
+        "evaluator_division_snapshot",
+        "evaluator_assignment_role_snapshot",
     )
     inlines = [ObservationResponseInline]
 

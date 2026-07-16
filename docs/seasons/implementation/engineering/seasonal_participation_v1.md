@@ -1,6 +1,6 @@
 # Seasonal Participation V1 Engineering Plan
 
-Status: Phase 1 foundation complete. Phase 2 season-aware player import complete. Phase 3 season-aware coach import complete. Phase 4 is the next implementation phase.
+Status: Phase 1 foundation complete. Phase 2 season-aware player import complete. Phase 3 season-aware coach import complete. Phase 4 season-aware evaluation context complete. Phase 5 is the next implementation phase.
 
 Created: 2026-07-15.
 
@@ -700,6 +700,8 @@ Status: complete.
 
 ### Phase 4 - Evaluation Context
 
+Status: complete.
+
 - Add `EvaluationCycle.season`.
 - Add observation season/team/membership references and snapshot fields.
 - Do not backfill production observations unless new observations exist by then and a separate reviewed migration plan is approved.
@@ -800,8 +802,7 @@ Rollback considerations:
 - Another environment may contain Platform V1 data even though production is empty; any optional backfill path must be explicit and reviewable.
 - Future production data could be created between planning and Phase 1 deployment; pre-migration verification must re-check counts.
 - Primary membership constraints can be difficult to enforce perfectly on all databases with nullable dates.
-- Coach import currently resets reused coach passwords; this must change before season-aware reimports.
-- Existing analytics filters and metrics currently read from `Player.team_name` and `Player.division`.
+- Existing analytics metrics and non-evaluation player experience surfaces still rely partly on compatibility `Player.team_name` and `Player.division` fields.
 - Introducing team-scoped permissions too early could block valid evaluators.
 - A new `seasons` app creates a shared dependency that needs clear service boundaries.
 - Transfer handling requires staff UX decisions, not just schema.
@@ -817,11 +818,11 @@ Rollback considerations:
 
 ## 27. Recommended Next Implementation Phase
 
-Start with Phase 4 - Evaluation Context.
+Start with Phase 5 - Read Models And UI.
 
-Phase 1 decisions and implementation are complete. Phase 2 updated player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services. Phase 3 updated coach import to require a selected season, create or reuse `SeasonTeam`, and create/update `CoachSeasonAssignment` through `seasons` services while preserving existing coach passwords.
+Phase 1 decisions and implementation are complete. Phase 2 updated player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services. Phase 3 updated coach import to require a selected season, create or reuse `SeasonTeam`, and create/update `CoachSeasonAssignment` through `seasons` services while preserving existing coach passwords. Phase 4 added season-linked evaluation cycles, observation seasonal context fields, submitted-evaluation snapshots, season-aware player selectors, and snapshot-based review display.
 
-Before implementing Phase 4, verify that Phase 3 production rollout completed successfully and that imported coach rows are creating expected season teams and coach assignments.
+Before implementing Phase 5, verify that Phase 4 production rollout completed successfully and that new submitted evaluations are recording expected season, roster membership, and snapshot values.
 
 ## 28. Acceptance Criteria
 

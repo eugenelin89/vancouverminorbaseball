@@ -25,6 +25,8 @@ Phase 2 - Season-Aware Player Import is implemented.
 
 Phase 3 - Season-Aware Coach Import is implemented.
 
+Phase 4 - Season-Aware Evaluation Context is implemented.
+
 Verified production state on July 15, 2026:
 
 ```text
@@ -69,13 +71,22 @@ Implemented coach import integration:
 - prior-season assignments are preserved;
 - coaches may have multiple teams and roles in the same season.
 
+Implemented evaluation context:
+
+- evaluation cycles can reference a season;
+- new evaluations created against a season-linked cycle resolve the player's roster membership for that season;
+- coach evaluations resolve a coach season assignment when one can be determined safely;
+- submitted evaluations preserve season, team, division, and coach-assignment snapshots;
+- review pages display submitted snapshots instead of live player team fields;
+- legacy observations without season context remain readable as `Legacy / No Season`.
+
 Current limitations:
 
-- evaluations do not yet store season/team/membership context;
 - there are no first-class roster-management pages yet.
+- stricter team-scoped coach permissions and peer team restrictions are deferred.
 
 Next phase:
 
-- Phase 4 - Evaluation Context.
+- Phase 5 - Read Models And UI.
 
-No evaluation workflow changes were made in Phase 3.
+Seasonal evaluation context was added in Phase 4 without adding dashboards, reports, roster-management pages, or stricter team-based authorization.

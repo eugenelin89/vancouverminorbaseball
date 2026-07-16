@@ -98,7 +98,7 @@ python manage.py migrate --plan
 
 ### Seasonal Participation Empty-State Check
 
-Before applying the initial `seasons` app migration, verify production still has no Platform V1 roster/evaluation data requiring seasonal backfill:
+Before applying the initial `seasons` app migration or the Analytics migration that adds observation season context, verify production still has no Platform V1 roster/evaluation data requiring seasonal backfill:
 
 ```text
 Players: 0
@@ -106,7 +106,7 @@ Coach profiles: 0
 Observations: 0
 ```
 
-If these counts are no longer zero, stop the deployment and create a reviewed migration/backfill plan. Do not fabricate legacy seasons, player roster memberships, coach assignments, or observation context during the schema migration.
+If these counts are no longer zero, stop the deployment and create a reviewed migration/backfill plan. Do not fabricate legacy seasons, player roster memberships, coach assignments, or observation context during the schema migration. Existing observations in non-production environments should remain nullable and display as `Legacy / No Season` unless a reviewed backfill plan exists.
 
 Apply migrations:
 

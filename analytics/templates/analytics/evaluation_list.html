@@ -41,8 +41,8 @@
                     {% for item in player_statuses %}
                         <tr>
                             <td>{{ item.player.display_name }}</td>
-                            <td>{{ item.player.division }}</td>
-                            <td>{{ item.player.team_name }}</td>
+                            <td>{{ item.player_division }}</td>
+                            <td>{{ item.player_team }}</td>
                             <td>{{ item.evaluation_perspective_label }}</td>
                             <td>{% include "analytics/_assessment_status_badge.html" with status=item.status %}</td>
                             <td>
@@ -51,9 +51,9 @@
                                 {% elif item.observation and item.status == "submitted" %}
                                     <a class="button button--ghost" href="{% url 'analytics:assessment-detail' observation_id=item.observation.id %}">View My Submission</a>
                                 {% elif item.observation %}
-                                    <a class="button button--primary" href="{% url 'analytics:evaluation-player' player_id=item.player.id %}">Continue</a>
+                                    <a class="button button--primary" href="{% url 'analytics:evaluation-player' player_id=item.player.id %}{% if item.player_roster_membership %}?membership={{ item.player_roster_membership.id }}{% endif %}">Continue</a>
                                 {% else %}
-                                    <a class="button button--primary" href="{% url 'analytics:evaluation-player' player_id=item.player.id %}">Evaluate Player</a>
+                                    <a class="button button--primary" href="{% url 'analytics:evaluation-player' player_id=item.player.id %}{% if item.player_roster_membership %}?membership={{ item.player_roster_membership.id }}{% endif %}">Evaluate Player</a>
                                 {% endif %}
                             </td>
                         </tr>

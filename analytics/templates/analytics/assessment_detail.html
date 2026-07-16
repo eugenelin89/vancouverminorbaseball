@@ -7,6 +7,11 @@
 <article class="pdp-card">
     <h2>Assessment</h2>
     <p>Type: {{ observation.evaluation_perspective_label }}</p>
+    <p>Season: {{ observation.season_name_snapshot|default:"Legacy / No Season" }}</p>
+    <p>Roster: {{ observation.player_division_snapshot|default:observation.player.division }} {{ observation.player_team_name_snapshot|default:observation.player.team_name }}</p>
+    {% if observation.evaluator_team_name_snapshot %}
+        <p>Evaluator Assignment: {{ observation.evaluator_assignment_role_snapshot }} · {{ observation.evaluator_division_snapshot }} {{ observation.evaluator_team_name_snapshot }}</p>
+    {% endif %}
     <p>Evaluator: {{ observation.evaluator }} · Role: {{ observation.evaluator_role_name }}</p>
     {% if observation.submitted_at %}<p>Submitted: {{ observation.submitted_at }}</p>{% endif %}
     {% for group in question_groups %}

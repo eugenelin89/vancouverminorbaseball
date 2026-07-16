@@ -16,7 +16,7 @@ from analytics.services.coach_assessment_service import (
     get_existing_coach_assessment,
     get_or_create_draft_coach_assessment,
     group_questions_for_display,
-    list_players_for_assessment,
+    list_memberships_for_assessment,
     reopen_observation,
 )
 from analytics.services.comparison_service import (
@@ -54,6 +54,7 @@ from analytics.services.reporting_service import get_command_center_context
 from analytics.services.timeline_service import get_player_timeline
 from players.models import PlayerImportBatch
 from players.models import Player
+from seasons.models import PlayerRosterMembership
 from players.services.import_service import (
     MAPPING_KEY_ACTIVATE_PLAYER_ACCOUNTS,
     MAPPING_KEY_PROVISION_PLAYER_ACCOUNTS,
@@ -306,7 +307,11 @@ class EvaluationPlayerView(EvaluationSubmitterRequiredMixin, TemplateView):
         player = get_object_or_404(Player, pk=kwargs["player_id"], is_active=True)
         if not can_evaluate_player(request.user, player):
             raise PermissionDenied("You cannot evaluate this player.")
-        self.observation = get_or_create_evaluation_for_player(request.user, player, cycle)
+        membership = None
+        membership_id = request.GET.get("membership") or request.POST.get("membership")
+        if membership_id:
+            membership = get_object_or_404(PlayerRosterMembership, pk=membership_id)
+        self.observation = get_or_create_evaluation_for_player(request.user, player, cycle, player_roster_membership=membership)
         if self.observation.status == OBSERVATION_STATUS_SUBMITTED:
             return redirect("analytics:assessment-detail", observation_id=self.observation.pk)
         return super().dispatch(request, *args, **kwargs)
@@ -425,6 +430,7 @@ class EvaluationReviewListView(EvaluationReviewRequiredMixin, TemplateView):
                 "review_list": review_list,
                 "rows": review_list.rows,
                 "filters": review_list.filters,
+                "seasons": review_list.seasons,
                 "cycles": review_list.cycles,
                 "evaluator_roles": review_list.evaluator_roles,
                 "perspective_choices": review_list.perspective_choices,
@@ -462,7 +468,7 @@ class CoachAssessmentListView(LoginRequiredMixin, TemplateView):
         players = Player.objects.none()
         player_statuses = []
         if cycle:
-            players = list_players_for_assessment(query=query, division=division, team=team)
+            players = list_memberships_for_assessment(cycle, query=query, division=division, team=team)
             player_statuses = assessment_status_for_players(list(players), cycle, self.request.user)
         context.update(
             {
@@ -505,7 +511,16 @@ class CoachAssessmentEditView(LoginRequiredMixin, TemplateView):
             existing = get_existing_coach_assessment(player, cycle, request.user)
             if existing and existing.status == OBSERVATION_STATUS_SUBMITTED:
                 return redirect("analytics:assessment-detail", observation_id=existing.pk)
-            self.observation = get_or_create_draft_coach_assessment(player, cycle, request.user)
+            membership = None
+            membership_id = request.GET.get("membership") or request.POST.get("membership")
+            if membership_id:
+                membership = get_object_or_404(PlayerRosterMembership, pk=membership_id)
+            self.observation = get_or_create_draft_coach_assessment(
+                player,
+                cycle,
+                request.user,
+                player_roster_membership=membership,
+            )
         return super().dispatch(request, *args, **kwargs)
 
     def get_form(self, data=None, require_required=False):
@@ -590,9 +605,15 @@ class StaffObservationReviewListView(AnalyticsStaffRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        queryset = Observation.objects.select_related("player", "evaluation_cycle", "observation_type", "evaluator", "evaluator_role", "source").filter(
-            observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT
-        )
+        queryset = Observation.objects.select_related(
+            "player",
+            "evaluation_cycle",
+            "season",
+            "observation_type",
+            "evaluator",
+            "evaluator_role",
+            "source",
+        ).filter(observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT)
         status = self.request.GET.get("status", "").strip()
         cycle = normalize_cycle_id(self.request.GET.get("cycle"))
         q = self.request.GET.get("q", "").strip()

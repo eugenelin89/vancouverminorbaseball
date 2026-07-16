@@ -46,6 +46,15 @@
             <input type="text" name="division" value="{{ filters.division }}">
         </label>
         <label>
+            Season
+            <select name="season">
+                <option value="">All</option>
+                {% for season in seasons %}
+                    <option value="{{ season.id }}" {% if filters.season == season.id|stringformat:"s" %}selected{% endif %}>{{ season.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
             Cycle
             <select name="cycle">
                 <option value="">All</option>
@@ -70,6 +79,7 @@
             <thead>
                 <tr>
                     <th>Player</th>
+                    <th>Season</th>
                     <th>Team</th>
                     <th>Division</th>
                     <th>Evaluator</th>
@@ -84,6 +94,7 @@
                 {% for row in rows %}
                     <tr>
                         <td>{{ row.player_name }}</td>
+                        <td>{{ row.season_name }}</td>
                         <td>{{ row.player_team }}</td>
                         <td>{{ row.player_division }}</td>
                         <td>{{ row.evaluator_name }}</td>
@@ -94,7 +105,7 @@
                         <td><a class="button button--ghost" href="{% url 'analytics:evaluation-review-detail' observation_id=row.observation_id %}">Review</a></td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="9">No submitted evaluations found.</td></tr>
+                    <tr><td colspan="10">No submitted evaluations found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -7,6 +7,9 @@ from analytics.models import RESPONSE_TYPE_RATING_1_5, EvaluationCycle
 from analytics.services.observation_service import create_coach_assessment_observation, submit_observation
 from analytics.services.question_service import ensure_default_coach_assessment_setup
 from players.models import Player
+from seasons.services.membership_service import create_membership
+from seasons.services.season_service import create_season
+from seasons.services.team_service import get_or_create_season_team
 
 from .models import Draft, DraftActionType, DraftPlayer, DraftStatus
 from .services import (
@@ -141,12 +144,16 @@ class DraftViewTests(TestCase):
 
     def test_command_center_renders_read_only_analytics_draft_context(self):
         coach = get_user_model().objects.create_user(username="context-coach", password="secret123")
-        player = Player.objects.create(first_name="Ava", last_name="Lopez", birth_year=2012, division="13U")
+        player = Player.objects.create(first_name="Ava", last_name="Lopez", birth_year=2012, division="13U", team_name="Expos")
+        season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        season_team, _ = get_or_create_season_team(season=season, name="Expos", division="13U")
+        create_membership(player=player, season_team=season_team, is_primary=True, is_active=True)
         setup_result = ensure_default_coach_assessment_setup()
         cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=setup_result.question_set,
+            season=season,
         )
         draft_player = DraftPlayer.objects.create(
             draft=self.draft,

@@ -7,6 +7,9 @@
 <article class="pdp-card pdp-card--form">
     <h2>Evaluation</h2>
     <p>{{ observation.evaluation_perspective_label }}</p>
+    {% if observation.season_name_snapshot %}
+        <p>{{ observation.season_name_snapshot }} · {{ observation.player_division_snapshot }} {{ observation.player_team_name_snapshot }}</p>
+    {% endif %}
     {% if question_set.rubric.labels %}
         <p>
             {% for value, label in question_set.rubric.labels.items %}
@@ -16,6 +19,9 @@
     {% endif %}
     <form method="post" class="pdp-form">
         {% csrf_token %}
+        {% if observation.player_roster_membership_id %}
+            <input type="hidden" name="membership" value="{{ observation.player_roster_membership_id }}">
+        {% endif %}
         {{ form.non_field_errors }}
         {% for group in question_groups %}
             <section class="pdp-list__item pdp-list__item--stack">

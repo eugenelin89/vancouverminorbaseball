@@ -29,6 +29,9 @@ Each observation should include:
 
 - player reference to `players.Player`
 - evaluation cycle
+- season context when the evaluation cycle belongs to a season
+- roster membership and coach assignment references when available
+- submitted season/team/division snapshots for historical display stability
 - observation type
 - observation source/provider
 - evaluator/user who submitted or imported the observation, when applicable

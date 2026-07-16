@@ -17,9 +17,11 @@ from analytics.models import (
     ObservationQuestionSet,
 )
 from analytics.services.observation_service import create_coach_assessment_observation
+from analytics.services.evaluation_context_service import apply_evaluation_context, resolve_evaluation_context
 from analytics.services.permissions import can_evaluate_player, evaluation_perspective_for_user
 from analytics.services.question_service import get_active_questions, get_coach_assessment_type, get_question_set_for_cycle
 from players.models import Player
+from seasons.models import PlayerRosterMembership
 
 
 @dataclass
@@ -27,15 +29,19 @@ class PlayerAssessmentStatus:
     player: Player
     observation: Observation | None
     status: str
+    player_roster_membership: PlayerRosterMembership | None = None
+    player_team: str = ""
+    player_division: str = ""
     evaluation_perspective: str = ""
     evaluation_perspective_label: str = ""
 
 
 def get_active_coach_assessment_cycle(cycle_id: int | None = None) -> EvaluationCycle | None:
-    queryset = EvaluationCycle.objects.filter(is_active=True).order_by("-starts_on", "-created_at", "name")
+    queryset = EvaluationCycle.objects.select_related("season").filter(is_active=True).order_by("-starts_on", "-created_at", "name")
     if cycle_id:
         return queryset.filter(pk=cycle_id).first()
-    return queryset.filter(coach_assessment_question_set__observation_type__key=OBSERVATION_TYPE_COACH_ASSESSMENT).first()
+    coach_cycles = queryset.filter(coach_assessment_question_set__observation_type__key=OBSERVATION_TYPE_COACH_ASSESSMENT)
+    return coach_cycles.filter(season__isnull=False).first() or coach_cycles.first()
 
 
 def list_players_for_assessment(query: str = "", division: str = "", team: str = ""):
@@ -47,6 +53,28 @@ def list_players_for_assessment(query: str = "", division: str = "", team: str =
     if team:
         players = players.filter(team_name__iexact=team)
     return players
+
+
+def list_memberships_for_assessment(cycle: EvaluationCycle, query: str = "", division: str = "", team: str = ""):
+    """Return season-roster rows for player selectors when a cycle has season context."""
+    if not cycle.season_id:
+        return list_players_for_assessment(query=query, division=division, team=team)
+    memberships = (
+        PlayerRosterMembership.objects.select_related("player", "season_team", "season_team__season")
+        .filter(player__is_active=True, is_active=True, season_team__season=cycle.season)
+        .order_by("player__last_name", "player__first_name", "season_team__division", "season_team__name", "id")
+    )
+    if query:
+        memberships = memberships.filter(
+            Q(player__first_name__icontains=query)
+            | Q(player__last_name__icontains=query)
+            | Q(player__preferred_name__icontains=query)
+        )
+    if division:
+        memberships = memberships.filter(season_team__division__iexact=division)
+    if team:
+        memberships = memberships.filter(season_team__name__iexact=team)
+    return memberships
 
 
 def get_existing_coach_assessment(
@@ -70,24 +98,65 @@ def get_existing_coach_assessment(
 
 
 @transaction.atomic
-def get_or_create_draft_coach_assessment(player: Player, cycle: EvaluationCycle, evaluator) -> Observation:
+def get_or_create_draft_coach_assessment(
+    player: Player,
+    cycle: EvaluationCycle,
+    evaluator,
+    *,
+    player_roster_membership: PlayerRosterMembership | None = None,
+) -> Observation:
     evaluation_perspective = evaluation_perspective_for_user(evaluator, player)
     existing = get_existing_coach_assessment(player, cycle, evaluator, evaluation_perspective=evaluation_perspective)
     if existing:
+        if player_roster_membership and existing.status in {OBSERVATION_STATUS_DRAFT, OBSERVATION_STATUS_REOPENED}:
+            context = resolve_evaluation_context(
+                player=player,
+                evaluation_cycle=cycle,
+                evaluator=evaluator,
+                evaluation_perspective=evaluation_perspective,
+                player_roster_membership=player_roster_membership,
+                require_season=False,
+            )
+            apply_evaluation_context(existing, context, refresh_snapshots=True)
+            existing.save(
+                update_fields=[
+                    "season",
+                    "player_roster_membership",
+                    "evaluator_coach_assignment",
+                    "season_name_snapshot",
+                    "season_key_snapshot",
+                    "player_team_name_snapshot",
+                    "player_division_snapshot",
+                    "evaluator_team_name_snapshot",
+                    "evaluator_division_snapshot",
+                    "evaluator_assignment_role_snapshot",
+                    "updated_at",
+                ]
+            )
         return existing
     result = create_coach_assessment_observation(
         player=player,
         evaluation_cycle=cycle,
         evaluator=evaluator,
         evaluation_perspective=evaluation_perspective,
+        player_roster_membership=player_roster_membership,
         question_set=get_question_set_for_cycle(cycle, get_coach_assessment_type()),
         status=OBSERVATION_STATUS_DRAFT,
     )
     return result.observation
 
 
-def assessment_status_for_players(players, cycle: EvaluationCycle, evaluator) -> list[PlayerAssessmentStatus]:
-    player_list = list(players)
+def assessment_status_for_players(players_or_memberships, cycle: EvaluationCycle, evaluator) -> list[PlayerAssessmentStatus]:
+    input_list = list(players_or_memberships)
+    target_rows = []
+    player_list = []
+    for item in input_list:
+        if isinstance(item, PlayerRosterMembership):
+            target_rows.append((item.player, item))
+            player_list.append(item.player)
+        else:
+            target_rows.append((item, None))
+            player_list.append(item)
     observations = {
         (observation.player_id, observation.evaluation_perspective): observation
         for observation in Observation.objects.filter(
@@ -98,7 +167,7 @@ def assessment_status_for_players(players, cycle: EvaluationCycle, evaluator) ->
         )
     }
     statuses = []
-    for player in player_list:
+    for player, membership in target_rows:
         perspective = ""
         label = ""
         observation = None
@@ -111,6 +180,9 @@ def assessment_status_for_players(players, cycle: EvaluationCycle, evaluator) ->
                 player=player,
                 observation=observation,
                 status=observation.status if observation else "not_started",
+                player_roster_membership=membership,
+                player_team=membership.season_team.name if membership else player.team_name,
+                player_division=membership.season_team.division if membership else player.division,
                 evaluation_perspective=perspective,
                 evaluation_perspective_label=label,
             )

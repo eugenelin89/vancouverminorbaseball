@@ -99,9 +99,21 @@ from players.models import Player, PlayerImportBatch, PlayerImportStatus, Player
 from players.services.import_service import SOURCE_MEMBER_LIST
 from players.services.tag_service import assign_tag
 from seasons.services.season_service import create_season
+from seasons.services.team_service import get_or_create_season_team
+from seasons.services.membership_service import create_membership
+from seasons.services.coach_assignment_service import create_assignment
 
 
 User = get_user_model()
+
+
+def attach_player_to_season(player, season, *, team_name=None, division=None, is_primary=True):
+    season_team, _ = get_or_create_season_team(
+        season=season,
+        name=team_name or player.team_name or "Expos",
+        division=division or player.division or "13U",
+    )
+    return create_membership(player=player, season_team=season_team, is_primary=is_primary, is_active=True)
 
 
 class AnalyticsImportViewTests(TestCase):
@@ -341,8 +353,11 @@ class AnalyticsObservationFoundationTests(TestCase):
     def setUp(self):
         self.evaluator = User.objects.create_user(username="coach", password="testpass")
         self.other_evaluator = User.objects.create_user(username="othercoach", password="testpass")
-        self.player = Player.objects.create(first_name="Eugene", last_name="Lin", division="13U")
-        self.other_player = Player.objects.create(first_name="Alex", last_name="Chen", division="13U")
+        self.player = Player.objects.create(first_name="Eugene", last_name="Lin", division="13U", team_name="Expos")
+        self.other_player = Player.objects.create(first_name="Alex", last_name="Chen", division="13U", team_name="Expos")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        self.player_membership = attach_player_to_season(self.player, self.season)
+        attach_player_to_season(self.other_player, self.season)
         self.setup_result = ensure_default_coach_assessment_setup()
         self.role = EvaluatorRole.objects.get(key=ROLE_COACH)
         self.source = ObservationSource.objects.get(key=SOURCE_COACH)
@@ -350,6 +365,7 @@ class AnalyticsObservationFoundationTests(TestCase):
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
 
     def required_response_payload(self):
@@ -554,6 +570,7 @@ class AnalyticsObservationFoundationTests(TestCase):
                 evaluator = User.objects.create_user(username=f"snapshot-{account_role}", password="testpass")
                 set_account_role(evaluator, account_role)
                 player = Player.objects.create(first_name=f"Snapshot{index}", last_name="Target", division="13U")
+                attach_player_to_season(player, self.season)
 
                 result = create_coach_assessment_observation(
                     player=player,
@@ -831,17 +848,132 @@ class AnalyticsObservationFoundationTests(TestCase):
             self.assertIn(model, admin.site._registry)
 
 
+class SeasonalEvaluationContextTests(TestCase):
+    def setUp(self):
+        self.coach = User.objects.create_user(username="season-coach", password="testpass")
+        set_account_role(self.coach, AccountRole.COACH)
+        self.player = Player.objects.create(first_name="Season", last_name="Player", division="13U", team_name="Reds")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        self.other_season = create_season(key="2027-spring", name="2027 Spring")
+        self.membership = attach_player_to_season(self.player, self.season, team_name="Reds", division="13U")
+        self.setup_result = ensure_default_coach_assessment_setup()
+        self.cycle = EvaluationCycle.objects.create(
+            name="2026 Spring Evaluations",
+            cycle_type="Coach Assessment",
+            coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
+        )
+
+    def rating_payload(self, value=4):
+        return {
+            question: value
+            for question in self.setup_result.question_set.questions.filter(response_type=RESPONSE_TYPE_RATING_1_5)
+        }
+
+    def test_submitted_observation_stores_immutable_season_and_roster_snapshots(self):
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+            responses=self.rating_payload(),
+        ).observation
+
+        submitted = submit_observation(observation, actor=self.coach)
+        self.membership.season_team.name = "Corrected Reds"
+        self.membership.season_team.division = "14U"
+        self.membership.season_team.save()
+        self.player.team_name = "Live Team"
+        self.player.division = "Live Division"
+        self.player.save(update_fields=["team_name", "division", "updated_at"])
+        submitted.refresh_from_db()
+
+        self.assertEqual(submitted.season, self.season)
+        self.assertEqual(submitted.player_roster_membership, self.membership)
+        self.assertEqual(submitted.season_name_snapshot, "2026 Spring")
+        self.assertEqual(submitted.season_key_snapshot, "2026-spring")
+        self.assertEqual(submitted.player_team_name_snapshot, "Reds")
+        self.assertEqual(submitted.player_division_snapshot, "13U")
+
+    def test_coach_assignment_snapshot_is_stored_when_resolved(self):
+        assignment = create_assignment(user=self.coach, season_team=self.membership.season_team, assignment_role="head_coach", is_primary=True)
+
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+            responses=self.rating_payload(),
+        ).observation
+        submitted = submit_observation(observation, actor=self.coach)
+
+        self.assertEqual(submitted.evaluator_coach_assignment, assignment)
+        self.assertEqual(submitted.evaluator_team_name_snapshot, "Reds")
+        self.assertEqual(submitted.evaluator_division_snapshot, "13U")
+        self.assertEqual(submitted.evaluator_assignment_role_snapshot, "Head Coach")
+
+    def test_cross_player_or_cross_season_membership_is_rejected(self):
+        other_player = Player.objects.create(first_name="Other", last_name="Player", division="13U")
+        other_membership = attach_player_to_season(other_player, self.season)
+        cross_season_membership = attach_player_to_season(self.player, self.other_season)
+
+        with self.assertRaisesMessage(ValidationError, "does not belong to this player"):
+            create_coach_assessment_observation(
+                player=self.player,
+                evaluation_cycle=self.cycle,
+                evaluator=self.coach,
+                player_roster_membership=other_membership,
+            )
+        with self.assertRaisesMessage(ValidationError, "does not belong to this evaluation season"):
+            create_coach_assessment_observation(
+                player=self.player,
+                evaluation_cycle=self.cycle,
+                evaluator=self.coach,
+                player_roster_membership=cross_season_membership,
+            )
+
+    def test_ambiguous_multiple_memberships_without_primary_are_blocked(self):
+        player = Player.objects.create(first_name="Multi", last_name="Member", division="13U")
+        attach_player_to_season(player, self.season, team_name="Reds", division="13U", is_primary=False)
+        attach_player_to_season(player, self.season, team_name="Blues", division="13U", is_primary=False)
+
+        with self.assertRaisesMessage(ValidationError, "multiple active memberships"):
+            create_coach_assessment_observation(player=player, evaluation_cycle=self.cycle, evaluator=self.coach)
+
+    def test_review_uses_snapshot_values_not_live_player_fields(self):
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.coach,
+            responses=self.rating_payload(),
+        ).observation
+        submitted = submit_observation(observation, actor=self.coach)
+        self.player.team_name = "Changed Live Team"
+        self.player.division = "Changed Live Division"
+        self.player.save(update_fields=["team_name", "division", "updated_at"])
+        set_account_role(self.coach, AccountRole.COACH)
+
+        from analytics.services.evaluation_review_service import get_evaluation_review_detail
+
+        detail = get_evaluation_review_detail(self.coach, submitted.id)
+
+        self.assertEqual(detail.season_name, "2026 Spring")
+        self.assertEqual(detail.player_team, "Reds")
+        self.assertEqual(detail.player_division, "13U")
+
+
 class AnalyticsDraftContextServiceTests(TestCase):
     def setUp(self):
         self.coach = User.objects.create_user(username="coach", password="testpass")
         self.other_coach = User.objects.create_user(username="othercoach", password="testpass")
         self.third_coach = User.objects.create_user(username="thirdcoach", password="testpass")
-        self.player = Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U")
+        self.player = Player.objects.create(first_name="Eugene", last_name="Lin", birth_year=2012, division="13U", team_name="Expos")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.player, self.season)
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
         self.draft = Draft.objects.create(name="2026 VCB 13U", year=2026, division="13U")
         self.team = DraftTeam.objects.create(draft=self.draft, name="Expos Navy", display_order=1)
@@ -997,11 +1129,15 @@ class PlayerExperienceServiceTests(TestCase):
             team_name="Mounties",
         )
         self.no_context_player = Player.objects.create(first_name="No", last_name="Context", division="13U")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.player, self.season)
+        attach_player_to_season(self.other_player, self.season)
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
         self.draft = Draft.objects.create(name="2026 VCB 13U", year=2026, division="13U")
         self.team = DraftTeam.objects.create(draft=self.draft, name="Expos Navy", display_order=1)
@@ -1177,11 +1313,15 @@ class PlayerExperienceViewTests(TestCase):
             primary_positions="SS",
         )
         self.other_player = Player.objects.create(first_name="Alex", last_name="Chen", division="15U", team_name="Mounties")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.player, self.season)
+        attach_player_to_season(self.other_player, self.season, team_name="Mounties", division="15U")
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
 
     def rating_payload(self, value=4):
@@ -1324,11 +1464,15 @@ class AnalyticsCommandCenterServiceTests(TestCase):
             division="15U",
             team_name="Mounties",
         )
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.player, self.season)
+        attach_player_to_season(self.other_player, self.season, team_name="Mounties", division="15U")
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
 
     def rating_payload(self, value=4):
@@ -1500,11 +1644,14 @@ class AnalyticsCommandCenterViewTests(TestCase):
         self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
         self.coach = User.objects.create_user(username="coach", password="testpass")
         self.player = Player.objects.create(first_name="Eugene", last_name="Lin", division="13U", team_name="Expos")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.player, self.season)
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
 
     def rating_payload(self, value=4):
@@ -1575,11 +1722,15 @@ class CoachAssessmentWorkflowTests(TestCase):
         self.staff = User.objects.create_user(username="staff", password="testpass", is_staff=True)
         self.player = Player.objects.create(first_name="Eugene", last_name="Lin", division="13U", team_name="Expos")
         self.other_player = Player.objects.create(first_name="Alex", last_name="Chen", division="13U", team_name="Expos")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.player, self.season)
+        attach_player_to_season(self.other_player, self.season)
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
 
     def response_payload(self, include_required=True):
@@ -1834,12 +1985,16 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.self_player = Player.objects.create(first_name="Self", last_name="Player", division="13U", team_name="Expos")
         self.target_player = Player.objects.create(first_name="Target", last_name="Player", division="13U", team_name="Expos")
         self.inactive_player = Player.objects.create(first_name="Inactive", last_name="Player", division="13U", is_active=False)
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.self_player, self.season)
+        attach_player_to_season(self.target_player, self.season)
         link_user_to_player(self.player_user, self.self_player, relationship=UserPlayerRelationship.SELF, is_primary=True)
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
 
     def response_payload(self, include_required=True):
@@ -2059,6 +2214,7 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         for user, expected_role in [(self.coach, ROLE_COACH), (self.guest, ROLE_GUEST_EVALUATOR)]:
             with self.subTest(user=user.username):
                 target = Player.objects.create(first_name=user.username, last_name="Target", division="13U")
+                attach_player_to_season(target, self.season)
                 self.client.force_login(user)
                 response = self.client.get(reverse("analytics:evaluation-player", kwargs={"player_id": target.id}))
 
@@ -2097,6 +2253,10 @@ class MyEvaluationsViewTests(TestCase):
         self.player = Player.objects.create(first_name="Linked", last_name="Player", division="13U")
         self.second_player = Player.objects.create(first_name="Second", last_name="Player", division="15U")
         self.other_player = Player.objects.create(first_name="Other", last_name="Player", division="13U")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        attach_player_to_season(self.player, self.season)
+        attach_player_to_season(self.second_player, self.season, team_name="Mounties", division="15U")
+        attach_player_to_season(self.other_player, self.season)
         link_user_to_player(self.player_user, self.player, relationship=UserPlayerRelationship.SELF, is_primary=True)
         link_user_to_player(self.other_player_user, self.other_player, relationship=UserPlayerRelationship.SELF, is_primary=True)
         self.setup_result = ensure_default_coach_assessment_setup()
@@ -2104,6 +2264,7 @@ class MyEvaluationsViewTests(TestCase):
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
 
     def service_response_payload(self, value=4, note="Good teammate."):
@@ -2321,6 +2482,7 @@ class MyEvaluationsViewTests(TestCase):
 
     def test_staff_with_self_link_receives_player_safe_my_evaluation_output(self):
         staff_player = Player.objects.create(first_name="Staff", last_name="Player")
+        attach_player_to_season(staff_player, self.season)
         link_user_to_player(self.staff, staff_player, relationship=UserPlayerRelationship.SELF, is_primary=True)
         observation = self.submitted_observation(player=staff_player, evaluator=self.coach, note="Private staff-linked result.")
         self.client.force_login(self.staff)
@@ -2418,16 +2580,23 @@ class EvaluationReviewViewTests(TestCase):
         set_account_role(self.role_admin, AccountRole.ADMIN)
         self.player = Player.objects.create(first_name="Target", last_name="One", division="13U", team_name="Reds")
         self.second_player = Player.objects.create(first_name="Target", last_name="Two", division="15U", team_name="Blues")
+        self.season = create_season(key="2026-spring", name="2026 Spring", is_current=True)
+        self.second_season = create_season(key="2026-summer", name="2026 Summer")
+        attach_player_to_season(self.player, self.season, team_name="Reds", division="13U")
+        attach_player_to_season(self.second_player, self.season, team_name="Reds", division="13U")
+        attach_player_to_season(self.second_player, self.second_season, team_name="Blues", division="15U")
         self.setup_result = ensure_default_coach_assessment_setup()
         self.cycle = EvaluationCycle.objects.create(
             name="2026 13U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.season,
         )
         self.second_cycle = EvaluationCycle.objects.create(
             name="2026 15U Coach Assessment",
             cycle_type="Coach Assessment",
             coach_assessment_question_set=self.setup_result.question_set,
+            season=self.second_season,
         )
 
     def service_response_payload(self, value=4, note="Good teammate."):

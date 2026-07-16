@@ -27,6 +27,8 @@
             <thead>
                 <tr>
                     <th>Player</th>
+                    <th>Season</th>
+                    <th>Roster</th>
                     <th>Cycle</th>
                     <th>Evaluator</th>
                     <th>Type</th>
@@ -39,6 +41,8 @@
                 {% for observation in observations %}
                     <tr>
                         <td>{{ observation.player.display_name }}</td>
+                        <td>{{ observation.season_name_snapshot|default:"Legacy / No Season" }}</td>
+                        <td>{{ observation.player_division_snapshot|default:observation.player.division }} {{ observation.player_team_name_snapshot|default:observation.player.team_name }}</td>
                         <td>{{ observation.evaluation_cycle.name }}</td>
                         <td>{{ observation.evaluator }}</td>
                         <td>{{ observation.evaluation_perspective_label }}</td>
@@ -47,7 +51,7 @@
                         <td><a class="button button--ghost" href="{% url 'analytics:observation-review-detail' observation_id=observation.id %}">Review</a></td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="7">No observations found.</td></tr>
+                    <tr><td colspan="9">No observations found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

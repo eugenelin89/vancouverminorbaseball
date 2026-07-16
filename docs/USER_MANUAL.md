@@ -15,7 +15,7 @@ The platform helps Vancouver Community Baseball manage:
 
 This is a user manual, not a technical deployment guide. Deployment information lives in [docs/deployment/](deployment/README.md).
 
-Season-aware roster foundations now exist in the system. Player and coach imports are now season-aware: staff choose an active season, and imported team/division information creates roster participation records or coach assignments for that season. Evaluation pages are not season-aware yet, so staff should continue using the current evaluation workflows until that seasonal phase is implemented.
+Season-aware roster foundations now exist in the system. Player imports, coach imports, and evaluations are season-aware: staff choose an active season for imports, imported team/division information creates roster participation records or coach assignments, and submitted evaluations preserve the season/team/division context that existed when the evaluation was submitted.
 
 ## Start Here
 
@@ -394,6 +394,9 @@ Parent accounts do not submit evaluations unless staff gives that user an evalua
 - Self evaluations are labeled Self Evaluation.
 - The system records who submitted the evaluation.
 - The evaluator's role/category and evaluation type are recorded for reporting and historical context.
+- The evaluation cycle determines the season for new evaluations when the cycle has a season.
+- The player list uses roster membership for that evaluation season.
+- Submitted evaluations preserve the season, team, and division at the time of submission.
 - Submitted evaluations become part of the player's Analytics record.
 
 ### Ratings And Notes
@@ -465,6 +468,8 @@ Players, parents, and guest evaluators cannot access the review page.
 Coach review is read-only. It shows submitted evaluations only. Coaches cannot reopen, edit, or delete submitted evaluations from this page.
 
 Coach review shows evaluator names, role/category, and evaluation type. It does not show evaluator email addresses, passwords, import metadata, or unrelated account details.
+
+Coach review displays the saved season/team/division from the submitted evaluation. Later roster changes do not rewrite historical evaluation context.
 
 ## Staff Analytics
 
@@ -560,6 +565,8 @@ Staff can review submitted evaluations from:
 ```
 
 This page still uses `observations` in the URL because that is the internal Analytics record name. Staff review is used to inspect submitted evaluations and reopen them if corrections are needed.
+
+Staff review shows saved season and roster context for submitted evaluations. Older legacy records without season context may display as `Legacy / No Season`.
 
 ## Player Imports
 

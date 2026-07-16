@@ -41,8 +41,8 @@
                     {% for item in player_statuses %}
                         <tr>
                             <td>{{ item.player.display_name }}</td>
-                            <td>{{ item.player.division }}</td>
-                            <td>{{ item.player.team_name }}</td>
+                            <td>{{ item.player_division }}</td>
+                            <td>{{ item.player_team }}</td>
                             <td>{{ item.evaluation_perspective_label }}</td>
                             <td>{% include "analytics/_assessment_status_badge.html" with status=item.status %}</td>
                             <td>
@@ -51,7 +51,7 @@
                                 {% elif item.observation %}
                                     <a class="button button--primary" href="{% url 'analytics:assessment-edit' observation_id=item.observation.id %}">Continue</a>
                                 {% else %}
-                                    <a class="button button--primary" href="{% url 'analytics:assessment-player' player_id=item.player.id %}">Start</a>
+                                    <a class="button button--primary" href="{% url 'analytics:assessment-player' player_id=item.player.id %}{% if item.player_roster_membership %}?membership={{ item.player_roster_membership.id }}{% endif %}">Start</a>
                                 {% endif %}
                             </td>
                         </tr>
