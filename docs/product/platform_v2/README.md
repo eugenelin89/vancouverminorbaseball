@@ -33,10 +33,21 @@ Platform V2 should build on the completed Platform V1 foundations:
 - PDP should remain legacy/transitionary. Platform V2 should not depend on `pdp.PlayerProfile` or PDP development models.
 - Parent access, AI-generated summaries, report exports, rankings, and development-plan persistence are deferred.
 
+## Phase 1A Decision Summary
+
+- Player Development Summary V1 engineering planning is complete.
+- Implementation has not started.
+- Future implementation should create a `development` app with no models and no migrations.
+- Summary output should use submitted, season-scoped `coach_assessment` observations only.
+- Category averages may display from one valid rating, but strength/opportunity labels require at least two valid ratings.
+- Player-safe summaries hide evaluator identity and peer free-text comments.
+- Coach access reuses current broad coach-review access; strict team scoping remains deferred.
+
 ## Planning Documents
 
 - [Platform V2 Roadmap](../PLATFORM_V2_ROADMAP.md)
 - [Phase 0 Engineering Plan](implementation/engineering/platform_v2_phase_0_plan.md)
+- [Player Development Summary V1 Engineering Plan](implementation/engineering/player_development_summary_v1.md)
 
 ## Implementation Rule
 

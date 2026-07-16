@@ -349,6 +349,7 @@ Documentation:
 
 - [Platform V2 Roadmap](product/PLATFORM_V2_ROADMAP.md)
 - [Platform V2 Product Planning](product/platform_v2/README.md)
+- [Player Development Summary V1 Engineering Plan](product/platform_v2/implementation/engineering/player_development_summary_v1.md)
 
 ## Current Platform State
 
