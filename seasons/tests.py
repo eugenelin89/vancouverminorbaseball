@@ -10,6 +10,9 @@ from django.urls import reverse
 
 from accounts.models import AccountRole
 from accounts.services.profile_service import get_or_create_account_profile, set_account_role
+from analytics.models import EvaluationCycle, RESPONSE_TYPE_RATING_1_5, RESPONSE_TYPE_TEXT
+from analytics.services.observation_service import create_coach_assessment_observation, submit_observation
+from analytics.services.question_service import ensure_default_coach_assessment_setup
 from players.models import Player
 from seasons.models import (
     CoachAssignmentRole,
@@ -40,7 +43,7 @@ from seasons.services.membership_service import (
     update_membership,
 )
 from seasons.services.season_service import create_season, deactivate_season, get_current_season, set_current_season
-from seasons.services.team_service import get_or_create_season_team
+from seasons.services.team_service import get_or_create_season_team, update_season_team
 
 
 User = get_user_model()
@@ -515,6 +518,14 @@ class SeasonOperationsUITests(TestCase):
         self.assertEqual(team.name, "Cardinals Updated")
         self.assertEqual(team.season, self.spring)
 
+    def test_cannot_create_team_from_inactive_season_shortcut(self):
+        inactive = create_season(key="2025-spring", name="2025 Spring", is_active=False)
+        self.login_staff()
+
+        response = self.client.get(reverse("seasons:season-team-new", kwargs={"season_id": inactive.id}))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_staff_can_manage_membership_history_transfer_and_additional_membership(self):
         self.login_staff()
         create_response = self.client.post(
@@ -619,6 +630,18 @@ class SeasonOperationsUITests(TestCase):
         response = self.client.get(reverse("seasons:membership-list") + "?season=bad&team=bad")
         self.assertEqual(response.status_code, 200)
 
+    def test_membership_list_is_paginated_and_preserves_filters(self):
+        self.login_staff()
+        for index in range(55):
+            player = Player.objects.create(first_name=f"Player{index}", last_name="Paged")
+            create_membership(player=player, season_team=self.dodgers, is_primary=True)
+
+        response = self.client.get(reverse("seasons:membership-list") + f"?season={self.spring.id}&active=yes")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Page 1 of 2")
+        self.assertContains(response, f"?season={self.spring.id}&amp;active=yes&amp;page=2")
+
     def test_staff_can_create_edit_end_coach_assignment_without_account_side_effects(self):
         original_password = self.coach.password
         self.login_staff()
@@ -705,3 +728,47 @@ class SeasonOperationsUITests(TestCase):
 
         response = self.client.get(reverse("seasons:coach-history", kwargs={"user_id": self.regular.id}))
         self.assertEqual(response.status_code, 404)
+
+    def test_submitted_evaluation_snapshot_survives_team_edit_and_player_transfer(self):
+        setup = ensure_default_coach_assessment_setup()
+        membership = create_membership(player=self.player, season_team=self.dodgers, is_primary=True)
+        create_assignment(
+            user=self.coach,
+            season_team=self.dodgers,
+            assignment_role=CoachAssignmentRole.HEAD_COACH,
+            is_primary=True,
+        )
+        cycle = EvaluationCycle.objects.create(
+            name="2026 Spring Evaluation",
+            cycle_type="Coach Assessment",
+            season=self.spring,
+            coach_assessment_question_set=setup.question_set,
+        )
+        responses = {
+            question: 4
+            for question in setup.question_set.questions.filter(
+                response_type=RESPONSE_TYPE_RATING_1_5,
+                is_required=True,
+                is_active=True,
+            )
+        }
+        text_question = setup.question_set.questions.get(response_type=RESPONSE_TYPE_TEXT)
+        responses[text_question] = "Snapshot should not move."
+
+        result = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=cycle,
+            evaluator=self.coach,
+            player_roster_membership=membership,
+            responses=responses,
+        )
+        observation = submit_observation(result.observation, actor=self.coach)
+
+        update_season_team(self.dodgers, name="Renamed Dodgers", division="Renamed 13U")
+        transfer_player(player=self.player, from_membership=membership, to_season_team=self.expos, transfer_date=date(2026, 6, 1))
+        observation.refresh_from_db()
+
+        self.assertEqual(observation.season_name_snapshot, "2026 Spring")
+        self.assertEqual(observation.player_team_name_snapshot, "Dodgers")
+        self.assertEqual(observation.player_division_snapshot, "13U")
+        self.assertEqual(observation.evaluator_team_name_snapshot, "Dodgers")

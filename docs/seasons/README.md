@@ -29,6 +29,16 @@ Phase 4 - Season-Aware Evaluation Context is implemented.
 
 Phase 5 - Season And Roster Operations UI is implemented.
 
+Phase 6 - Production Review And Freeze is complete.
+
+Seasonal Participation V1 status:
+
+```text
+Feature Complete
+Production Ready
+Frozen
+```
+
 Verified production state on July 15, 2026:
 
 ```text
@@ -98,8 +108,11 @@ Current limitations:
 - stricter team-scoped coach permissions and peer team restrictions are deferred.
 - dashboards, charts, exports, reports, and strict team-scoped permissions remain deferred.
 
-Next phase:
+Frozen status:
 
-- Phase 6 - Production Review And Freeze.
+- no new V1 features should be added;
+- defect fixes, security fixes, production-operability fixes, and documentation corrections are allowed;
+- structural changes require a new reviewed phase;
+- Platform V2 work must not be mixed into V1 maintenance.
 
 Seasonal operations UI was added in Phase 5 without adding dashboards, reports, exports, APIs, bulk editing, or stricter team-based authorization.

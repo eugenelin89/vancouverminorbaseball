@@ -32,22 +32,33 @@ class SeasonOperationsStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin
         return is_staff_or_admin(self.request.user)
 
 
+class SeasonPaginationMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query = self.request.GET.copy()
+        query.pop("page", None)
+        encoded = query.urlencode()
+        context["pagination_query"] = f"{encoded}&" if encoded else ""
+        return context
+
+
 def _clean_int(value: str) -> str | None:
     value = str(value or "").strip()
     return value if value.isdigit() else None
 
 
-class SeasonListView(SeasonOperationsStaffRequiredMixin, ListView):
+class SeasonListView(SeasonOperationsStaffRequiredMixin, SeasonPaginationMixin, ListView):
     model = Season
     template_name = "seasons/season_list.html"
     context_object_name = "seasons"
+    paginate_by = 50
 
     def get_queryset(self):
         return Season.objects.annotate(
             team_count=Count("teams", distinct=True),
             membership_count=Count("teams__player_memberships", distinct=True),
             assignment_count=Count("teams__coach_assignments", distinct=True),
-        )
+        ).order_by("-starts_on", "name", "id")
 
 
 class SeasonDetailView(SeasonOperationsStaffRequiredMixin, TemplateView):
@@ -137,10 +148,11 @@ class SeasonSetCurrentView(SeasonOperationsStaffRequiredMixin, FormView):
         return redirect("seasons:season-detail", season_id=self.season.id)
 
 
-class SeasonTeamListView(SeasonOperationsStaffRequiredMixin, ListView):
+class SeasonTeamListView(SeasonOperationsStaffRequiredMixin, SeasonPaginationMixin, ListView):
     model = SeasonTeam
     template_name = "seasons/team_list.html"
     context_object_name = "teams"
+    paginate_by = 50
 
     def get_queryset(self):
         queryset = SeasonTeam.objects.select_related("season").annotate(
@@ -167,7 +179,7 @@ class SeasonTeamCreateView(SeasonOperationsStaffRequiredMixin, FormView):
         kwargs = super().get_form_kwargs()
         season_id = self.kwargs.get("season_id")
         if season_id:
-            kwargs["fixed_season"] = get_object_or_404(Season, pk=season_id)
+            kwargs["fixed_season"] = get_object_or_404(Season, pk=season_id, is_active=True)
         return kwargs
 
     def form_valid(self, form):
@@ -235,10 +247,11 @@ class SeasonTeamEditView(SeasonOperationsStaffRequiredMixin, FormView):
         return redirect("seasons:team-list")
 
 
-class PlayerMembershipListView(SeasonOperationsStaffRequiredMixin, ListView):
+class PlayerMembershipListView(SeasonOperationsStaffRequiredMixin, SeasonPaginationMixin, ListView):
     model = PlayerRosterMembership
     template_name = "seasons/membership_list.html"
     context_object_name = "memberships"
+    paginate_by = 50
 
     def get_queryset(self):
         queryset = PlayerRosterMembership.objects.select_related("player", "season_team", "season_team__season")
@@ -468,10 +481,11 @@ class PlayerSeasonHistoryView(SeasonOperationsStaffRequiredMixin, TemplateView):
         return context
 
 
-class CoachAssignmentListView(SeasonOperationsStaffRequiredMixin, ListView):
+class CoachAssignmentListView(SeasonOperationsStaffRequiredMixin, SeasonPaginationMixin, ListView):
     model = CoachSeasonAssignment
     template_name = "seasons/assignment_list.html"
     context_object_name = "assignments"
+    paginate_by = 50
 
     def get_queryset(self):
         queryset = CoachSeasonAssignment.objects.select_related("user", "season_team", "season_team__season", "user__account_profile")

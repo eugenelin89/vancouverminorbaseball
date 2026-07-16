@@ -52,6 +52,8 @@ Pre-deployment review documentation:
 
 - [Production Readiness Review](production_readiness_review.md)
 
+Seasonal Participation V1 production rollout and browser verification steps are maintained in the [Deployment Runbook](RUNBOOK.md#seasonal-participation-v1-rollout).
+
 ## Operational Standard
 
 Future production deployments should:

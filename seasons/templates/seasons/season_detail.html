@@ -16,7 +16,9 @@
         {% if season.is_active and not season.is_current %}
             <a class="button button--ghost" href="{% url 'seasons:season-set-current' season.id %}">Set Current</a>
         {% endif %}
-        <a class="button button--ghost" href="{% url 'seasons:season-team-new' season.id %}">Add Team</a>
+        {% if season.is_active %}
+            <a class="button button--ghost" href="{% url 'seasons:season-team-new' season.id %}">Add Team</a>
+        {% endif %}
         <a class="button button--ghost" href="{% url 'seasons:membership-list' %}?season={{ season.id }}">Player Memberships</a>
         <a class="button button--ghost" href="{% url 'seasons:coach-assignment-list' %}?season={{ season.id }}">Coach Assignments</a>
     </div>

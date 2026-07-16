@@ -96,6 +96,106 @@ Review planned migrations:
 python manage.py migrate --plan
 ```
 
+## Seasonal Participation V1 Rollout
+
+Seasonal Participation V1 is additive and keeps legacy/no-season records readable. Do not fabricate seasons, teams, roster memberships, coach assignments, or evaluation context during deployment.
+
+Use these steps when deploying the completed Seasonal Participation V1 release.
+
+### 1. Become The Production User
+
+```bash
+sudo -iu django-user
+cd /var/www/vancouverminorbaseball
+source venv/bin/activate
+```
+
+### 2. Record Current State And Back Up
+
+```bash
+git status
+git log -n1 --oneline > /tmp/vcb_pre_deploy_commit.txt
+cp db.sqlite3 "db.sqlite3.pre_seasons_v1.$(date +%Y%m%d%H%M%S).bak"
+tar -czf "media.pre_seasons_v1.$(date +%Y%m%d%H%M%S).tgz" media
+```
+
+### 3. Update Code
+
+```bash
+git fetch origin
+git pull --ff-only origin main
+pip install -r requirements.txt
+```
+
+If `git pull --ff-only` fails, stop and resolve the repository state before continuing.
+
+### 4. Load Production Environment
+
+```bash
+set -a
+. /etc/vancouverminorbaseball.env
+set +a
+```
+
+### 5. Run Pre-Migration Checks
+
+```bash
+python manage.py check
+python manage.py makemigrations --check
+python manage.py migrate --plan
+python manage.py showmigrations seasons players accounts analytics
+python manage.py shell -c "from players.models import Player; from accounts.models import AccountProfile, AccountRole; from analytics.models import Observation; from seasons.models import Season, SeasonTeam, PlayerRosterMembership, CoachSeasonAssignment; print({'players': Player.objects.count(), 'coach_profiles': AccountProfile.objects.filter(role=AccountRole.COACH).count(), 'observations': Observation.objects.count(), 'seasons': Season.objects.count(), 'season_teams': SeasonTeam.objects.count(), 'player_roster_memberships': PlayerRosterMembership.objects.count(), 'coach_season_assignments': CoachSeasonAssignment.objects.count()})"
+```
+
+If unexpected production data exists before rollout, stop. Do not fabricate historical context. Create a reviewed migration/backfill plan before applying migrations that would require historical interpretation.
+
+### 6. Stop Service, Migrate, Collect Static, Restart
+
+```bash
+sudo systemctl stop vancouverminor.service
+python manage.py migrate
+python manage.py collectstatic --noinput
+sudo systemctl start vancouverminor.service
+sudo systemctl status vancouverminor.service
+sudo journalctl -u vancouverminor.service -n 100 --no-pager
+```
+
+### 7. HTTP Smoke Tests
+
+```bash
+curl -I https://vancouverminor.com/
+curl -I https://vancouverminor.com/accounts/login/
+curl -I https://vancouverminor.com/seasons/
+curl -I https://vancouverminor.com/analytics/
+```
+
+Unauthenticated staff pages such as `/seasons/` and `/analytics/` should redirect to login rather than expose data.
+
+### 8. Browser Workflow Verification
+
+Use optional test data only if the production operator has approved it. If test data is created in production, record what was created and clean it up only through approved application workflows.
+
+Checklist:
+
+1. Sign in as a Django staff user.
+2. Open Season Operations at `/seasons/`.
+3. Create a clearly named test season if approved.
+4. Create a test season team if approved.
+5. Import a small player CSV for the test season if approved.
+6. Verify the player roster membership appears under Season Operations.
+7. Import a small coach CSV for the test season if approved.
+8. Verify the coach assignment appears under Season Operations.
+9. Verify a returning coach import does not change the coach password hash.
+10. Create an evaluation cycle linked to the season if approved.
+11. Submit a self-evaluation.
+12. Submit a coach evaluation.
+13. Review saved season/team snapshots in evaluation review.
+14. Transfer the test player to another team.
+15. Verify the old submitted evaluation still displays the original season/team snapshot.
+16. View player season history.
+17. View coach assignment history.
+18. Sign in as a non-staff coach/player and verify `/seasons/` access is denied.
+
 ### Seasonal Participation Empty-State Check
 
 Before applying the initial `seasons` app migration or the Analytics migration that adds observation season context, verify production still has no Platform V1 roster/evaluation data requiring seasonal backfill:

@@ -327,7 +327,7 @@ Dependency guidance:
 | Players | V1 | Complete |
 | Analytics | V1 | Complete |
 | Account Management | V1 | Complete / Frozen |
-| Seasons | V1 Phase 5 | Season and roster operations UI complete |
+| Seasons | V1 | Feature Complete / Production Ready / Frozen |
 | Drafts | Active | Active development |
 | PDP | Legacy | Transitionary |
 | LeagueHub | Planned | Planned |
@@ -362,7 +362,7 @@ Likely future areas:
 
 - Account Management V2
 - Analytics V2
-- Seasonal Participation Phase 6 production review and freeze
+- Seasonal Participation V2 planning, only after a reviewed new phase
 - Drafts expansion
 - LeagueHub
 - Video
