@@ -202,7 +202,7 @@ What it must not own:
 
 Current status:
 
-Seasonal Participation V1 Phase 1 foundation, Phase 2 season-aware player import, Phase 3 season-aware coach import, and Phase 4 season-aware evaluation context are implemented. The schema, services, admin registration, tests, player import integration, coach import integration, and evaluation context integration exist. Player imports now create or update season teams and player roster memberships. Coach imports now create or update season teams and coach season assignments while preserving permanent coach accounts. New season-linked evaluations preserve season, player roster membership, player team/division snapshots, and coach assignment snapshots where applicable.
+Seasonal Participation V1 Phase 1 foundation, Phase 2 season-aware player import, Phase 3 season-aware coach import, Phase 4 season-aware evaluation context, and Phase 5 season/roster operations UI are implemented. The schema, services, admin registration, tests, player import integration, coach import integration, evaluation context integration, and staff-facing season operations pages exist. Staff can manage seasons, season teams, player roster memberships, transfers/additional memberships, player season history, coach assignments, and coach season history. Player imports now create or update season teams and player roster memberships. Coach imports now create or update season teams and coach season assignments while preserving permanent coach accounts. New season-linked evaluations preserve season, player roster membership, player team/division snapshots, and coach assignment snapshots where applicable.
 
 Documentation:
 
@@ -327,7 +327,7 @@ Dependency guidance:
 | Players | V1 | Complete |
 | Analytics | V1 | Complete |
 | Account Management | V1 | Complete / Frozen |
-| Seasons | V1 Phase 3 | Coach import integration complete |
+| Seasons | V1 Phase 5 | Season and roster operations UI complete |
 | Drafts | Active | Active development |
 | PDP | Legacy | Transitionary |
 | LeagueHub | Planned | Planned |
@@ -345,6 +345,7 @@ The platform currently has:
 - season-aware roster participation foundation
 - season-aware player and coach import integration
 - season-aware evaluation context and submitted-evaluation snapshots
+- staff-facing season and roster operations UI
 - account provisioning from player imports
 - forced password-change account flow
 - staff-only Analytics command center and reporting tables
@@ -361,7 +362,7 @@ Likely future areas:
 
 - Account Management V2
 - Analytics V2
-- Seasonal Participation Phase 5
+- Seasonal Participation Phase 6 production review and freeze
 - Drafts expansion
 - LeagueHub
 - Video

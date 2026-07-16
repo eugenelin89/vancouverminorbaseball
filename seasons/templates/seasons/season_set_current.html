@@ -1,0 +1,16 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}Set Current Season{% endblock %}
+{% block seasons_subtitle %}Only one season can be current at a time.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <p>Set <strong>{{ season.name }}</strong> as the current season?</p>
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">Set Current Season</button>
+        <a class="button button--ghost" href="{% url 'seasons:season-detail' season.id %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

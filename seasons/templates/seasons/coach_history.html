@@ -1,0 +1,33 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}Coach Season History{% endblock %}
+{% block seasons_subtitle %}Season-by-season assignment history for {{ coach.get_full_name|default:coach.username }}.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <h2>{{ coach.get_full_name|default:coach.username }}</h2>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr><th>Season</th><th>Team</th><th>Role</th><th>Primary</th><th>Active</th><th>Dates</th><th>Source</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ assignment.season.name }}</td>
+                        <td>{{ assignment.season_team.division }} {{ assignment.season_team.name }}</td>
+                        <td>{{ assignment.get_assignment_role_display }}</td>
+                        <td>{% if assignment.is_primary %}Yes{% else %}No{% endif %}</td>
+                        <td>{% if assignment.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td>{{ assignment.starts_on|default:"-" }} - {{ assignment.ends_on|default:"-" }}</td>
+                        <td>{{ assignment.source|default:"manual" }}</td>
+                        <td><a class="button button--ghost" href="{% url 'seasons:coach-assignment-edit' assignment.id %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8">No season assignments are recorded for this coach.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

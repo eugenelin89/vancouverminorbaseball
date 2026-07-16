@@ -1,0 +1,16 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}End Player Membership{% endblock %}
+{% block seasons_subtitle %}Ending a membership preserves the historical record.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <p>End {{ membership.player.display_name }} on {{ membership.season_team.division }} {{ membership.season_team.name }}?</p>
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">End Membership</button>
+        <a class="button button--ghost" href="{% url 'seasons:player-history' membership.player_id %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

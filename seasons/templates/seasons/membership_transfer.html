@@ -1,0 +1,17 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}Transfer or Add Membership{% endblock %}
+{% block seasons_subtitle %}Transfers end the old primary membership; additional memberships preserve the existing primary team.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <p>{{ membership.player.display_name }} currently has membership with {{ membership.season_team.division }} {{ membership.season_team.name }} for {{ membership.season.name }}.</p>
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">Save Membership Change</button>
+        <a class="button button--ghost" href="{% url 'seasons:player-history' membership.player_id %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

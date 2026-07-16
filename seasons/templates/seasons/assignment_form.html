@@ -1,0 +1,19 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}{% if assignment %}Edit Coach Assignment{% else %}Create Coach Assignment{% endif %}{% endblock %}
+{% block seasons_subtitle %}Assignments are seasonal team context only; they do not change account permissions.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">{% if assignment %}Save Assignment{% else %}Create Assignment{% endif %}</button>
+        {% if assignment %}
+            <a class="button button--ghost" href="{% url 'seasons:coach-assignment-end' assignment.id %}">End Assignment</a>
+        {% endif %}
+        <a class="button button--ghost" href="{% url 'seasons:coach-assignment-list' %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

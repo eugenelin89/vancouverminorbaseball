@@ -1,0 +1,44 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}Seasons{% endblock %}
+{% block seasons_subtitle %}Create seasons and choose the current operational season.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <div class="pdp-actions">
+        <a class="button button--primary" href="{% url 'seasons:season-new' %}">Create Season</a>
+    </div>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr>
+                    <th>Season</th>
+                    <th>Dates</th>
+                    <th>Current</th>
+                    <th>Active</th>
+                    <th>Teams</th>
+                    <th>Memberships</th>
+                    <th>Assignments</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for season in seasons %}
+                    <tr>
+                        <td>{{ season.name }}<br><small>{{ season.key }}</small></td>
+                        <td>{{ season.starts_on|default:"-" }} - {{ season.ends_on|default:"-" }}</td>
+                        <td>{% if season.is_current %}Yes{% else %}No{% endif %}</td>
+                        <td>{% if season.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td>{{ season.team_count }}</td>
+                        <td>{{ season.membership_count }}</td>
+                        <td>{{ season.assignment_count }}</td>
+                        <td><a class="button button--ghost" href="{% url 'seasons:season-detail' season.id %}">Open</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8">No seasons have been created.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

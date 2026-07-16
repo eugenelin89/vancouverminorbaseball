@@ -24,6 +24,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('drafts/', include('drafts.urls')),
     path('analytics/', include('analytics.urls')),
+    path('seasons/', include('seasons.urls')),
     path('leaguehub/', include('leaguehub.urls')),
     path('pdp/', include('pdp.urls')),
     path('scholarships/', include('scholarships.urls')),

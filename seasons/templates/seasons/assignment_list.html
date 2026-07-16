@@ -1,0 +1,68 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}Coach Assignments{% endblock %}
+{% block seasons_subtitle %}Season-specific coach-to-team assignments.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <form method="get" class="pdp-form">
+        <label>Search <input type="text" name="q" value="{{ filters.q }}" placeholder="Coach name or username"></label>
+        <label>
+            Season
+            <select name="season">
+                <option value="">All seasons</option>
+                {% for season in seasons %}
+                    <option value="{{ season.id }}"{% if filters.season == season.id|stringformat:"s" %} selected{% endif %}>{{ season.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Team
+            <select name="team">
+                <option value="">All teams</option>
+                {% for team in teams %}
+                    <option value="{{ team.id }}"{% if filters.team == team.id|stringformat:"s" %} selected{% endif %}>{{ team.season.name }} / {{ team.division }} {{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Active
+            <select name="active">
+                <option value="">Any</option>
+                <option value="yes"{% if filters.active == "yes" %} selected{% endif %}>Active</option>
+                <option value="no"{% if filters.active == "no" %} selected{% endif %}>Inactive</option>
+            </select>
+        </label>
+        <button class="button button--primary" type="submit">Apply</button>
+        <a class="button button--ghost" href="{% url 'seasons:coach-assignment-list' %}">Reset</a>
+        <a class="button button--ghost" href="{% url 'seasons:coach-assignment-new' %}">Create Assignment</a>
+    </form>
+</article>
+<article class="pdp-card">
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr><th>Coach</th><th>Season</th><th>Team</th><th>Role</th><th>Primary</th><th>Active</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ assignment.user.get_full_name|default:assignment.user.username }}</td>
+                        <td>{{ assignment.season.name }}</td>
+                        <td>{{ assignment.season_team.division }} {{ assignment.season_team.name }}</td>
+                        <td>{{ assignment.get_assignment_role_display }}</td>
+                        <td>{% if assignment.is_primary %}Yes{% else %}No{% endif %}</td>
+                        <td>{% if assignment.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td>
+                            <a class="button button--ghost" href="{% url 'seasons:coach-history' assignment.user_id %}">History</a>
+                            <a class="button button--ghost" href="{% url 'seasons:coach-assignment-edit' assignment.id %}">Edit</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7">No coach assignments match these filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

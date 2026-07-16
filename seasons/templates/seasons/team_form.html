@@ -1,0 +1,16 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}{% if team %}Edit Season Team{% else %}Create Season Team{% endif %}{% endblock %}
+{% block seasons_subtitle %}Teams are scoped to one season.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">{% if team %}Save Team{% else %}Create Team{% endif %}</button>
+        <a class="button button--ghost" href="{% url 'seasons:team-list' %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

@@ -27,6 +27,8 @@ Phase 3 - Season-Aware Coach Import is implemented.
 
 Phase 4 - Season-Aware Evaluation Context is implemented.
 
+Phase 5 - Season And Roster Operations UI is implemented.
+
 Verified production state on July 15, 2026:
 
 ```text
@@ -80,13 +82,24 @@ Implemented evaluation context:
 - review pages display submitted snapshots instead of live player team fields;
 - legacy observations without season context remain readable as `Legacy / No Season`.
 
+Implemented season operations UI:
+
+- staff can list, create, edit, and explicitly set current seasons;
+- staff can list, create, and edit season teams;
+- staff can list, create, edit, end, transfer, and add additional player roster memberships;
+- staff can view player season history;
+- staff can list, create, edit, and end coach season assignments;
+- staff can view coach season history;
+- seasonal assignment changes do not reset passwords, change activation, change platform roles, or grant Django staff/superuser access;
+- state-changing operations use staff-only POST workflows and preserve historical records.
+
 Current limitations:
 
-- there are no first-class roster-management pages yet.
 - stricter team-scoped coach permissions and peer team restrictions are deferred.
+- dashboards, charts, exports, reports, and strict team-scoped permissions remain deferred.
 
 Next phase:
 
-- Phase 5 - Read Models And UI.
+- Phase 6 - Production Review And Freeze.
 
-Seasonal evaluation context was added in Phase 4 without adding dashboards, reports, roster-management pages, or stricter team-based authorization.
+Seasonal operations UI was added in Phase 5 without adding dashboards, reports, exports, APIs, bulk editing, or stricter team-based authorization.

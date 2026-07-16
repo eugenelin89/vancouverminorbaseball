@@ -1,0 +1,47 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}Season Teams{% endblock %}
+{% block seasons_subtitle %}Season-specific team and division records.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <form method="get" class="pdp-form">
+        <label>
+            Season
+            <select name="season">
+                <option value="">All seasons</option>
+                {% for season in seasons %}
+                    <option value="{{ season.id }}"{% if selected_season_id == season.id|stringformat:"s" %} selected{% endif %}>{{ season.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button class="button button--primary" type="submit">Apply</button>
+        <a class="button button--ghost" href="{% url 'seasons:team-list' %}">Reset</a>
+        <a class="button button--ghost" href="{% url 'seasons:team-new' %}">Create Team</a>
+    </form>
+</article>
+<article class="pdp-card">
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr><th>Season</th><th>Team</th><th>Division</th><th>Active</th><th>Memberships</th><th>Assignments</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                    <tr>
+                        <td>{{ team.season.name }}</td>
+                        <td>{{ team.name }}</td>
+                        <td>{{ team.division }}</td>
+                        <td>{% if team.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td>{{ team.membership_count }}</td>
+                        <td>{{ team.assignment_count }}</td>
+                        <td><a class="button button--ghost" href="{% url 'seasons:team-edit' team.id %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7">No teams match these filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

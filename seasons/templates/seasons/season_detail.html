@@ -1,0 +1,49 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}{{ season.name }}{% endblock %}
+{% block seasons_subtitle %}Season teams, memberships, and coach assignment entry points.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <dl class="pdp-definition-list">
+        <dt>Key</dt><dd>{{ season.key }}</dd>
+        <dt>Dates</dt><dd>{{ season.starts_on|default:"-" }} - {{ season.ends_on|default:"-" }}</dd>
+        <dt>Current</dt><dd>{% if season.is_current %}Yes{% else %}No{% endif %}</dd>
+        <dt>Active</dt><dd>{% if season.is_active %}Active{% else %}Inactive{% endif %}</dd>
+    </dl>
+    <div class="pdp-actions">
+        <a class="button button--primary" href="{% url 'seasons:season-edit' season.id %}">Edit Season</a>
+        {% if season.is_active and not season.is_current %}
+            <a class="button button--ghost" href="{% url 'seasons:season-set-current' season.id %}">Set Current</a>
+        {% endif %}
+        <a class="button button--ghost" href="{% url 'seasons:season-team-new' season.id %}">Add Team</a>
+        <a class="button button--ghost" href="{% url 'seasons:membership-list' %}?season={{ season.id }}">Player Memberships</a>
+        <a class="button button--ghost" href="{% url 'seasons:coach-assignment-list' %}?season={{ season.id }}">Coach Assignments</a>
+    </div>
+</article>
+
+<article class="pdp-card">
+    <h2>Teams</h2>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr><th>Team</th><th>Division</th><th>Active</th><th>Memberships</th><th>Assignments</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                    <tr>
+                        <td>{{ team.name }}</td>
+                        <td>{{ team.division }}</td>
+                        <td>{% if team.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td>{{ team.membership_count }}</td>
+                        <td>{{ team.assignment_count }}</td>
+                        <td><a class="button button--ghost" href="{% url 'seasons:team-edit' team.id %}">Edit</a></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6">No teams are recorded for this season.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

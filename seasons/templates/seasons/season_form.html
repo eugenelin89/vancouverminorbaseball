@@ -1,0 +1,16 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}{% if season %}Edit Season{% else %}Create Season{% endif %}{% endblock %}
+{% block seasons_subtitle %}Season records identify roster and evaluation context.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">{% if season %}Save Season{% else %}Create Season{% endif %}</button>
+        <a class="button button--ghost" href="{% if season %}{% url 'seasons:season-detail' season.id %}{% else %}{% url 'seasons:season-list' %}{% endif %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

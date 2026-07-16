@@ -1,6 +1,6 @@
 # Seasonal Participation V1 Engineering Plan
 
-Status: Phase 1 foundation complete. Phase 2 season-aware player import complete. Phase 3 season-aware coach import complete. Phase 4 season-aware evaluation context complete. Phase 5 is the next implementation phase.
+Status: Phase 1 foundation complete. Phase 2 season-aware player import complete. Phase 3 season-aware coach import complete. Phase 4 season-aware evaluation context complete. Phase 5 season and roster operations UI complete. Phase 6 production review and freeze is the next implementation phase.
 
 Created: 2026-07-15.
 
@@ -709,13 +709,21 @@ Status: complete.
 - Update player-facing, coach-facing, and staff review read models to use snapshots.
 - Preserve submitted snapshots across later roster changes.
 
-### Phase 5 - Read Models And UI
+### Phase 5 - Season And Roster Operations UI
 
-- Add staff roster history views if needed.
-- Update player profile/timeline to show season history.
-- Update player search, command center, coach review, and metrics filters to use season-aware services.
-- Add safe empty states for no current roster.
-- Keep templates presentation-only.
+Status: complete.
+
+- Added staff-only season operations routes under `/seasons/`.
+- Added season list, detail, create, edit, and explicit set-current pages.
+- Added season-team list, create, and edit pages.
+- Added player roster membership list, create, edit, end, transfer, additional membership, and player history pages.
+- Added coach assignment list, create, edit, end, and coach history pages.
+- Kept state-changing operations behind POST/CSRF workflows.
+- Preserved player roster and coach assignment history through inactive/end-dated records rather than deletion.
+- Preserved existing evaluation snapshot behavior; season operations do not rewrite submitted evaluations.
+- Kept templates presentation-only and business rules in existing `seasons` services.
+- Added tests for permissions, season management, team management, memberships, transfer/additional membership behavior, cross-season tampering, player history, coach assignments, coach history, and privilege/password non-effects.
+- Did not add dashboards, charts, reports, exports, APIs, bulk editing, strict team-scoped authorization, new models, or migrations.
 
 ### Phase 6 - Production Review And Freeze
 
@@ -786,7 +794,8 @@ Deployment should be staged:
 4. Deploy player import changes after foundation is stable.
 5. Deploy coach assignment changes after player seasonal model is proven.
 6. Deploy evaluation context changes with snapshot behavior for new submissions.
-7. Update UI/read models after data is available.
+7. Deploy season and roster operations UI after import/evaluation context behavior is validated.
+8. Perform production review and freeze.
 
 Rollback considerations:
 
@@ -810,7 +819,6 @@ Rollback considerations:
 ## 26. Open Questions
 
 - What roster statuses are needed for V1?
-- Should staff be able to manually edit memberships and assignments in admin only, or through first-class UI?
 - How should imported transfer rows explicitly signal transfer versus concurrent membership?
 - Should player peer-evaluation scope eventually be limited to same season/team?
 - Should the exact one-current-season rule be database-enforced on SQLite, service-enforced, or both?
@@ -818,11 +826,11 @@ Rollback considerations:
 
 ## 27. Recommended Next Implementation Phase
 
-Start with Phase 5 - Read Models And UI.
+Start with Phase 6 - Production Review And Freeze.
 
-Phase 1 decisions and implementation are complete. Phase 2 updated player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services. Phase 3 updated coach import to require a selected season, create or reuse `SeasonTeam`, and create/update `CoachSeasonAssignment` through `seasons` services while preserving existing coach passwords. Phase 4 added season-linked evaluation cycles, observation seasonal context fields, submitted-evaluation snapshots, season-aware player selectors, and snapshot-based review display.
+Phase 1 decisions and implementation are complete. Phase 2 updated player import to require a selected season, create or reuse `SeasonTeam`, and create/update `PlayerRosterMembership` through `seasons` services. Phase 3 updated coach import to require a selected season, create or reuse `SeasonTeam`, and create/update `CoachSeasonAssignment` through `seasons` services while preserving existing coach passwords. Phase 4 added season-linked evaluation cycles, observation seasonal context fields, submitted-evaluation snapshots, season-aware player selectors, and snapshot-based review display. Phase 5 added staff-facing season and roster operations UI.
 
-Before implementing Phase 5, verify that Phase 4 production rollout completed successfully and that new submitted evaluations are recording expected season, roster membership, and snapshot values.
+Before implementing Phase 6, verify that Phase 5 production rollout completed successfully and staff can complete season, team, membership, transfer, and coach assignment workflows without Django admin.
 
 ## 28. Acceptance Criteria
 

@@ -1,0 +1,16 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}End Coach Assignment{% endblock %}
+{% block seasons_subtitle %}Ending an assignment preserves historical coach context.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <p>End {{ assignment.user.get_full_name|default:assignment.user.username }} on {{ assignment.season_team.division }} {{ assignment.season_team.name }}?</p>
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">End Assignment</button>
+        <a class="button button--ghost" href="{% url 'seasons:coach-history' assignment.user_id %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

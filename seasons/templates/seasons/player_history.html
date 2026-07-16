@@ -1,0 +1,42 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}Player Season History{% endblock %}
+{% block seasons_subtitle %}Season-by-season roster history for {{ player.display_name }}.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <h2>{{ player.display_name }}</h2>
+    <div class="pdp-actions">
+        <a class="button button--ghost" href="{% url 'analytics:player-profile' player.id %}">Analytics Profile</a>
+        <a class="button button--ghost" href="{% url 'seasons:membership-new' %}">Create Membership</a>
+    </div>
+    <div class="table-wrap">
+        <table class="pdp-table">
+            <thead>
+                <tr><th>Season</th><th>Team</th><th>Status</th><th>Primary</th><th>Active</th><th>Dates</th><th>Source</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for membership in memberships %}
+                    <tr>
+                        <td>{{ membership.season.name }}</td>
+                        <td>{{ membership.season_team.division }} {{ membership.season_team.name }}</td>
+                        <td>{{ membership.get_status_display }}</td>
+                        <td>{% if membership.is_primary %}Yes{% else %}No{% endif %}</td>
+                        <td>{% if membership.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td>{{ membership.starts_on|default:"-" }} - {{ membership.ends_on|default:"-" }}</td>
+                        <td>{{ membership.source|default:"manual" }}</td>
+                        <td>
+                            <a class="button button--ghost" href="{% url 'seasons:membership-edit' membership.id %}">Edit</a>
+                            {% if membership.is_active %}
+                                <a class="button button--ghost" href="{% url 'seasons:membership-transfer' membership.id %}">Transfer/Add</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8">No season memberships are recorded for this player.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+{% endblock %}

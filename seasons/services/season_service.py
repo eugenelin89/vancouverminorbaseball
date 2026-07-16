@@ -54,6 +54,8 @@ def update_season(season: Season, **updates) -> Season:
         season.is_current = requested_current
     for field, value in updates.items():
         setattr(season, field, value)
+    if season.is_current and not season.is_active:
+        season.is_current = False
     season.save()
     return season
 

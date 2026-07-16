@@ -7,7 +7,7 @@ The platform helps Vancouver Community Baseball manage:
 - player records
 - account access
 - player and coach imports
-- season and roster foundations
+- season and roster operations
 - evaluations
 - player history
 - draft preparation
@@ -15,7 +15,7 @@ The platform helps Vancouver Community Baseball manage:
 
 This is a user manual, not a technical deployment guide. Deployment information lives in [docs/deployment/](deployment/README.md).
 
-Season-aware roster foundations now exist in the system. Player imports, coach imports, and evaluations are season-aware: staff choose an active season for imports, imported team/division information creates roster participation records or coach assignments, and submitted evaluations preserve the season/team/division context that existed when the evaluation was submitted.
+Season-aware roster operations now exist in the system. Staff can manage seasons, teams, player roster memberships, transfers, coach assignments, and season history without using Django admin. Player imports, coach imports, and evaluations are season-aware: staff choose an active season for imports, imported team/division information creates roster participation records or coach assignments, and submitted evaluations preserve the season/team/division context that existed when the evaluation was submitted.
 
 ## Start Here
 
@@ -78,8 +78,9 @@ Use this section when you are responsible for account access, operational setup,
 2. Review accounts requiring password change and users without player links.
 3. Create or update staff, coach, parent, guest evaluator, or player accounts.
 4. Import coach accounts when onboarding a roster.
-5. Confirm staff-only access is controlled by Django staff/superuser permissions.
-6. Use Analytics to confirm imports, evaluations, and review workflows are healthy.
+5. Open Season Operations to create seasons, teams, roster memberships, and coach assignments.
+6. Confirm staff-only access is controlled by Django staff/superuser permissions.
+7. Use Analytics to confirm imports, evaluations, and review workflows are healthy.
 
 ### Pages Normally Used
 
@@ -88,6 +89,7 @@ Use this section when you are responsible for account access, operational setup,
 - `/accounts/create/`
 - `/accounts/create/player/`
 - `/accounts/imports/coaches/`
+- `/seasons/`
 - `/analytics/`
 - `/admin/`
 
@@ -117,9 +119,10 @@ Start at:
 2. Review evaluation activity, import summaries, and completion status.
 3. Search for players from `/analytics/players/`.
 4. Import or update players from `/analytics/imports/`.
-5. Review submitted evaluations from `/analytics/observations/review/`.
-6. Compare players or review player profiles when preparing decisions.
-7. Use Account Operations if users need access help.
+5. Use `/seasons/` to review or correct season teams, roster memberships, transfers, and coach assignments.
+6. Review submitted evaluations from `/analytics/observations/review/`.
+7. Compare players or review player profiles when preparing decisions.
+8. Use Account Operations if users need access help.
 
 ### Pages Normally Used
 
@@ -129,6 +132,7 @@ Start at:
 - `/analytics/imports/`
 - `/analytics/observations/review/`
 - `/analytics/evaluation-review/`
+- `/seasons/`
 - `/accounts/`
 - `/drafts/`
 
@@ -354,6 +358,75 @@ Supported relationships:
 - staff
 
 A parent or guardian may link to multiple players. A player may have multiple parents or guardians. Normal unlinking deactivates the link instead of deleting it so history is preserved.
+
+## Season Operations
+
+### Purpose
+
+Season Operations lets staff manage season-aware roster context without using Django admin.
+
+### Who Uses It
+
+Staff and administrators with Django staff/superuser access.
+
+Seasonal assignments do not grant access by themselves. A coach assignment records baseball context for a season and team; it does not make the user a Django staff member or superuser.
+
+### Typical Workflow
+
+1. Open `/seasons/`.
+2. Create or edit the season.
+3. Set the current season explicitly when the organization is ready.
+4. Create season-specific teams.
+5. Create or correct player roster memberships.
+6. Use transfer/additional-membership actions when a player changes teams or plays on multiple teams.
+7. Review player season history.
+8. Create or correct coach season assignments.
+9. Review coach season history.
+
+### Related Pages
+
+- `/seasons/`
+- `/seasons/new/`
+- `/seasons/<season_id>/`
+- `/seasons/teams/`
+- `/seasons/memberships/`
+- `/seasons/players/<player_id>/history/`
+- `/seasons/coach-assignments/`
+- `/seasons/coaches/<user_id>/history/`
+
+### Seasons And Current Season
+
+Staff can create and edit seasons. One season can be marked current at a time. Setting the current season is an explicit confirmation action so staff do not accidentally change import and evaluation defaults.
+
+Inactive seasons remain visible for history. Normal operations preserve history instead of deleting records.
+
+### Teams
+
+Teams are scoped to a season. The same team name can exist in different seasons without being treated as the same roster record.
+
+### Player Memberships
+
+Player memberships record a player's roster stint on a season team. Staff can:
+
+- create memberships;
+- edit status, dates, jersey number, source, and primary membership;
+- end memberships without deleting history;
+- transfer a player to another team in the same season;
+- add an additional non-primary membership for multi-team participation;
+- view the player's season-by-season history.
+
+A player may have multiple memberships in a season, but only one active primary membership per season. Transfers preserve the prior membership as historical context.
+
+### Coach Assignments
+
+Coach assignments record a coach user's season-specific team assignment. Staff can:
+
+- create assignments;
+- edit assignment role, dates, primary flag, source, and active state;
+- end assignments without deleting history;
+- view the coach's season-by-season assignment history.
+
+Coach assignment changes do not reset passwords, change account activation, change platform role, or grant Django staff/superuser access.
 
 ## Evaluations
 

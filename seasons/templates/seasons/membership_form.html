@@ -1,0 +1,20 @@
+{% extends "seasons/base.html" %}
+
+{% block seasons_title %}{% if membership %}Edit Player Membership{% else %}Create Player Membership{% endif %}{% endblock %}
+{% block seasons_subtitle %}Player membership changes preserve roster history.{% endblock %}
+
+{% block seasons_content %}
+<article class="pdp-card">
+    <form method="post" class="pdp-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="button button--primary" type="submit">{% if membership %}Save Membership{% else %}Create Membership{% endif %}</button>
+        {% if membership %}
+            <a class="button button--ghost" href="{% url 'seasons:membership-transfer' membership.id %}">Transfer or Add Team</a>
+            <a class="button button--ghost" href="{% url 'seasons:membership-end' membership.id %}">End Membership</a>
+        {% endif %}
+        <a class="button button--ghost" href="{% url 'seasons:membership-list' %}">Cancel</a>
+    </form>
+</article>
+{% endblock %}

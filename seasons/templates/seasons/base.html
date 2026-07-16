@@ -1,0 +1,19 @@
+{% extends "pdp/base.html" %}
+
+{% block pdp_title %}{% block seasons_title %}Season Operations{% endblock %}{% endblock %}
+{% block pdp_subtitle %}{% block seasons_subtitle %}Manage seasons, roster memberships, and coach assignments.{% endblock %}{% endblock %}
+
+{% block pdp_content %}
+<section class="pdp-grid pdp-grid--single">
+    <article class="pdp-card">
+        <h2>Season Operations</h2>
+        <div class="pdp-actions">
+            <a class="button button--ghost" href="{% url 'seasons:season-list' %}">Seasons</a>
+            <a class="button button--ghost" href="{% url 'seasons:team-list' %}">Teams</a>
+            <a class="button button--ghost" href="{% url 'seasons:membership-list' %}">Player Memberships</a>
+            <a class="button button--ghost" href="{% url 'seasons:coach-assignment-list' %}">Coach Assignments</a>
+        </div>
+    </article>
+    {% block seasons_content %}{% endblock %}
+</section>
+{% endblock %}
