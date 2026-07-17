@@ -33,6 +33,7 @@ body {
     color: var(--color-text);
     line-height: 1.6;
     font-family: inherit;
+    overflow-x: hidden;
 }
 
 .skip-link {
@@ -55,6 +56,7 @@ body {
 a {
     color: inherit;
     text-decoration: none;
+    overflow-wrap: anywhere;
 }
 
 a:hover,
@@ -74,6 +76,8 @@ a:focus {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     cursor: pointer;
+    min-height: 44px;
+    text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
     text-decoration: none;
 }
@@ -149,6 +153,7 @@ main {
     max-width: var(--max-width);
     margin: 0 auto;
     padding: 0 1.5rem;
+    min-width: 0;
 }
 
 .site-header {
@@ -160,6 +165,7 @@ main {
     max-width: var(--max-width);
     margin: 2rem auto 2.5rem;
     overflow: hidden;
+    width: calc(100% - 2rem);
 }
 
 .header-top {
@@ -399,6 +405,7 @@ main {
     border-radius: 28px;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
+    width: calc(100% - 2rem);
 }
 
 .hero-media {
@@ -519,6 +526,7 @@ main {
     margin: 0;
     line-height: 1.15;
     text-shadow: 0 18px 40px rgba(16, 42, 67, 0.42);
+    overflow-wrap: anywhere;
 }
 
 .hero-eyebrow {
@@ -2511,5 +2519,141 @@ table.tryout-table td:last-child {
     .draft-form__grid,
     .checkbox-grid ul {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    :root {
+        --section-spacing: 2.5rem;
+        --radius-lg: 20px;
+    }
+
+    main {
+        padding-bottom: 2.5rem;
+    }
+
+    .container,
+    .programs-sections,
+    .info-sections,
+    .tryout-section,
+    .contact-callout {
+        padding-inline: 1rem;
+    }
+
+    .site-header,
+    .hero {
+        border-radius: 20px;
+        margin: 0.5rem 1rem 1.5rem;
+        width: auto;
+    }
+
+    .header-top {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .logo img {
+        width: 88px;
+    }
+
+    .branding h2 {
+        font-size: 1.35rem;
+    }
+
+    .branding-highlights,
+    .social-links,
+    .hero-actions,
+    .schedule-cta,
+    .contact-actions,
+    .cta-banner-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .hero-media {
+        min-height: 520px;
+    }
+
+    .hero-content {
+        justify-content: flex-start;
+        padding: 1.25rem;
+    }
+
+    .home-hero,
+    .programs-hero,
+    .registration-hero {
+        padding-top: 1.25rem;
+    }
+
+    .hero-message,
+    .hero-message--compact {
+        max-width: 100%;
+    }
+
+    .hero-highlights li {
+        border-radius: 14px;
+    }
+
+    .button,
+    .hero-actions .button,
+    .schedule-cta .button,
+    .contact-actions .button,
+    .cta-banner-actions .button {
+        width: 100%;
+    }
+
+    .about-grid,
+    .expectations .container,
+    .info-card,
+    .programs-card,
+    .division-card,
+    .contact-card {
+        padding: 1.35rem;
+        border-radius: 18px;
+    }
+
+    .expectations-grid,
+    .programs-grid,
+    .info-grid,
+    .tryout-grid,
+    .division-grid,
+    .schedule-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .division-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .tryout-table {
+        min-width: 620px;
+    }
+}
+
+@media (max-width: 380px) {
+    .container,
+    .programs-sections,
+    .info-sections,
+    .tryout-section,
+    .contact-callout {
+        padding-inline: 0.75rem;
+    }
+
+    .site-header,
+    .hero {
+        border-radius: 16px;
+        margin-inline: 0.5rem;
+    }
+
+    .hero-content {
+        padding: 1rem;
+    }
+
+    .hero-eyebrow {
+        border-radius: 12px;
+        letter-spacing: 0.12em;
     }
 }

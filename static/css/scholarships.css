@@ -9,6 +9,7 @@
     max-width: var(--max-width);
     margin: 0 auto;
     padding: 0 1.5rem 1rem;
+    min-width: 0;
 }
 
 .scholarship-message-stack {
@@ -109,6 +110,8 @@
     padding: 1.65rem 1.75rem;
     border-radius: 28px;
     background: rgba(255, 255, 255, 0.94);
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .scholarship-panel--feature {
@@ -272,6 +275,7 @@
 .scholarship-filter-bar input,
 .scholarship-filter-bar select {
     width: 100%;
+    min-height: 44px;
     padding: 0.9rem 1rem;
     border-radius: 16px;
     border: 1px solid rgba(16, 42, 67, 0.14);
@@ -360,11 +364,15 @@
 
 .table-shell {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    border-radius: 18px;
 }
 
 .scholarship-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 640px;
 }
 
 .scholarship-table th,
@@ -373,6 +381,7 @@
     border-bottom: 1px solid rgba(16, 42, 67, 0.08);
     text-align: left;
     vertical-align: top;
+    overflow-wrap: anywhere;
 }
 
 .scholarship-table th {
@@ -452,5 +461,35 @@
     .download-list li {
         align-items: start;
         flex-direction: column;
+    }
+
+    .scholarship-actions,
+    .scholarship-actions--split {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .scholarship-actions .button,
+    .scholarship-form .button,
+    .scholarship-filter-bar .button {
+        width: 100%;
+    }
+
+    .scholarship-table {
+        min-width: 560px;
+    }
+}
+
+@media (max-width: 380px) {
+    .scholarship-app {
+        padding-inline: 0.75rem;
+    }
+
+    .scholarship-hero__content,
+    .scholarship-cycle-card,
+    .scholarship-panel,
+    .scholarship-dashboard-hero {
+        padding: 1rem;
+        border-radius: 18px;
     }
 }

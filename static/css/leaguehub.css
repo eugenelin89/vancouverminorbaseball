@@ -4,6 +4,7 @@
     gap: 1rem;
     grid-template-columns: minmax(0, 1fr) auto;
     margin-bottom: 1.5rem;
+    min-width: 0;
 }
 
 .leaguehub-toolbar__links,
@@ -43,6 +44,7 @@
     color: #09172f;
     font-family: "Source Sans 3", sans-serif;
     min-width: 220px;
+    min-height: 44px;
     padding: 0.7rem 2.75rem 0.7rem 0.95rem;
 }
 
@@ -120,6 +122,7 @@
     box-shadow: 0 28px 56px rgba(7, 20, 45, 0.2);
     color: #f7f2e8;
     padding: 1.75rem;
+    overflow-wrap: anywhere;
 }
 
 .leaguehub-scoreboard-hero {
@@ -243,6 +246,8 @@
     display: block;
     padding: 1.15rem 1.2rem;
     text-decoration: none;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .leaguehub-game-card--awaiting {
@@ -342,5 +347,33 @@
 
     .leaguehub-scoreboard__status {
         justify-content: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .leaguehub-toolbar__links,
+    .leaguehub-toolbar__selectors,
+    .leaguehub-season-card__actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .leaguehub-select,
+    .leaguehub-toolbar__selectors .button,
+    .leaguehub-season-card__actions .button {
+        width: 100%;
+    }
+
+    .leaguehub-scoreboard-hero,
+    .leaguehub-scoreboard {
+        padding: 1.15rem;
+        border-radius: 20px;
+    }
+
+    .leaguehub-scoreboard__row,
+    .leaguehub-game-card__team-row,
+    .leaguehub-game-card__teams {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }
