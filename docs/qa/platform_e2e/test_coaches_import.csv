@@ -1,0 +1,3 @@
+first_name,last_name,email,username,team,division,is_active,notes,source_id,season,assignment_role,assignment_start_date,assignment_end_date,assignment_source_id
+Coach,QA One,REPLACE_WITH_YOUR_EMAIL+qa-coach1@example.com,coach.qa.one,TEST - Alpha,13U House,true,QA imported coach for Alpha,qa-coach-001,TEST - Platform QA 2026,head_coach,2026-07-01,,qa-assignment-coach-001
+Coach,QA Two,REPLACE_WITH_YOUR_EMAIL+qa-coach2@example.com,coach.qa.two,TEST - Beta,13U House,true,QA imported coach for Beta,qa-coach-002,TEST - Platform QA 2026,assistant_coach,2026-07-01,,qa-assignment-coach-002
