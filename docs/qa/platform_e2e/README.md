@@ -74,6 +74,103 @@ Production smoke test
 
 Do not import optional negative fixtures during a normal production smoke test. Use them only when deliberately testing collision or inactive-account behavior.
 
+## Recommended Long-Term QA Strategy
+
+Maintain one permanent QA environment instead of recreating fixtures for every release.
+
+Recommended permanent season:
+
+```text
+TEST - Platform QA
+```
+
+The current fixture season remains:
+
+```text
+TEST - Platform QA 2026
+```
+
+Either naming style is acceptable as long as it is clearly isolated from real seasons.
+
+Recommended evaluation-cycle naming:
+
+```text
+TEST - Smoke YYYY-MM-DD
+```
+
+or:
+
+```text
+TEST - Release 1.8.2
+```
+
+Long-term practice:
+
+- keep QA players permanent;
+- keep QA coaches permanent;
+- keep QA teams permanent;
+- keep QA accounts permanent but deactivate them when not needed;
+- keep historical QA evaluations unless intentionally resetting the QA environment;
+- create new evaluation cycles over time when a clean smoke-test run is useful;
+- reuse existing evaluation cycles by reopening and resubmitting records when repeatability is more important than a clean cycle.
+
+This keeps repeated production deployments fast and minimizes cleanup.
+
+## Evaluation Cycle Guidance
+
+Full regression:
+
+- create or reuse `TEST - Cycle A`;
+- create or reuse `TEST - Cycle B`;
+- verify that identical evaluator/player/perspective combinations can be tested independently in each cycle.
+
+Smoke tests support either approach:
+
+- create a new smoke-test cycle such as `TEST - Smoke 2026-07-23`; or
+- reuse an existing smoke-test cycle and reopen/resubmit existing evaluations.
+
+The application does not require one approach over the other. Choose based on whether the release needs clean cycle-specific counts or repeatable low-maintenance checks.
+
+Current uniqueness behavior:
+
+```text
+Evaluator + Player + Observation Type + Perspective + Evaluation Cycle
+```
+
+Self-evaluations also enforce:
+
+```text
+Player + Evaluation Cycle
+```
+
+This means repeated smoke tests in the same cycle should reuse/reopen existing evaluations rather than trying to create new duplicate evaluations.
+
+## QA Environment Lifecycle
+
+```text
+Build once
+-> use for many releases
+-> archive when obsolete
+-> create a new QA environment only when the data model or product workflow changes significantly
+```
+
+When future platform features are added, extend this QA package instead of replacing it.
+
+Examples:
+
+- new evaluator roles;
+- new observation types;
+- new dashboards;
+- new reports;
+- new permissions;
+- new importers.
+
+Each future feature should receive:
+
+- one smoke-test item;
+- one release-blocking test if appropriate;
+- one full regression section if needed.
+
 ## Important Import Notes
 
 - Player import and coach import use different CSV schemas.

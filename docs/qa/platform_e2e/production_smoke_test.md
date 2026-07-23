@@ -4,6 +4,28 @@ Use this checklist after deployment. It is intentionally shorter than the full E
 
 Do not use optional negative fixtures during the smoke test.
 
+## Smoke Test Mode
+
+Choose one mode before starting.
+
+### Mode A: First Deployment
+
+Expected behavior:
+
+- imports create new player, coach, account, roster membership, and assignment records;
+- evaluations create new observation records;
+- temporary passwords are captured only where newly created accounts require them.
+
+### Mode B: Repeat Deployment
+
+Expected behavior:
+
+- imports reuse existing players, coaches, accounts, roster memberships, and assignments;
+- account provisioning reuses or reports already-linked player accounts;
+- evaluations reuse existing drafts or submitted records;
+- submitted evaluations are reopened, edited, and resubmitted where appropriate;
+- no duplicate records are created.
+
 ## Run Information
 
 ```text
@@ -11,6 +33,9 @@ Tester:
 Date:
 Environment:
 Commit:
+Evaluation Cycle:
+Smoke Test Mode:
+Expected Result:
 Overall result:
 Critical defects:
 Non-critical defects:
@@ -31,33 +56,79 @@ Non-critical defects:
 - [ ] Open Operations Home `/analytics/`.
 - [ ] Confirm Imports, User Accounts, Seasons, Evaluations, and Review links work.
 - [ ] Import or re-import `test_players_import.csv`.
-- [ ] Verify no duplicate players, player accounts, self links, or active roster memberships are created.
 - [ ] Import or re-import `test_coaches_import.csv`.
-- [ ] Verify no duplicate coach accounts or active coach assignments are created.
 - [ ] Create or verify one manual account from `manual_test_records.md`.
+
+First deployment:
+
+- [ ] Player import creates the expected QA players.
+- [ ] Player import creates active roster memberships.
+- [ ] Player account provisioning creates or links player accounts.
+- [ ] Coach import creates the expected QA coaches.
+- [ ] Coach import creates coach assignments.
+- [ ] Manual account creation creates the selected manual QA account.
+
+Repeat deployment:
+
+- [ ] Player import reuses or updates existing QA players.
+- [ ] Player import does not create duplicate player accounts, self links, or active roster memberships.
+- [ ] Coach import reuses existing coach accounts.
+- [ ] Coach import does not create duplicate active coach assignments.
+- [ ] Manual account already exists or is verified without recreating it.
 
 ## Coach Workflow
 
 - [ ] Sign in as imported coach `coach.qa.one`.
-- [ ] Create, save, reopen, and submit one coach evaluation.
 - [ ] Sign in as manual coach `coach.qa.manual`.
-- [ ] Submit one evaluation of an imported player.
+
+First deployment:
+
+- [ ] Imported coach creates, saves, reopens, and submits one coach evaluation.
+- [ ] Manual coach submits one evaluation of an imported player.
+
+Repeat deployment:
+
+- [ ] If the imported coach evaluation is already submitted, reopen it from staff review.
+- [ ] Edit one answer as the original imported coach.
+- [ ] Resubmit the same imported-coach evaluation.
+- [ ] If the manual coach evaluation is already submitted, reopen it from staff review.
+- [ ] Edit one answer as the original manual coach.
+- [ ] Resubmit the same manual-coach evaluation.
+- [ ] Confirm both workflows reused existing observation records and created no duplicates.
 
 ## Player Workflow
 
 - [ ] Sign in as imported player `player.qa.one`.
-- [ ] Submit one self-evaluation.
-- [ ] Submit one peer evaluation of a manual player.
 - [ ] Sign in as manual player `player.qa.manual.one`.
-- [ ] Submit one self-evaluation or one peer evaluation of an imported player.
+
+First deployment:
+
+- [ ] Imported player submits one self-evaluation.
+- [ ] Imported player submits one peer evaluation of a manual player.
+- [ ] Manual player submits one self-evaluation or one peer evaluation of an imported player.
+
+Repeat deployment:
+
+- [ ] If the imported player's self-evaluation already exists, reopen it from staff review.
+- [ ] Edit one answer as the imported player.
+- [ ] Resubmit the same self-evaluation.
+- [ ] If the imported player's peer evaluation already exists, reopen it from staff review.
+- [ ] Edit one answer as the imported player.
+- [ ] Resubmit the same peer evaluation.
+- [ ] If the manual player's evaluation already exists, reopen it from staff review.
+- [ ] Edit one answer as the manual player.
+- [ ] Resubmit the same evaluation.
+- [ ] Confirm no duplicate self or peer evaluation records were created.
 
 ## Review Workflow
 
 - [ ] Sign back in as administrator or Django staff.
 - [ ] Confirm all smoke-test evaluations appear in `/analytics/evaluation-review/`.
-- [ ] Reopen one evaluation from `/analytics/observations/review/`.
+- [ ] Record the observation IDs for each smoke-test evaluation.
+- [ ] Reopen one evaluation from `/analytics/observations/review/` if no repeat-mode reopen was already performed.
 - [ ] Resubmit it as the original evaluator.
-- [ ] Confirm no duplicate evaluation is created.
+- [ ] Confirm the same observation ID was reused.
+- [ ] Confirm no duplicate evaluation was created for the same evaluator, player, perspective, and cycle.
 - [ ] Confirm the player timeline includes the submitted evaluations.
 - [ ] Confirm player comparison includes submitted evaluation scores.
 - [ ] Confirm key Command Center metrics changed by the expected amount.
