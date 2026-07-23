@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load analytics_account_nav %}
 
 {% block extra_head %}
     {{ block.super }}
@@ -13,24 +14,34 @@
     <section class="pdp-app">
         <header class="pdp-hero">
             <div>
-                <p class="pdp-kicker">Player Development Platform</p>
-                <h1>{% block pdp_title %}Premium athlete growth system{% endblock %}</h1>
-                <p class="pdp-subtitle">{% block pdp_subtitle %}Track progress, guide development, and keep the experience motivating for players and families.{% endblock %}</p>
+                <p class="pdp-kicker">VCB Platform</p>
+                <h1>{% block pdp_title %}Baseball operations{% endblock %}</h1>
+                <p class="pdp-subtitle">{% block pdp_subtitle %}Manage accounts, seasons, players, evaluations, and baseball operations workflows.{% endblock %}</p>
             </div>
             <nav class="pdp-nav">
                 {% if request.user.is_authenticated %}
                     <a href="/">Site Home</a>
-                    <a href="{% url 'leaguehub:index' %}">League Hub</a>
-                    <a href="{% url 'pdp:home' %}">Home</a>
-                    <a href="{% url 'pdp:coach-dashboard' %}">Coach</a>
-                    <a href="{% url 'pdp:parent-dashboard' %}">Parent</a>
-                    {% if request.user.is_staff or request.user.is_superuser %}
-                        <a href="{% url 'seasons:season-list' %}">Seasons</a>
+                    {% analytics_can_submit_evaluation request.user as can_submit_evaluations %}
+                    {% if can_submit_evaluations %}
+                        <a href="{% url 'analytics:evaluation-list' %}">Evaluations</a>
                     {% endif %}
-                    <a href="{% url 'pdp:import-workbench' %}">Imports</a>
-                    <a href="{% url 'pdp:drill-library' %}">Drills</a>
-                    <a href="{% url 'pdp:password-change' %}">Password</a>
-                    <a href="{% url 'pdp:logout' %}">Log out</a>
+                    {% analytics_can_view_my_evaluations request.user as can_view_my_evaluations %}
+                    {% if can_view_my_evaluations %}
+                        <a href="{% url 'analytics:my-evaluations' %}">My Evaluations</a>
+                    {% endif %}
+                    {% analytics_can_review_evaluations request.user as can_review_evaluations %}
+                    {% if can_review_evaluations %}
+                        <a href="{% url 'analytics:evaluation-review-list' %}">Review Evaluations</a>
+                    {% endif %}
+                    {% if request.user.is_staff or request.user.is_superuser %}
+                        <a href="{% url 'analytics:command-center' %}">Operations Home</a>
+                        <a href="{% url 'accounts:operations-dashboard' %}">User Accounts</a>
+                        <a href="{% url 'seasons:season-list' %}">Seasons</a>
+                        <a href="{% url 'analytics:import-list' %}">Imports</a>
+                    {% endif %}
+                    <a href="{% url 'accounts:profile' %}">Profile</a>
+                    <a href="{% url 'accounts:password-change' %}">Password</a>
+                    <a href="{% url 'accounts:logout' %}">Log out</a>
                 {% endif %}
             </nav>
         </header>

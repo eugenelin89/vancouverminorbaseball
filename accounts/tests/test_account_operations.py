@@ -1342,7 +1342,10 @@ class AccountOperationsViewTests(TestCase):
         response = self.client.get(reverse("accounts:profile"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, reverse("accounts:operations-dashboard"))
+        self.assertNotContains(
+            response, f'href="{reverse("accounts:operations-dashboard")}"'
+        )
+        self.assertNotContains(response, "Account Operations")
 
     def test_account_create_requires_staff(self):
         self.client.force_login(self.regular)
