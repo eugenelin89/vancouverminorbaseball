@@ -6,6 +6,8 @@ Do not use optional negative fixtures during the smoke test.
 
 ## Smoke Test Mode
 
+Requirements covered: `OPS-001`
+
 Choose one mode before starting.
 
 ### Mode A: First Deployment
@@ -43,6 +45,8 @@ Non-critical defects:
 
 ## Setup
 
+Requirements covered: `OPS-001`, `OPS-002`
+
 - [ ] Confirm the deployed commit.
 - [ ] Confirm a recent database backup exists.
 - [ ] Confirm QA season `TEST - Platform QA 2026` is active for testing.
@@ -51,6 +55,8 @@ Non-critical defects:
 - [ ] Activate only the QA accounts required for this smoke test.
 
 ## Admin Workflow
+
+Requirements covered: `IMP-001`, `IMP-002`, `IMP-003`, `IMP-004`, `ACC-001`, `ACC-002`, `ACC-003`, `ACC-004`, `ACC-005`, `ACC-006`, `ACC-007`, `ASN-001`, `ASN-002`, `NAV-001`
 
 - [ ] Sign in as an administrator or Django staff user.
 - [ ] Open Operations Home `/analytics/`.
@@ -78,6 +84,8 @@ Repeat deployment:
 
 ## Coach Workflow
 
+Requirements covered: `EVL-001`, `EVL-004`, `EVL-005`, `EVL-007`, `REV-002`, `REV-003`
+
 - [ ] Sign in as imported coach `coach.qa.one`.
 - [ ] Sign in as manual coach `coach.qa.manual`.
 
@@ -97,6 +105,8 @@ Repeat deployment:
 - [ ] Confirm both workflows reused existing observation records and created no duplicates.
 
 ## Player Workflow
+
+Requirements covered: `EVL-002`, `EVL-003`, `EVL-004`, `EVL-005`, `EVL-007`, `SEC-003`, `REV-003`
 
 - [ ] Sign in as imported player `player.qa.one`.
 - [ ] Sign in as manual player `player.qa.manual.one`.
@@ -122,6 +132,8 @@ Repeat deployment:
 
 ## Review Workflow
 
+Requirements covered: `REV-001`, `REV-002`, `REV-003`, `EVL-005`, `ANA-001`, `ANA-002`, `ANA-003`, `ANA-004`, `ANA-005`
+
 - [ ] Sign back in as administrator or Django staff.
 - [ ] Confirm all smoke-test evaluations appear in `/analytics/evaluation-review/`.
 - [ ] Record the observation IDs for each smoke-test evaluation.
@@ -135,6 +147,8 @@ Repeat deployment:
 
 ## Security Workflow
 
+Requirements covered: `SEC-001`, `SEC-002`, `SEC-003`, `SEC-004`
+
 - [ ] Coach receives 403 from `/analytics/imports/`.
 - [ ] Coach receives 403 from `/accounts/`.
 - [ ] Player receives 403 from `/analytics/evaluation-review/`.
@@ -142,6 +156,8 @@ Repeat deployment:
 - [ ] Anonymous user is redirected to login from `/analytics/`.
 
 ## Cleanup
+
+Requirements covered: `OPS-003`
 
 - [ ] Deactivate QA accounts not needed for continued testing.
 - [ ] Archive or deactivate the QA season when appropriate.

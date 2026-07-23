@@ -19,18 +19,18 @@ Production smoke test
 
 These tests must pass before a production release is accepted:
 
-- [ ] player import
-- [ ] player account provisioning
-- [ ] coach import
-- [ ] manual account creation
-- [ ] coach evaluation submission
-- [ ] player self-evaluation submission
-- [ ] player peer-evaluation submission
-- [ ] evaluation review
-- [ ] direct URL permissions
-- [ ] forced password change
-- [ ] no duplicate submissions after refresh or repeat submit
-- [ ] basic Analytics Command Center integrity
+- [ ] player import (`IMP-001`, `IMP-003`)
+- [ ] player account provisioning (`ACC-001`)
+- [ ] coach import (`IMP-002`, `IMP-003`)
+- [ ] manual account creation (`ACC-007`)
+- [ ] coach evaluation submission (`EVL-001`)
+- [ ] player self-evaluation submission (`EVL-002`)
+- [ ] player peer-evaluation submission (`EVL-003`)
+- [ ] evaluation review (`REV-001`, `REV-003`)
+- [ ] direct URL permissions (`SEC-001` to `SEC-004`)
+- [ ] forced password change (`ACC-006`)
+- [ ] no duplicate submissions after refresh or repeat submit (`EVL-005`)
+- [ ] basic Analytics Command Center integrity (`ANA-001`)
 
 ### Standard Regression
 
@@ -55,6 +55,29 @@ These tests are useful before major pilots, after import/account changes, or whe
 - [ ] multi-tab stale edits
 - [ ] case and whitespace normalization
 - [ ] conflicting cross-role emails
+
+## Risk Priority
+
+Critical and High tests should be prioritized when release time is limited. Medium and Low tests should not be permanently skipped; they may be deferred based on release scope. Release-blocking classification and risk classification are related but not identical.
+
+| Area | Requirement IDs | Risk |
+| --- | --- | --- |
+| Import data creation and idempotency | `IMP-001` to `IMP-003` | Critical |
+| Import preview and conflict reporting | `IMP-004` | High |
+| Account provisioning, activation, and passwords | `ACC-001`, `ACC-002`, `ACC-005`, `ACC-006` | Critical |
+| Username and email handling | `ACC-003`, `ACC-004` | High |
+| Manual account creation | `ACC-007` | High |
+| Active assignments and memberships | `ASN-001`, `ASN-002` | Critical |
+| Historical assignment preservation | `ASN-003` | High |
+| Core evaluation workflows | `EVL-001` to `EVL-006` | Critical |
+| Imported/manual workflow consistency | `EVL-007` | High |
+| Review and attribution | `REV-001` to `REV-003` | High |
+| Permissions | `SEC-001` to `SEC-004` | Critical |
+| Command Center and reporting | `ANA-001` to `ANA-005` | High |
+| Navigation and mobile | `NAV-001`, `NAV-002` | Medium |
+| Browser refresh and back-button behavior | `NAV-003` | Medium |
+| Multi-tab stale edits | `NAV-004` | Medium |
+| QA retention and cleanup | `OPS-002`, `OPS-003` | Medium |
 
 ## QA Fixture Summary
 
@@ -123,6 +146,10 @@ Coach import:
 
 ## A. Initial Setup
 
+Requirements covered: `OPS-001`, `OPS-002`, `NAV-001`
+
+Automation readiness: Manual
+
 Tester:
 
 ```text
@@ -159,6 +186,10 @@ Notes:
 ```
 
 ## B. Player Import
+
+Requirements covered: `IMP-001`, `IMP-003`, `IMP-004`, `ACC-001`, `ACC-003`, `ACC-004`, `ACC-005`, `ACC-006`, `ASN-001`
+
+Automation readiness: Semi-automatable
 
 Path:
 
@@ -217,6 +248,10 @@ Notes:
 
 ## C. Coach Import
 
+Requirements covered: `IMP-002`, `IMP-003`, `IMP-004`, `ACC-002`, `ACC-003`, `ACC-004`, `ACC-005`, `ACC-006`, `ASN-002`
+
+Automation readiness: Semi-automatable
+
 Path:
 
 ```text
@@ -269,6 +304,10 @@ Notes:
 
 ## D. Manual Creation
 
+Requirements covered: `ACC-007`, `ACC-005`, `ACC-006`, `ASN-001`, `ASN-002`
+
+Automation readiness: Semi-automatable
+
 Use `manual_test_records.md`.
 
 Steps:
@@ -295,6 +334,10 @@ Notes:
 ```
 
 ## E. Administrator Navigation And Permissions
+
+Requirements covered: `NAV-001`, `SEC-001`, `SEC-002`
+
+Automation readiness: Semi-automatable
 
 As a staff or superuser account, verify visible navigation:
 
@@ -323,6 +366,10 @@ Notes:
 ```
 
 ## F. Coach Evaluation Workflow
+
+Requirements covered: `EVL-001`, `EVL-004`, `REV-003`, `SEC-003`
+
+Automation readiness: Semi-automatable
 
 Test all three coaches.
 
@@ -369,6 +416,10 @@ Notes:
 
 ## G. Player Self-Evaluations
 
+Requirements covered: `EVL-002`, `EVL-004`, `SEC-003`
+
+Automation readiness: Semi-automatable
+
 Minimum submissions:
 
 - Player QA One self-evaluates.
@@ -405,6 +456,10 @@ Notes:
 
 ## H. Player Peer Evaluations
 
+Requirements covered: `EVL-003`, `EVL-004`, `SEC-003`, `REV-003`
+
+Automation readiness: Semi-automatable
+
 Minimum submissions:
 
 - Player QA One evaluates Player QA Two.
@@ -438,6 +493,10 @@ Notes:
 ```
 
 ## I. Review Workflow
+
+Requirements covered: `REV-001`, `REV-002`, `REV-003`, `ANA-005`, `EVL-005`
+
+Automation readiness: Semi-automatable
 
 As an administrator, staff user, or coach reviewer:
 
@@ -487,6 +546,10 @@ Notes:
 
 ## J. Permission Testing
 
+Requirements covered: `SEC-001`, `SEC-002`, `SEC-003`, `SEC-004`
+
+Automation readiness: Fully automatable
+
 Direct URL access must be tested. Navigation hiding is not enough.
 
 As a coach, directly attempt:
@@ -519,6 +582,10 @@ Notes:
 ```
 
 ## K. Account Activation And Password Workflow
+
+Requirements covered: `ACC-005`, `ACC-006`, `SEC-004`
+
+Automation readiness: Semi-automatable
 
 Test:
 
@@ -554,6 +621,10 @@ Notes:
 
 ## L. Analytics And Timeline
 
+Requirements covered: `ANA-001`, `ANA-002`, `ANA-003`, `ANA-004`, `ANA-005`
+
+Automation readiness: Semi-automatable
+
 As staff:
 
 - [ ] Open `/analytics/players/`.
@@ -575,6 +646,10 @@ Notes:
 ```
 
 ## M. Mobile Testing
+
+Requirements covered: `NAV-002`
+
+Automation readiness: Manual
 
 At approximately 390-pixel width, test:
 
@@ -599,6 +674,10 @@ Notes:
 
 ## N. Cleanup
 
+Requirements covered: `OPS-003`
+
+Automation readiness: Manual
+
 Use `cleanup_checklist.md`.
 
 - [ ] Record defects and screenshots.
@@ -619,6 +698,10 @@ Notes:
 ## Cross-Workflow Consistency Tests
 
 Level: Standard regression.
+
+Requirements covered: `EVL-007`, `REV-003`
+
+Automation readiness: Semi-automatable
 
 Use these tests to verify that imported and manually created accounts behave the same in evaluation workflows.
 
@@ -661,6 +744,10 @@ Notes:
 ## Username Collision Tests
 
 Level: Extended edge cases.
+
+Requirements covered: `ACC-003`, `IMP-004`
+
+Automation readiness: Fully automatable
 
 Actual behavior discovered from code:
 
@@ -712,6 +799,10 @@ Notes:
 ## Email Reuse and Conflict Tests
 
 Level: Extended edge cases.
+
+Requirements covered: `ACC-004`, `IMP-004`
+
+Automation readiness: Fully automatable
 
 Actual behavior discovered from code:
 
@@ -767,6 +858,10 @@ Notes:
 
 Level: Standard regression.
 
+Requirements covered: `ACC-005`, `ACC-006`, `ASN-003`
+
+Automation readiness: Fully automatable
+
 Use optional fixture:
 
 ```text
@@ -808,6 +903,10 @@ Notes:
 ## Evaluation Cycle Isolation Tests
 
 Level: Standard regression.
+
+Requirements covered: `EVL-006`, `ANA-005`
+
+Automation readiness: Fully automatable
 
 Use two QA evaluation cycles where supported:
 
@@ -854,6 +953,10 @@ Notes:
 
 Level: Release-blocking for basic duplicate protection; extended for multi-tab concurrency.
 
+Requirements covered: `EVL-005`, `REV-002`, `NAV-003`, `NAV-004`
+
+Automation readiness: Semi-automatable
+
 Actual behavior discovered from code:
 
 - Starting the same evaluator/player/perspective/cycle evaluation reuses the existing draft or redirects to the submitted detail.
@@ -895,6 +998,10 @@ Notes:
 ## Browser State and Navigation Tests
 
 Level: Extended edge cases.
+
+Requirements covered: `NAV-003`, `NAV-004`, `EVL-005`
+
+Automation readiness: Semi-automatable
 
 Run for coach, self, and peer evaluations.
 
@@ -944,6 +1051,10 @@ Notes:
 ## Archive and Deactivation Behavior Tests
 
 Level: Standard regression.
+
+Requirements covered: `ACC-005`, `ASN-003`, `OPS-002`, `OPS-003`
+
+Automation readiness: Manual
 
 Do not delete records during the normal test run.
 
@@ -1000,6 +1111,10 @@ Notes:
 ## Expanded Analytics Command Center and Reporting Verification
 
 Level: Release-blocking for basic dashboard integrity; standard regression for detailed counts.
+
+Requirements covered: `ANA-001`, `ANA-002`, `ANA-003`, `ANA-004`, `ANA-005`, `EVL-005`
+
+Automation readiness: Semi-automatable
 
 Current implemented outputs include:
 

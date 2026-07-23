@@ -24,6 +24,33 @@ Recommended QA teams:
 - `production_smoke_test.md`: concise post-deployment smoke-test checklist.
 - `manual_test_records.md`: records intentionally left for manual creation.
 - `cleanup_checklist.md`: safe cleanup checklist after testing.
+- `feature_traceability.md`: stable requirement IDs, risk levels, coverage, and automation-readiness matrix.
+- `release_pipeline.md`: release QA sequence and change-impact guidance.
+- `CHANGELOG.md`: QA package history.
+
+## Traceability And Release Planning
+
+Use `feature_traceability.md` when a release, defect, or code review needs a stable reference to tested behavior.
+
+- Requirement IDs are stable references for platform capabilities.
+- The traceability matrix shows where each capability is tested.
+- Risk levels help prioritize when release time is limited.
+- Automation readiness identifies where future unit, integration, or browser automation can replace manual checks.
+- `release_pipeline.md` connects development changes to production QA scope.
+
+## Maintaining Traceability
+
+When a feature is added or materially changed:
+
+1. Create or reuse a stable requirement ID.
+2. Update the traceability matrix.
+3. Add or update the appropriate smoke, release-blocking, regression, or edge test.
+4. Update risk only if the impact changed.
+5. Update automation readiness when automated coverage is added.
+6. Add a changelog entry.
+7. Update release-pipeline impact mapping if a new capability area is introduced.
+
+Do not renumber existing IDs merely to improve ordering. Deprecated requirements should remain listed and be marked deprecated rather than silently removed.
 
 ## Current UI Paths
 
