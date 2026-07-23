@@ -18,6 +18,10 @@ Recommended QA teams:
 - `platform_e2e_test_script.md`: step-by-step production QA script.
 - `test_players_import.csv`: four imported player records.
 - `test_coaches_import.csv`: two imported coach records.
+- `test_coaches_inactive_import.csv`: optional inactive-coach lifecycle fixture.
+- `test_coach_account_collision_cases.csv`: optional negative-test fixture for coach account collision behavior.
+- `negative_test_fixtures.md`: purpose, prerequisites, expected outcomes, and cleanup for optional negative fixtures.
+- `production_smoke_test.md`: concise post-deployment smoke-test checklist.
 - `manual_test_records.md`: records intentionally left for manual creation.
 - `cleanup_checklist.md`: safe cleanup checklist after testing.
 
@@ -46,12 +50,29 @@ Recommended QA teams:
 1. Confirm a recent database backup exists.
 2. Create or verify the QA season `TEST - Platform QA 2026`.
 3. Create or verify the QA teams `TEST - Alpha` and `TEST - Beta`.
-4. Replace every `REPLACE_WITH_YOUR_EMAIL+...@example.com` placeholder in both CSV files with controlled test inbox aliases before importing.
+4. Replace every `REPLACE_WITH_YOUR_EMAIL+...@example.com` placeholder in the CSV files with controlled test inbox aliases before importing.
 5. Import `test_players_import.csv` from `/analytics/imports/new/`.
 6. Import `test_coaches_import.csv` from `/accounts/imports/coaches/new/`.
 7. Manually create the records listed in `manual_test_records.md`.
 8. Follow `platform_e2e_test_script.md`.
 9. After testing, follow `cleanup_checklist.md`.
+
+## Test Levels
+
+Use the package in this order:
+
+```text
+Production smoke test
+-> release-blocking E2E tests
+-> standard regression
+-> extended edge cases
+```
+
+- **Release-blocking**: imports, account provisioning, coach evaluation, self-evaluation, peer evaluation, review, direct URL permissions, password change, duplicate-submission protection, and basic dashboard integrity.
+- **Standard regression**: imported/manual cross-workflows, cycle isolation, inactive-account lifecycle, archive behavior, reporting filters, and mobile layout.
+- **Extended edge cases**: collision handling, multi-tab stale edits, browser back/forward behavior, case and whitespace normalization, and conflicting cross-role emails.
+
+Do not import optional negative fixtures during a normal production smoke test. Use them only when deliberately testing collision or inactive-account behavior.
 
 ## Important Import Notes
 
@@ -65,6 +86,9 @@ Recommended QA teams:
 - Imported coaches do not receive Django staff or superuser access.
 - Coach import creates or updates season teams and coach assignments.
 - Player import creates or updates season teams and player roster memberships.
+- Generated usernames use `firstname.lastname` and suffix with `2`, `3`, and so on when the generated base already exists.
+- Explicit usernames are normalized and rejected when already used by a different account.
+- Emails are normalized by trimming whitespace and comparing case-insensitively.
 
 ## Placeholder Email Rule
 

@@ -1,0 +1,2 @@
+first_name,last_name,email,username,team,division,is_active,notes,source_id,season,assignment_role,assignment_start_date,assignment_end_date,assignment_source_id
+Coach,QA Inactive,REPLACE_WITH_YOUR_EMAIL+qa-coach-inactive@example.com,coach.qa.inactive,TEST - Alpha,13U House,false,QA inactive coach lifecycle test,qa-coach-inactive-001,TEST - Platform QA 2026,evaluator,2026-07-01,,qa-assignment-coach-inactive-001

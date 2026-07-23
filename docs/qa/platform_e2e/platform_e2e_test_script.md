@@ -4,6 +4,58 @@ Use this script to test account provisioning, player imports, coach imports, sea
 
 Do not use real personal data. Replace all placeholder email addresses before importing.
 
+## Test Classification
+
+Run tests in this order:
+
+```text
+Production smoke test
+-> release-blocking E2E tests
+-> standard regression
+-> extended edge cases
+```
+
+### Release-Blocking
+
+These tests must pass before a production release is accepted:
+
+- [ ] player import
+- [ ] player account provisioning
+- [ ] coach import
+- [ ] manual account creation
+- [ ] coach evaluation submission
+- [ ] player self-evaluation submission
+- [ ] player peer-evaluation submission
+- [ ] evaluation review
+- [ ] direct URL permissions
+- [ ] forced password change
+- [ ] no duplicate submissions after refresh or repeat submit
+- [ ] basic Analytics Command Center integrity
+
+### Standard Regression
+
+These tests should run for a planned release or when related code changes:
+
+- [ ] imported/manual cross-workflow consistency
+- [ ] evaluation-cycle isolation
+- [ ] inactive-account lifecycle
+- [ ] archive and deactivation behavior
+- [ ] reporting filters
+- [ ] player timeline
+- [ ] player comparison
+- [ ] mobile layout
+
+### Extended Edge Cases
+
+These tests are useful before major pilots, after import/account changes, or when investigating defects:
+
+- [ ] username collision handling
+- [ ] email reuse and cross-role conflict handling
+- [ ] browser back/forward behavior
+- [ ] multi-tab stale edits
+- [ ] case and whitespace normalization
+- [ ] conflicting cross-role emails
+
 ## QA Fixture Summary
 
 QA season:
@@ -556,6 +608,459 @@ Use `cleanup_checklist.md`.
 - [ ] Hide QA teams from normal selectors where supported.
 - [ ] Do not delete linked records until cascade behavior is understood.
 - [ ] Retain the QA environment for repeat smoke tests if appropriate.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Cross-Workflow Consistency Tests
+
+Level: Standard regression.
+
+Use these tests to verify that imported and manually created accounts behave the same in evaluation workflows.
+
+| Combination | Example | Tested | Result |
+| --- | --- | --- | --- |
+| Imported coach evaluates imported player | Coach QA One evaluates Player QA One | [ ] |  |
+| Imported coach evaluates manual player | Coach QA One evaluates Player QA Manual One | [ ] |  |
+| Manual coach evaluates imported player | Coach QA Manual evaluates Player QA Two | [ ] |  |
+| Manual coach evaluates manual player | Coach QA Manual evaluates Player QA Manual One | [ ] |  |
+| Imported player evaluates imported player | Player QA One evaluates Player QA Two | [ ] |  |
+| Imported player evaluates manual player | Player QA One evaluates Player QA Manual One | [ ] |  |
+| Manual player evaluates imported player | Player QA Manual One evaluates Player QA Two | [ ] |  |
+| Manual player evaluates manual player | Player QA Manual One evaluates Player QA Manual Two | [ ] |  |
+
+For each combination:
+
+- [ ] Start an evaluation.
+- [ ] Save as draft.
+- [ ] Leave the page.
+- [ ] Reopen the draft.
+- [ ] Submit.
+- [ ] If reopened by staff, resubmit as the original evaluator.
+- [ ] Confirm evaluator account is recognized correctly.
+- [ ] Confirm evaluator role snapshot is correct.
+- [ ] Confirm Self, Peer, or Coach classification is correct.
+- [ ] Confirm subject player is correct.
+- [ ] Confirm season snapshot is `TEST - Platform QA 2026`.
+- [ ] Confirm team and division snapshots match the target player's QA roster membership.
+- [ ] Confirm evaluation-cycle snapshot is correct.
+- [ ] Confirm imported and manual accounts have equivalent practical permissions.
+- [ ] Confirm no behavior difference is caused only by provisioning method.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Username Collision Tests
+
+Level: Extended edge cases.
+
+Actual behavior discovered from code:
+
+- Generated usernames use `firstname.lastname`.
+- When a generated username already exists in the database, the username service adds suffixes such as `firstname.lastname2`.
+- Explicit usernames are normalized to lowercase and trimmed.
+- Explicit usernames with letters, numbers, dots, underscores, and hyphens are allowed.
+- Explicit usernames that already exist are rejected.
+- Coach import detects two ready rows that would use the same final username in the same CSV and marks the later row as a conflict.
+- Manual account creation rejects duplicate usernames.
+- Manual player-account creation rejects duplicate usernames and refuses to create a second self account for the same player.
+
+Use optional fixture:
+
+```text
+test_coach_account_collision_cases.csv
+```
+
+Do not use this fixture in a normal smoke test.
+
+Scenarios:
+
+- [ ] Generated username already exists before import.
+- [ ] Existing username belongs to the same intended account and email matches an existing coach.
+- [ ] Existing username belongs to a different account.
+- [ ] Two imported coach rows generate the same base username.
+- [ ] Manually requested username conflicts with an existing account.
+
+Verify:
+
+- [ ] Generated username collision suffixes correctly when the existing username is already in the database.
+- [ ] Existing coach email is reused safely and password remains unchanged.
+- [ ] Explicit duplicate username is reported as a conflict.
+- [ ] Two new rows that would generate the same final username do not both create accounts.
+- [ ] Conflict rows do not create accounts, assignments, player records, or user-player links.
+- [ ] Staff can understand the preview/result message.
+
+Policy decision required:
+
+- Decide whether duplicate generated names in the same coach CSV should suffix automatically instead of marking the later row as a conflict.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Email Reuse and Conflict Tests
+
+Level: Extended edge cases.
+
+Actual behavior discovered from code:
+
+- Emails are normalized by trimming whitespace and comparing case-insensitively.
+- Coach import reuses an existing Coach account by email and keeps that account's password unchanged.
+- Coach import does not activate an existing inactive Coach account and does not reset its password.
+- Coach import conflicts when the email belongs to a non-Coach account.
+- Player account provisioning reuses an existing self-linked user for the same player.
+- Player account provisioning conflicts when the imported email belongs to an unrelated existing user.
+- Player account provisioning does not change an existing coach role into a player role.
+
+Coach email scenarios:
+
+- [ ] Same coach, same email, repeated import.
+- [ ] Different coach identity using an existing coach email.
+- [ ] Coach import using an email belonging to a Player account.
+- [ ] Coach import using an email belonging to Staff or another non-Coach role.
+- [ ] Email differing only by letter case.
+- [ ] Leading or trailing whitespace around an email.
+
+Player account-provisioning scenarios:
+
+- [ ] Repeated import with same player and same email.
+- [ ] Same player with a changed email.
+- [ ] Different player using an existing Player account email.
+- [ ] Player import using an email already owned by a Coach account.
+- [ ] Email differing only by case.
+- [ ] Whitespace normalization.
+
+For each scenario, verify:
+
+- [ ] account reuse behavior
+- [ ] conflict behavior
+- [ ] preview status
+- [ ] whether commit is blocked or row is skipped/conflicted
+- [ ] whether a user-player link is created
+- [ ] whether an existing role changes
+- [ ] whether an unintended duplicate account appears
+- [ ] whether the result clearly explains the outcome
+
+Policy decision required:
+
+- Decide whether an existing coach email reused with a different first/last name should require staff review before assignment changes are committed.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Inactive-Account Lifecycle Tests
+
+Level: Standard regression.
+
+Use optional fixture:
+
+```text
+test_coaches_inactive_import.csv
+```
+
+Also test one deactivated player account and one manually created inactive account where practical.
+
+Steps:
+
+- [ ] Import the inactive coach fixture.
+- [ ] Confirm the inactive coach user is created or retained.
+- [ ] Confirm the inactive coach cannot sign in.
+- [ ] Confirm knowing the correct temporary password does not grant access while inactive.
+- [ ] Confirm staff can activate the account from Account Operations.
+- [ ] Confirm the activated user can sign in.
+- [ ] Confirm forced password change still applies.
+- [ ] Confirm the user can log out and sign in with the new password.
+- [ ] Confirm the original temporary password no longer works.
+- [ ] Deactivate the account again.
+- [ ] Confirm login is blocked again.
+- [ ] Submit or locate a historical evaluation by the account before deactivation where practical.
+- [ ] Confirm historical evaluations remain attributed to the deactivated account.
+
+Actual behavior discovered from code:
+
+- New inactive coach import rows create inactive Django users.
+- Existing inactive coach accounts reused by coach import are not activated and do not get a new password.
+- Operational password reset preserves inactive account state.
+- Account deactivation preserves profile, user-player links, provenance, and historical attribution.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Evaluation Cycle Isolation Tests
+
+Level: Standard regression.
+
+Use two QA evaluation cycles where supported:
+
+- `TEST - Cycle A`
+- `TEST - Cycle B`
+
+Create or verify both cycles through the supported staff/admin workflow available in the environment. Do not invent a route if cycle management is admin-only in the deployed build.
+
+Actual uniqueness rule discovered from code:
+
+```text
+One evaluator + one player + one observation type + one evaluation perspective + one evaluation cycle.
+Self evaluations are stricter: one self evaluation per player per cycle.
+```
+
+Tests:
+
+- [ ] Same coach evaluates the same player once in Cycle A.
+- [ ] Same coach evaluates the same player once in Cycle B.
+- [ ] Same player completes a self-evaluation once in Cycle A.
+- [ ] Same player completes a self-evaluation once in Cycle B.
+- [ ] Same player evaluates the same peer once in Cycle A.
+- [ ] Same player evaluates the same peer once in Cycle B.
+- [ ] Review filters separate Cycle A and Cycle B.
+- [ ] Timeline entries show the correct cycle.
+- [ ] Player comparison includes only submitted evaluations according to current comparison behavior.
+- [ ] Command Center cycle filter changes completion/submitted counts for the selected cycle.
+- [ ] Drafts from one cycle do not appear as drafts in another.
+- [ ] Reopening an evaluation preserves its original cycle.
+- [ ] Inactive cycles do not become the default active cycle.
+
+Policy decision required:
+
+- Confirm whether inactive or closed cycles should prevent new submissions through the UI or whether staff/admin lifecycle controls are sufficient.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Duplicate Evaluation and Repeat Submission Tests
+
+Level: Release-blocking for basic duplicate protection; extended for multi-tab concurrency.
+
+Actual behavior discovered from code:
+
+- Starting the same evaluator/player/perspective/cycle evaluation reuses the existing draft or redirects to the submitted detail.
+- Service-level duplicate creation is blocked for the same evaluator, player, observation type, perspective, and cycle.
+- Self-evaluation duplicate creation is blocked per player and cycle.
+- Submission revalidates uniqueness before saving.
+- Reopened evaluations reuse the same observation record.
+
+Tests:
+
+- [ ] Start the same evaluation twice in separate browser tabs.
+- [ ] Double-click Submit.
+- [ ] Refresh immediately after submission.
+- [ ] Use browser Back after submission and submit again.
+- [ ] Reopen a submitted evaluation and resubmit it.
+- [ ] Attempt to create another evaluation for the same evaluator, player, type, perspective, and cycle.
+- [ ] Submit an old draft after a newer draft or submission exists.
+- [ ] Try two requests close together where practical.
+
+Verify:
+
+- [ ] duplicates are blocked or existing drafts are reused
+- [ ] duplicate observations are not created
+- [ ] the user receives a useful message or redirect
+- [ ] answers are not overwritten unexpectedly during ordinary single-tab use
+- [ ] review counts do not increase incorrectly
+
+Risk to document:
+
+- Multi-tab stale-update conflict warnings are not currently a documented feature. If one tab overwrites another tab's saved draft, record it as a known UX risk unless product policy requires optimistic locking.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Browser State and Navigation Tests
+
+Level: Extended edge cases.
+
+Run for coach, self, and peer evaluations.
+
+### Refresh
+
+- [ ] Begin an evaluation.
+- [ ] Enter answers.
+- [ ] Save as draft.
+- [ ] Refresh the page.
+- [ ] Confirm answers remain.
+- [ ] Submit.
+- [ ] Refresh the success/detail page.
+- [ ] Confirm no duplicate submission is created.
+
+### Back and Forward
+
+- [ ] Begin an evaluation.
+- [ ] Save a draft.
+- [ ] Navigate back.
+- [ ] Navigate forward.
+- [ ] Confirm state remains valid.
+- [ ] Submit once.
+- [ ] Use Back.
+- [ ] Attempt to submit again.
+- [ ] Verify no duplicate is created.
+
+### Multiple Tabs
+
+- [ ] Open the same draft in two tabs.
+- [ ] Modify both copies differently.
+- [ ] Save one.
+- [ ] Save or submit the other.
+- [ ] Record whether stale data overwrites newer data.
+- [ ] Verify whether the user receives a conflict warning.
+
+Risk to document:
+
+- Stale-update protection is not currently documented as implemented. Treat multi-tab overwrite behavior as an observation unless the product requires a blocking fix.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Archive and Deactivation Behavior Tests
+
+Level: Standard regression.
+
+Do not delete records during the normal test run.
+
+### Season
+
+- [ ] Mark `TEST - Platform QA 2026` inactive.
+- [ ] Verify it disappears from active import selectors.
+- [ ] Verify historical evaluations remain viewable to authorized users.
+- [ ] Verify timelines still load.
+- [ ] Verify player comparison still works.
+- [ ] Verify review filters can still access historical data if the inactive season remains selectable.
+- [ ] Verify whether new evaluations can still be started for a cycle tied to the inactive season.
+
+### Team
+
+- [ ] Deactivate `TEST - Alpha`.
+- [ ] Verify roster and coach assignment history remains intact.
+- [ ] Verify historical evaluation snapshots still display.
+- [ ] Verify inactive teams do not appear in active assignment workflows.
+
+### Player Account
+
+- [ ] Deactivate Player QA One's user account.
+- [ ] Verify login is blocked.
+- [ ] Verify the player record and history still exist.
+- [ ] Verify coach and peer evaluations of the player remain visible to authorized reviewers.
+- [ ] Verify whether the player appears in new-evaluation selectors.
+
+### Coach Account
+
+- [ ] Deactivate Coach QA One.
+- [ ] Verify login is blocked.
+- [ ] Verify historical coach evaluations remain attributed correctly.
+- [ ] Verify whether the coach appears as an active evaluator or assignment option.
+
+### Membership and Assignment
+
+- [ ] End a player roster membership.
+- [ ] End a coach assignment.
+- [ ] Verify historical snapshots remain correct.
+- [ ] Verify active permissions update appropriately.
+
+Policy decision required:
+
+- Current selectors primarily filter active players, active seasons, active memberships, active teams, and coach-role accounts. Confirm the desired policy for inactive-season historical review filters and inactive player visibility in staff reports.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## Expanded Analytics Command Center and Reporting Verification
+
+Level: Release-blocking for basic dashboard integrity; standard regression for detailed counts.
+
+Current implemented outputs include:
+
+- summary cards
+- active player count
+- submitted assessment count
+- completion rate
+- imports needing review
+- drafted/matched summary
+- recent observations
+- coach completion details
+- observation status counts
+- evaluator-role breakdown
+- average score by category
+- average score by role
+- coach-to-coach spread rows
+- import status and row summaries
+- draft matching summary
+- players without draft context
+- player profile timeline
+- player comparison
+- evaluation review filters
+
+Test process:
+
+1. Record values before creating QA evaluations.
+2. Submit a known number of coach, self, and peer evaluations.
+3. Refresh `/analytics/`.
+4. Confirm submitted counts change by the expected amount.
+5. Filter by cycle, division, and team where supported.
+6. Confirm QA records do not unexpectedly pollute real-season reporting, or document the filter required to isolate them.
+7. Reopen and resubmit one evaluation.
+8. Confirm counts do not double-count the reopened/resubmitted record.
+9. Deactivate or archive the QA season.
+10. Confirm reports treat archived QA data according to current behavior.
+
+For each metric, verify:
+
+- [ ] value before QA activity
+- [ ] expected delta
+- [ ] value after QA activity
+- [ ] cycle filter behavior
+- [ ] team/division filter behavior
+- [ ] behavior after reopen/resubmit
+- [ ] behavior after QA season deactivation
+
+Pay special attention to:
+
+- [ ] coach evaluations
+- [ ] self-evaluations
+- [ ] peer evaluations
+- [ ] evaluator-role labels
+- [ ] evaluation-type labels
+- [ ] score averages
+- [ ] variance rows
+- [ ] timeline labels
+- [ ] comparison summaries
+
+Policy decision required:
+
+- Command Center labels still use "coach assessment" language in some places because the underlying observation type is `coach_assessment`. Confirm whether broader user-facing labels should change in a future UI polish pass.
 
 Pass / Fail:
 
