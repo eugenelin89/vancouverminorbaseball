@@ -11,6 +11,7 @@
 - Release-pipeline guidance.
 - Change-impact guidance for selecting QA scope.
 - Lightweight maintenance conventions for future traceability changes.
+- Optional evaluation question traceability and regression coverage.
 
 ## Previous Milestones
 

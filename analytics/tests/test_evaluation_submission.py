@@ -259,6 +259,34 @@ class EvaluationAccessSubmissionViewTests(TestCase):
             observation.evaluation_perspective, EVALUATION_PERSPECTIVE_PEER
         )
 
+    def test_player_can_submit_with_optional_question_blank(self):
+        optional_question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        optional_question.is_required = False
+        optional_question.save(update_fields=["is_required", "updated_at"])
+        self.client.force_login(self.player_user)
+        data = {"action": "submit"}
+        data.update(self.response_payload())
+        data[f"question_{optional_question.id}"] = ""
+
+        response = self.client.post(
+            reverse(
+                "analytics:evaluation-player",
+                kwargs={"player_id": self.target_player.id},
+            ),
+            data,
+        )
+
+        observation = Observation.objects.get(
+            player=self.target_player, evaluator=self.player_user
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(observation.status, OBSERVATION_STATUS_SUBMITTED)
+        self.assertFalse(
+            observation.responses.filter(question=optional_question).exists()
+        )
+
     def test_player_self_evaluation_draft_resumes_and_submitted_duplicate_redirects(
         self,
     ):

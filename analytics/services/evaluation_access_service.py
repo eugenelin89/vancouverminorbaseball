@@ -63,6 +63,7 @@ class MyEvaluationSummary:
 class MyEvaluationQuestionResponse:
     question_prompt: str
     category: str
+    is_required: bool
     numeric_value: object = None
     text_value: str = ""
 
@@ -88,15 +89,22 @@ def get_evaluation_target_list(user, params) -> EvaluationTargetList:
     division = (params.get("division") or "").strip()
     team = (params.get("team") or "").strip()
     if not cycle:
-        return EvaluationTargetList(cycle=None, player_statuses=[], query=query, division=division, team=team)
+        return EvaluationTargetList(
+            cycle=None, player_statuses=[], query=query, division=division, team=team
+        )
 
-    targets = list(list_memberships_for_assessment(cycle, query=query, division=division, team=team))
+    targets = list(
+        list_memberships_for_assessment(
+            cycle, query=query, division=division, team=team
+        )
+    )
     player_statuses = [
         EvaluationTargetStatus(
             player=item.player,
             observation=item.observation,
             status=item.status,
-            can_evaluate=item.status != "unavailable" and can_evaluate_player(user, item.player),
+            can_evaluate=item.status != "unavailable"
+            and can_evaluate_player(user, item.player),
             player_roster_membership=item.player_roster_membership,
             player_team=item.player_team,
             player_division=item.player_division,
@@ -113,20 +121,26 @@ def get_evaluation_target_list(user, params) -> EvaluationTargetList:
     )
 
 
-def get_existing_evaluation_for_player(user, player: Player, cycle: EvaluationCycle) -> Observation | None:
+def get_existing_evaluation_for_player(
+    user, player: Player, cycle: EvaluationCycle
+) -> Observation | None:
     """Return the evaluator's existing coach-assessment observation for a target player and cycle."""
     return get_existing_coach_assessment(player, cycle, user)
 
 
 @transaction.atomic
-def get_or_create_evaluation_for_player(user, player: Player, cycle: EvaluationCycle, player_roster_membership=None) -> Observation:
+def get_or_create_evaluation_for_player(
+    user, player: Player, cycle: EvaluationCycle, player_roster_membership=None
+) -> Observation:
     """Return or create the evaluator's draft evaluation for a target player."""
     if not can_evaluate_player(user, player):
         raise PermissionDenied("You cannot evaluate this player.")
     existing = get_existing_evaluation_for_player(user, player, cycle)
     if existing and existing.status == OBSERVATION_STATUS_SUBMITTED:
         return existing
-    return get_or_create_draft_coach_assessment(player, cycle, user, player_roster_membership=player_roster_membership)
+    return get_or_create_draft_coach_assessment(
+        player, cycle, user, player_roster_membership=player_roster_membership
+    )
 
 
 def active_evaluation_cycle() -> EvaluationCycle | None:
@@ -139,7 +153,9 @@ def self_linked_players_for_user(user) -> list[Player]:
     return list(get_self_linked_players(user).filter(is_active=True))
 
 
-def get_my_evaluations(user, player: Player | None = None) -> tuple[list[Player], list[MyEvaluationSummary]]:
+def get_my_evaluations(
+    user, player: Player | None = None
+) -> tuple[list[Player], list[MyEvaluationSummary]]:
     """Return submitted evaluations about the current user's self-linked player records."""
     if player is not None and not can_view_my_evaluations(user, player=player):
         raise PermissionDenied("You cannot view evaluations for this player.")
@@ -147,7 +163,9 @@ def get_my_evaluations(user, player: Player | None = None) -> tuple[list[Player]
     if not players:
         return [], []
     observations = (
-        Observation.objects.select_related("player", "evaluation_cycle", "evaluator_role")
+        Observation.objects.select_related(
+            "player", "evaluation_cycle", "evaluator_role"
+        )
         .filter(
             player__in=players,
             observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
@@ -172,23 +190,36 @@ def get_my_evaluations(user, player: Player | None = None) -> tuple[list[Player]
 def get_my_evaluation_detail(user, observation_id: int) -> MyEvaluationDetail:
     """Return a player-safe submitted evaluation detail view."""
     observation = (
-        Observation.objects.select_related("player", "evaluation_cycle", "evaluator_role")
+        Observation.objects.select_related(
+            "player", "evaluation_cycle", "evaluator_role", "question_set"
+        )
+        .prefetch_related("responses__question")
         .get(pk=observation_id)
     )
     if not can_view_my_evaluation_detail(user, observation):
         raise PermissionDenied("You cannot view this evaluation.")
+    responses_by_question = {
+        response.question_id: response for response in observation.responses.all()
+    }
     responses = [
         MyEvaluationQuestionResponse(
-            question_prompt=response.question.prompt,
-            category=response.question.category or "Questions",
-            numeric_value=response.numeric_value,
-            text_value=response.text_value,
+            question_prompt=question.prompt,
+            category=question.category or "Questions",
+            is_required=question.is_required,
+            numeric_value=(
+                responses_by_question[question.id].numeric_value
+                if question.id in responses_by_question
+                else None
+            ),
+            text_value=(
+                responses_by_question[question.id].text_value
+                if question.id in responses_by_question
+                else ""
+            ),
         )
-        for response in observation.responses.select_related("question").order_by(
-            "question__display_order",
-            "question_id",
-            "id",
-        )
+        for question in observation.question_set.questions.filter(
+            is_active=True
+        ).order_by("display_order", "id")
     ]
     return MyEvaluationDetail(
         observation_id=observation.id,

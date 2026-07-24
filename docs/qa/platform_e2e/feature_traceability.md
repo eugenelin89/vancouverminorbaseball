@@ -72,6 +72,7 @@ Current prefixes:
 | `EVL-005` | Evaluation uniqueness and duplicate prevention | Critical | Yes | Yes | Yes | Yes | Fully automatable | `platform_e2e_test_script.md` - Duplicate Evaluation and Repeat Submission Tests |
 | `EVL-006` | Evaluation-cycle isolation | Critical | No | Yes | Yes | Partial | Fully automatable | `platform_e2e_test_script.md` - Evaluation Cycle Isolation Tests |
 | `EVL-007` | Imported/manual workflow consistency | High | Partial | No | Yes | No | Semi-automatable | `platform_e2e_test_script.md` - Cross-Workflow Consistency Tests |
+| `EVL-008` | Optional evaluation questions | High | Partial | Yes | Yes | Partial | Fully automatable | `platform_e2e_test_script.md` - Optional Evaluation Question Tests |
 | `REV-001` | Evaluation review | High | Yes | Yes | Yes | Partial | Semi-automatable | `platform_e2e_test_script.md` - Review Workflow |
 | `REV-002` | Reopen and resubmit | High | Yes | Yes | Yes | Yes | Fully automatable | `platform_e2e_test_script.md` - Review Workflow |
 | `REV-003` | Evaluation metadata and attribution | High | Partial | Yes | Yes | Partial | Fully automatable | `platform_e2e_test_script.md` - Review Workflow |

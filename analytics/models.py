@@ -9,7 +9,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
 
-
 OBSERVATION_TYPE_COACH_ASSESSMENT = "coach_assessment"
 
 RESPONSE_TYPE_RATING_1_5 = "rating_1_5"
@@ -67,7 +66,9 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
-def unique_slug_for_model(instance, source_value: str, slug_field: str = "slug", max_length: int = 180) -> str:
+def unique_slug_for_model(
+    instance, source_value: str, slug_field: str = "slug", max_length: int = 180
+) -> str:
     base_slug = slugify(source_value) or "item"
     slug = base_slug[:max_length]
     counter = 2
@@ -131,7 +132,9 @@ class EvaluatorRole(TimeStampedModel):
 
 
 class ObservationQuestionSet(TimeStampedModel):
-    observation_type = models.ForeignKey(ObservationType, on_delete=models.PROTECT, related_name="question_sets")
+    observation_type = models.ForeignKey(
+        ObservationType, on_delete=models.PROTECT, related_name="question_sets"
+    )
     name = models.CharField(max_length=160)
     version = models.PositiveIntegerField(default=1)
     description = models.TextField(blank=True)
@@ -144,7 +147,10 @@ class ObservationQuestionSet(TimeStampedModel):
     class Meta:
         ordering = ["observation_type__key", "-version"]
         constraints = [
-            models.UniqueConstraint(fields=["observation_type", "version"], name="analytics_unique_question_set_version"),
+            models.UniqueConstraint(
+                fields=["observation_type", "version"],
+                name="analytics_unique_question_set_version",
+            ),
         ]
         indexes = [
             models.Index(fields=["observation_type", "is_active"]),
@@ -198,10 +204,13 @@ class EvaluationCycle(TimeStampedModel):
     def clean(self):
         if (
             self.coach_assessment_question_set_id
-            and self.coach_assessment_question_set.observation_type.key != OBSERVATION_TYPE_COACH_ASSESSMENT
+            and self.coach_assessment_question_set.observation_type.key
+            != OBSERVATION_TYPE_COACH_ASSESSMENT
         ):
             raise ValidationError(
-                {"coach_assessment_question_set": "Coach assessment cycles must use a coach-assessment question set."}
+                {
+                    "coach_assessment_question_set": "Coach assessment cycles must use a coach-assessment question set."
+                }
             )
 
     def __str__(self) -> str:
@@ -209,24 +218,33 @@ class EvaluationCycle(TimeStampedModel):
 
 
 class ObservationQuestion(TimeStampedModel):
-    question_set = models.ForeignKey(ObservationQuestionSet, on_delete=models.CASCADE, related_name="questions")
+    question_set = models.ForeignKey(
+        ObservationQuestionSet, on_delete=models.CASCADE, related_name="questions"
+    )
     key = models.SlugField(max_length=120)
     prompt = models.CharField(max_length=255)
     help_text = models.TextField(blank=True)
     category = models.CharField(max_length=80, blank=True)
     response_type = models.CharField(max_length=40, choices=RESPONSE_TYPE_CHOICES)
     display_order = models.PositiveIntegerField(default=0)
-    is_required = models.BooleanField(default=False)
+    is_required = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
-    min_numeric_value = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    max_numeric_value = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    min_numeric_value = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    max_numeric_value = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
     choices = models.JSONField(default=list, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ["question_set", "display_order", "id"]
         constraints = [
-            models.UniqueConstraint(fields=["question_set", "key"], name="analytics_unique_question_key_per_set"),
+            models.UniqueConstraint(
+                fields=["question_set", "key"],
+                name="analytics_unique_question_key_per_set",
+            ),
         ]
         indexes = [
             models.Index(fields=["question_set", "display_order"]),
@@ -239,8 +257,12 @@ class ObservationQuestion(TimeStampedModel):
 
 
 class Observation(TimeStampedModel):
-    player = models.ForeignKey("players.Player", on_delete=models.CASCADE, related_name="observations")
-    evaluation_cycle = models.ForeignKey(EvaluationCycle, on_delete=models.PROTECT, related_name="observations")
+    player = models.ForeignKey(
+        "players.Player", on_delete=models.CASCADE, related_name="observations"
+    )
+    evaluation_cycle = models.ForeignKey(
+        EvaluationCycle, on_delete=models.PROTECT, related_name="observations"
+    )
     season = models.ForeignKey(
         "seasons.Season",
         null=True,
@@ -262,10 +284,16 @@ class Observation(TimeStampedModel):
         on_delete=models.PROTECT,
         related_name="observations",
     )
-    observation_type = models.ForeignKey(ObservationType, on_delete=models.PROTECT, related_name="observations")
+    observation_type = models.ForeignKey(
+        ObservationType, on_delete=models.PROTECT, related_name="observations"
+    )
     observation_type_key = models.CharField(max_length=80, editable=False)
-    question_set = models.ForeignKey(ObservationQuestionSet, on_delete=models.PROTECT, related_name="observations")
-    source = models.ForeignKey(ObservationSource, on_delete=models.PROTECT, related_name="observations")
+    question_set = models.ForeignKey(
+        ObservationQuestionSet, on_delete=models.PROTECT, related_name="observations"
+    )
+    source = models.ForeignKey(
+        ObservationSource, on_delete=models.PROTECT, related_name="observations"
+    )
     evaluator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -287,15 +315,29 @@ class Observation(TimeStampedModel):
         choices=EVALUATION_PERSPECTIVE_CHOICES,
         default=EVALUATION_PERSPECTIVE_GUEST,
     )
-    status = models.CharField(max_length=40, choices=OBSERVATION_STATUS_CHOICES, default=OBSERVATION_STATUS_DRAFT)
+    status = models.CharField(
+        max_length=40,
+        choices=OBSERVATION_STATUS_CHOICES,
+        default=OBSERVATION_STATUS_DRAFT,
+    )
     submitted_at = models.DateTimeField(null=True, blank=True)
     season_name_snapshot = models.CharField(max_length=120, blank=True, editable=False)
     season_key_snapshot = models.CharField(max_length=80, blank=True, editable=False)
-    player_team_name_snapshot = models.CharField(max_length=120, blank=True, editable=False)
-    player_division_snapshot = models.CharField(max_length=80, blank=True, editable=False)
-    evaluator_team_name_snapshot = models.CharField(max_length=120, blank=True, editable=False)
-    evaluator_division_snapshot = models.CharField(max_length=80, blank=True, editable=False)
-    evaluator_assignment_role_snapshot = models.CharField(max_length=80, blank=True, editable=False)
+    player_team_name_snapshot = models.CharField(
+        max_length=120, blank=True, editable=False
+    )
+    player_division_snapshot = models.CharField(
+        max_length=80, blank=True, editable=False
+    )
+    evaluator_team_name_snapshot = models.CharField(
+        max_length=120, blank=True, editable=False
+    )
+    evaluator_division_snapshot = models.CharField(
+        max_length=80, blank=True, editable=False
+    )
+    evaluator_assignment_role_snapshot = models.CharField(
+        max_length=80, blank=True, editable=False
+    )
     notes = models.TextField(blank=True)
     source_metadata = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
@@ -304,12 +346,26 @@ class Observation(TimeStampedModel):
         ordering = ["-submitted_at", "-created_at", "-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=["player", "evaluation_cycle", "observation_type_key", "evaluator", "evaluation_perspective"],
-                condition=Q(observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT, evaluator__isnull=False),
+                fields=[
+                    "player",
+                    "evaluation_cycle",
+                    "observation_type_key",
+                    "evaluator",
+                    "evaluation_perspective",
+                ],
+                condition=Q(
+                    observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
+                    evaluator__isnull=False,
+                ),
                 name="analytics_unique_coach_assessment_per_perspective",
             ),
             models.UniqueConstraint(
-                fields=["player", "evaluation_cycle", "observation_type_key", "evaluation_perspective"],
+                fields=[
+                    "player",
+                    "evaluation_cycle",
+                    "observation_type_key",
+                    "evaluation_perspective",
+                ],
                 condition=Q(
                     observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
                     evaluation_perspective=EVALUATION_PERSPECTIVE_SELF,
@@ -332,19 +388,42 @@ class Observation(TimeStampedModel):
 
     def clean(self):
         errors = {}
-        if self.evaluation_cycle_id and self.season_id and self.evaluation_cycle.season_id:
+        if (
+            self.evaluation_cycle_id
+            and self.season_id
+            and self.evaluation_cycle.season_id
+        ):
             if self.evaluation_cycle.season_id != self.season_id:
-                errors["season"] = "Observation season must match the evaluation cycle season."
+                errors["season"] = (
+                    "Observation season must match the evaluation cycle season."
+                )
         if self.player_roster_membership_id:
             if self.player_roster_membership.player_id != self.player_id:
-                errors["player_roster_membership"] = "Player roster membership must belong to the observation player."
-            if self.season_id and self.player_roster_membership.season.id != self.season_id:
-                errors["player_roster_membership"] = "Player roster membership must belong to the observation season."
+                errors["player_roster_membership"] = (
+                    "Player roster membership must belong to the observation player."
+                )
+            if (
+                self.season_id
+                and self.player_roster_membership.season.id != self.season_id
+            ):
+                errors["player_roster_membership"] = (
+                    "Player roster membership must belong to the observation season."
+                )
         if self.evaluator_coach_assignment_id:
-            if self.evaluator_id and self.evaluator_coach_assignment.user_id != self.evaluator_id:
-                errors["evaluator_coach_assignment"] = "Evaluator coach assignment must belong to the evaluator."
-            if self.season_id and self.evaluator_coach_assignment.season.id != self.season_id:
-                errors["evaluator_coach_assignment"] = "Evaluator coach assignment must belong to the observation season."
+            if (
+                self.evaluator_id
+                and self.evaluator_coach_assignment.user_id != self.evaluator_id
+            ):
+                errors["evaluator_coach_assignment"] = (
+                    "Evaluator coach assignment must belong to the evaluator."
+                )
+            if (
+                self.season_id
+                and self.evaluator_coach_assignment.season.id != self.season_id
+            ):
+                errors["evaluator_coach_assignment"] = (
+                    "Evaluator coach assignment must belong to the observation season."
+                )
         if errors:
             raise ValidationError(errors)
 
@@ -363,14 +442,22 @@ class Observation(TimeStampedModel):
 
     @property
     def evaluation_perspective_label(self) -> str:
-        return EVALUATION_PERSPECTIVE_LABELS.get(self.evaluation_perspective, "Evaluation")
+        return EVALUATION_PERSPECTIVE_LABELS.get(
+            self.evaluation_perspective, "Evaluation"
+        )
 
 
 class ObservationResponse(TimeStampedModel):
-    observation = models.ForeignKey(Observation, on_delete=models.CASCADE, related_name="responses")
-    question = models.ForeignKey(ObservationQuestion, on_delete=models.PROTECT, related_name="responses")
+    observation = models.ForeignKey(
+        Observation, on_delete=models.CASCADE, related_name="responses"
+    )
+    question = models.ForeignKey(
+        ObservationQuestion, on_delete=models.PROTECT, related_name="responses"
+    )
     response_type = models.CharField(max_length=40, choices=RESPONSE_TYPE_CHOICES)
-    numeric_value = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    numeric_value = models.DecimalField(
+        max_digits=8, decimal_places=2, null=True, blank=True
+    )
     text_value = models.TextField(blank=True)
     boolean_value = models.BooleanField(null=True, blank=True)
     selected_choice = models.CharField(max_length=120, blank=True)
@@ -382,7 +469,10 @@ class ObservationResponse(TimeStampedModel):
     class Meta:
         ordering = ["question__display_order", "id"]
         constraints = [
-            models.UniqueConstraint(fields=["observation", "question"], name="analytics_unique_response_per_question"),
+            models.UniqueConstraint(
+                fields=["observation", "question"],
+                name="analytics_unique_response_per_question",
+            ),
         ]
         indexes = [
             models.Index(fields=["observation", "question"]),
@@ -393,14 +483,20 @@ class ObservationResponse(TimeStampedModel):
     def clean(self):
         if self.response_type == RESPONSE_TYPE_RATING_1_5:
             if self.numeric_value is None:
-                raise ValidationError({"numeric_value": "A 1-5 rating response requires a numeric value."})
+                raise ValidationError(
+                    {"numeric_value": "A 1-5 rating response requires a numeric value."}
+                )
             if (
                 not self.numeric_value.is_finite()
                 or self.numeric_value != self.numeric_value.to_integral_value()
                 or self.numeric_value < Decimal("1")
                 or self.numeric_value > Decimal("5")
             ):
-                raise ValidationError({"numeric_value": "Rating responses must be one of 1, 2, 3, 4, or 5."})
+                raise ValidationError(
+                    {
+                        "numeric_value": "Rating responses must be one of 1, 2, 3, 4, or 5."
+                    }
+                )
 
     def save(self, *args, **kwargs):
         if not self.response_type and self.question_id:

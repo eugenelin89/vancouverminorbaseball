@@ -26,6 +26,7 @@ These tests must pass before a production release is accepted:
 - [ ] coach evaluation submission (`EVL-001`)
 - [ ] player self-evaluation submission (`EVL-002`)
 - [ ] player peer-evaluation submission (`EVL-003`)
+- [ ] optional evaluation question handling (`EVL-008`)
 - [ ] evaluation review (`REV-001`, `REV-003`)
 - [ ] direct URL permissions (`SEC-001` to `SEC-004`)
 - [ ] forced password change (`ACC-006`)
@@ -71,6 +72,7 @@ Critical and High tests should be prioritized when release time is limited. Medi
 | Historical assignment preservation | `ASN-003` | High |
 | Core evaluation workflows | `EVL-001` to `EVL-006` | Critical |
 | Imported/manual workflow consistency | `EVL-007` | High |
+| Optional evaluation questions | `EVL-008` | High |
 | Review and attribution | `REV-001` to `REV-003` | High |
 | Permissions | `SEC-001` to `SEC-004` | Critical |
 | Command Center and reporting | `ANA-001` to `ANA-005` | High |
@@ -492,7 +494,78 @@ Result:
 Notes:
 ```
 
-## I. Review Workflow
+## I. Optional Evaluation Question Tests
+
+Requirements covered: `EVL-008`, `EVL-001`, `EVL-002`, `EVL-003`, `REV-001`, `ANA-002`
+
+Automation readiness: Fully automatable
+
+Setup:
+
+- [ ] In Django admin, open the active coach assessment question set.
+- [ ] Mark one rating question optional.
+- [ ] Leave at least one other rating question required.
+- [ ] Confirm the freeform notes question may also be optional if configured that way.
+
+Required-question behavior:
+
+- [ ] As a coach, open a new evaluation form.
+- [ ] Leave a required rating blank.
+- [ ] Fill any optional questions or leave them blank.
+- [ ] Click Submit.
+- [ ] Confirm the page blocks submission and shows a required-field error.
+- [ ] Confirm the evaluation remains draft.
+- [ ] Confirm entered answers remain visible after the validation error.
+
+Optional-question behavior:
+
+- [ ] As a coach, fill all required questions and leave the optional rating blank.
+- [ ] Click Submit.
+- [ ] Confirm submission succeeds.
+- [ ] Open the evaluation detail page.
+- [ ] Confirm the optional question is shown as `Optional`.
+- [ ] Confirm the optional unanswered question displays `Not answered`.
+- [ ] Confirm it is not displayed or counted as a `0`.
+
+Draft behavior:
+
+- [ ] Start another evaluation.
+- [ ] Answer only the optional question.
+- [ ] Save as draft.
+- [ ] Reopen the draft and clear the optional answer.
+- [ ] Save again.
+- [ ] Confirm the optional blank value is not retained as a zero or stale answer.
+- [ ] Complete only required questions and submit successfully.
+
+Player-submission behavior:
+
+- [ ] Repeat the optional blank submit path as a player self-evaluation.
+- [ ] Repeat the optional blank submit path as a player peer evaluation.
+- [ ] Confirm both submit successfully when required questions are complete.
+
+Review and analytics behavior:
+
+- [ ] Open player-facing `/analytics/my/evaluations/` detail for the submitted result.
+- [ ] Confirm evaluator names remain hidden.
+- [ ] Confirm the unanswered optional question is visible as `Not answered`.
+- [ ] Open coach/staff review detail.
+- [ ] Confirm the unanswered optional question is visible as `Not answered`.
+- [ ] Open Analytics Command Center and comparison views.
+- [ ] Confirm averages exclude blank optional answers.
+- [ ] Confirm completion metrics treat the submitted evaluation as complete because required questions were answered.
+
+Cleanup:
+
+- [ ] Restore the optional question setting to the desired production configuration.
+
+Pass / Fail:
+
+```text
+Result:
+Notes:
+```
+
+## J. Review Workflow
 
 Requirements covered: `REV-001`, `REV-002`, `REV-003`, `ANA-005`, `EVL-005`
 

@@ -1,5 +1,6 @@
 <label>
     {{ field.label }}
+    {% if not question.is_required %}<span class="pdp-badge pdp-badge--muted">Optional</span>{% endif %}
     {{ field }}
     {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
     {% for error in field.errors %}<span class="errorlist">{{ error }}</span>{% endfor %}

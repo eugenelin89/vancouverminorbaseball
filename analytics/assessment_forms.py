@@ -6,7 +6,9 @@ from analytics.services.question_service import get_active_questions
 
 
 class CoachAssessmentForm(forms.Form):
-    def __init__(self, *args, question_set, observation=None, require_required=False, **kwargs):
+    def __init__(
+        self, *args, question_set, observation=None, require_required=False, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.question_set = question_set
         self.observation = observation
@@ -18,29 +20,40 @@ class CoachAssessmentForm(forms.Form):
         for question in self.questions:
             field_name = self.field_name(question)
             required = question.is_required if require_required else False
-            initial = self.initial_for_question(question, existing_responses.get(question.id))
+            field_label = (
+                question.prompt
+                if question.is_required
+                else f"{question.prompt} (Optional)"
+            )
+            initial = self.initial_for_question(
+                question, existing_responses.get(question.id)
+            )
             if question.response_type == RESPONSE_TYPE_RATING_1_5:
                 choices = [("", "---------")]
                 for value in range(1, 6):
-                    label = rubric_labels.get(str(value), str(value))
-                    choices.append((value, f"{value} - {label}"))
+                    choice_label = rubric_labels.get(str(value), str(value))
+                    choices.append((value, f"{value} - {choice_label}"))
                 self.fields[field_name] = forms.TypedChoiceField(
                     choices=choices,
                     coerce=int,
                     empty_value=None,
                     required=required,
-                    label=question.prompt,
+                    label=field_label,
                     help_text=question.help_text,
                 )
             elif question.response_type == RESPONSE_TYPE_TEXT:
                 self.fields[field_name] = forms.CharField(
                     required=required,
-                    label=question.prompt,
+                    label=field_label,
                     help_text=question.help_text,
                     widget=forms.Textarea(attrs={"rows": 4}),
                 )
             else:
-                self.fields[field_name] = forms.CharField(required=False, label=question.prompt, disabled=True)
+                self.fields[field_name] = forms.CharField(
+                    required=False,
+                    label=field_label,
+                    disabled=True,
+                )
             self.fields[field_name].initial = initial
 
     @staticmethod
@@ -52,7 +65,11 @@ class CoachAssessmentForm(forms.Form):
         if not response:
             return None
         if question.response_type == RESPONSE_TYPE_RATING_1_5:
-            return int(response.numeric_value) if response.numeric_value is not None else None
+            return (
+                int(response.numeric_value)
+                if response.numeric_value is not None
+                else None
+            )
         if question.response_type == RESPONSE_TYPE_TEXT:
             return response.text_value
         return response.raw_value
@@ -61,8 +78,6 @@ class CoachAssessmentForm(forms.Form):
         payload = []
         for question in self.questions:
             value = self.cleaned_data.get(self.field_name(question))
-            if value in {"", None}:
-                continue
             payload.append({"question": question, "value": value})
         return payload
 

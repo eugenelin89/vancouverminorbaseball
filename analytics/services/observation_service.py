@@ -25,6 +25,15 @@ from analytics.models import (
     ObservationSource,
     ObservationType,
 )
+from analytics.services.evaluation_context_service import (
+    apply_evaluation_context,
+    resolve_evaluation_context,
+)
+from analytics.services.permissions import (
+    can_evaluate_player,
+    evaluation_perspective_for_user,
+    evaluator_role_for_user,
+)
 from analytics.services.question_service import (
     SOURCE_COACH,
     get_active_questions,
@@ -32,10 +41,8 @@ from analytics.services.question_service import (
     get_default_coach_assessment_question_set,
     get_question_set_for_cycle,
 )
-from analytics.services.permissions import can_evaluate_player, evaluation_perspective_for_user, evaluator_role_for_user
 from players.models import Player
 from seasons.models import CoachSeasonAssignment, PlayerRosterMembership
-from analytics.services.evaluation_context_service import apply_evaluation_context, resolve_evaluation_context
 
 
 @dataclass
@@ -45,7 +52,9 @@ class ObservationCreateResult:
     responses_updated: int = 0
 
 
-def _snapshot_role(observation: Observation, evaluator_role: EvaluatorRole | None) -> None:
+def _snapshot_role(
+    observation: Observation, evaluator_role: EvaluatorRole | None
+) -> None:
     if evaluator_role:
         observation.evaluator_role = evaluator_role
         observation.evaluator_role_key = evaluator_role.key
@@ -73,7 +82,9 @@ def _validate_unique_coach_assessment(
     if exclude_observation:
         queryset = queryset.exclude(pk=exclude_observation.pk)
     if queryset.exists():
-        raise ValidationError("This evaluator already has a coach assessment for this player and evaluation cycle.")
+        raise ValidationError(
+            "This evaluator already has a coach assessment for this player and evaluation cycle."
+        )
     if evaluation_perspective == EVALUATION_PERSPECTIVE_SELF:
         self_queryset = Observation.objects.filter(
             player=player,
@@ -84,7 +95,9 @@ def _validate_unique_coach_assessment(
         if exclude_observation:
             self_queryset = self_queryset.exclude(pk=exclude_observation.pk)
         if self_queryset.exists():
-            raise ValidationError("This player already has a self evaluation for this evaluation cycle.")
+            raise ValidationError(
+                "This player already has a self evaluation for this evaluation cycle."
+            )
 
 
 def _coerce_rating(value) -> Decimal:
@@ -102,12 +115,18 @@ def _coerce_rating(value) -> Decimal:
     return numeric
 
 
-def _validate_question_set_for_type(question_set: ObservationQuestionSet, observation_type: ObservationType) -> None:
+def _validate_question_set_for_type(
+    question_set: ObservationQuestionSet, observation_type: ObservationType
+) -> None:
     if question_set.observation_type_id != observation_type.id:
-        raise ValidationError("Question set must belong to the selected observation type.")
+        raise ValidationError(
+            "Question set must belong to the selected observation type."
+        )
 
 
-def _response_defaults(question: ObservationQuestion, value, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+def _response_defaults(
+    question: ObservationQuestion, value, extra: dict[str, Any] | None = None
+) -> dict[str, Any]:
     extra = extra or {}
     defaults = {
         "response_type": question.response_type,
@@ -125,8 +144,26 @@ def _response_defaults(question: ObservationQuestion, value, extra: dict[str, An
     elif question.response_type == RESPONSE_TYPE_TEXT:
         defaults["text_value"] = "" if value is None else str(value)
     else:
-        raise ValidationError(f"Response type {question.response_type} is not implemented in Version 1.")
+        raise ValidationError(
+            f"Response type {question.response_type} is not implemented in Version 1."
+        )
     return defaults
+
+
+def _is_blank_response_value(value) -> bool:
+    return value is None or (isinstance(value, str) and value.strip() == "")
+
+
+def _response_has_value(response: ObservationResponse) -> bool:
+    if response.response_type == RESPONSE_TYPE_RATING_1_5:
+        return response.numeric_value is not None
+    if response.response_type == RESPONSE_TYPE_TEXT:
+        return bool(response.text_value.strip())
+    return bool(
+        response.raw_value.strip()
+        or response.selected_choice
+        or response.boolean_value is not None
+    )
 
 
 @transaction.atomic
@@ -153,7 +190,9 @@ def create_observation(
         if not can_evaluate_player(evaluator, player):
             raise ValidationError("This evaluator cannot evaluate this player.")
         evaluator_role = evaluator_role or evaluator_role_for_user(evaluator)
-        evaluation_perspective = evaluation_perspective or evaluation_perspective_for_user(evaluator, player)
+        evaluation_perspective = (
+            evaluation_perspective or evaluation_perspective_for_user(evaluator, player)
+        )
     else:
         evaluation_perspective = evaluation_perspective or EVALUATION_PERSPECTIVE_GUEST
     _validate_unique_coach_assessment(
@@ -193,7 +232,9 @@ def create_observation(
     try:
         observation.save()
     except IntegrityError as exc:
-        raise ValidationError("This observation would duplicate an existing coach assessment.") from exc
+        raise ValidationError(
+            "This observation would duplicate an existing coach assessment."
+        ) from exc
     return observation
 
 
@@ -219,10 +260,14 @@ def create_coach_assessment_observation(
     if evaluator is None:
         raise ValidationError("Coach assessments require an evaluator.")
     observation_type = get_coach_assessment_type()
-    question_set = question_set or get_question_set_for_cycle(evaluation_cycle, observation_type)
+    question_set = question_set or get_question_set_for_cycle(
+        evaluation_cycle, observation_type
+    )
     source = source or ObservationSource.objects.get(key=SOURCE_COACH)
     evaluator_role = evaluator_role or evaluator_role_for_user(evaluator)
-    evaluation_perspective = evaluation_perspective or evaluation_perspective_for_user(evaluator, player)
+    evaluation_perspective = evaluation_perspective or evaluation_perspective_for_user(
+        evaluator, player
+    )
     observation = create_observation(
         player=player,
         evaluation_cycle=evaluation_cycle,
@@ -247,33 +292,56 @@ def create_coach_assessment_observation(
     return result
 
 
-def _question_for_response(observation: Observation, question_ref) -> ObservationQuestion:
+def _question_for_response(
+    observation: Observation, question_ref
+) -> ObservationQuestion:
     if isinstance(question_ref, ObservationQuestion):
         question = question_ref
     elif isinstance(question_ref, int):
         question = ObservationQuestion.objects.get(pk=question_ref)
     else:
-        question = ObservationQuestion.objects.get(question_set=observation.question_set, key=str(question_ref))
+        question = ObservationQuestion.objects.get(
+            question_set=observation.question_set, key=str(question_ref)
+        )
     if question.question_set_id != observation.question_set_id:
-        raise ValidationError("Responses can only be saved for questions in the observation question set.")
+        raise ValidationError(
+            "Responses can only be saved for questions in the observation question set."
+        )
     return question
 
 
 @transaction.atomic
-def save_observation_responses(observation: Observation, responses: dict[Any, Any] | list[dict[str, Any]]) -> tuple[int, int]:
+def save_observation_responses(
+    observation: Observation, responses: dict[Any, Any] | list[dict[str, Any]]
+) -> tuple[int, int]:
     """Create or update responses for an observation."""
     locked_observation = Observation.objects.select_for_update().get(pk=observation.pk)
     created_count = 0
     updated_count = 0
 
     if isinstance(responses, dict):
-        response_items = [{"question": question_ref, "value": value} for question_ref, value in responses.items()]
+        response_items = [
+            {"question": question_ref, "value": value}
+            for question_ref, value in responses.items()
+        ]
     else:
         response_items = responses
 
     for response_input in response_items:
-        question = _question_for_response(locked_observation, response_input["question"])
-        defaults = _response_defaults(question, response_input.get("value"), extra=response_input)
+        question = _question_for_response(
+            locked_observation, response_input["question"]
+        )
+        value = response_input.get("value")
+        if _is_blank_response_value(value):
+            deleted_count, _ = ObservationResponse.objects.filter(
+                observation=locked_observation,
+                question=question,
+            ).delete()
+            updated_count += int(bool(deleted_count))
+            continue
+        defaults = _response_defaults(
+            question, response_input.get("value"), extra=response_input
+        )
         _, created = ObservationResponse.objects.update_or_create(
             observation=locked_observation,
             question=question,
@@ -290,12 +358,22 @@ def validate_required_responses(observation: Observation) -> None:
     if observation.observation_type_key != OBSERVATION_TYPE_COACH_ASSESSMENT:
         return
     required_question_ids = set(
-        observation.question_set.questions.filter(is_active=True, is_required=True).values_list("id", flat=True)
+        observation.question_set.questions.filter(
+            is_active=True, is_required=True
+        ).values_list("id", flat=True)
     )
-    answered_question_ids = set(observation.responses.filter(question_id__in=required_question_ids).values_list("question_id", flat=True))
+    answered_question_ids = {
+        response.question_id
+        for response in observation.responses.filter(
+            question_id__in=required_question_ids
+        )
+        if _response_has_value(response)
+    }
     missing_count = len(required_question_ids - answered_question_ids)
     if missing_count:
-        raise ValidationError(f"Coach assessment is missing {missing_count} required response(s).")
+        raise ValidationError(
+            f"Coach assessment is missing {missing_count} required response(s)."
+        )
 
 
 @transaction.atomic

@@ -20,6 +20,7 @@
             {% for item in group.questions %}
                 <div>
                     <strong>{{ item.question.prompt }}</strong>
+                    {% if not item.question.is_required %}<span class="pdp-badge pdp-badge--muted">Optional</span>{% endif %}
                     {% if item.response %}
                         {% if item.response.numeric_value %}
                             <span>{{ item.response.numeric_value|floatformat:0 }}</span>

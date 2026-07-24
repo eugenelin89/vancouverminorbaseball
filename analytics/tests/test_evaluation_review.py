@@ -177,6 +177,26 @@ class EvaluationReviewViewTests(TestCase):
         )
         self.assertNotContains(response, self.coach.email)
 
+    def test_review_detail_shows_unanswered_optional_questions(self):
+        optional_question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        optional_question.is_required = False
+        optional_question.save(update_fields=["is_required", "updated_at"])
+        observation = self.submitted_observation(note="Required answers only.")
+        self.client.force_login(self.coach)
+
+        response = self.client.get(
+            reverse(
+                "analytics:evaluation-review-detail",
+                kwargs={"observation_id": observation.id},
+            )
+        )
+
+        self.assertContains(response, optional_question.prompt)
+        self.assertContains(response, "Optional")
+        self.assertContains(response, "Not answered")
+
     def test_coach_review_access_rules(self):
         self.submitted_observation()
         for user in [self.player_user, self.parent, self.guest]:

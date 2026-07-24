@@ -148,6 +148,16 @@ class AnalyticsObservationFoundationTests(TestCase):
         self.assertEqual(question.display_order, 99)
         self.assertFalse(question.is_required)
 
+    def test_new_questions_default_to_required(self):
+        question = ObservationQuestion.objects.create(
+            question_set=self.setup_result.question_set,
+            key="new_required_default",
+            prompt="New required default",
+            response_type=RESPONSE_TYPE_RATING_1_5,
+        )
+
+        self.assertTrue(question.is_required)
+
     def test_cycle_slug_generation_creates_unique_slugs(self):
         second_cycle = EvaluationCycle.objects.create(
             name=self.cycle.name, cycle_type="Coach Assessment"
@@ -465,6 +475,31 @@ class AnalyticsObservationFoundationTests(TestCase):
         self.assertEqual(updated, 1)
         self.assertEqual(response.numeric_value, Decimal("5.00"))
 
+    def test_blank_optional_response_deletes_existing_response(self):
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.evaluator,
+        ).observation
+        question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        question.is_required = False
+        question.save(update_fields=["is_required", "updated_at"])
+
+        save_observation_responses(observation, {question: 3})
+        created, updated = save_observation_responses(
+            observation, [{"question": question, "value": ""}]
+        )
+
+        self.assertEqual(created, 0)
+        self.assertEqual(updated, 1)
+        self.assertFalse(
+            ObservationResponse.objects.filter(
+                observation=observation, question=question
+            ).exists()
+        )
+
     def test_invalid_rating_is_rejected(self):
         observation = create_coach_assessment_observation(
             player=self.player,
@@ -666,6 +701,28 @@ class AnalyticsObservationFoundationTests(TestCase):
             validate_required_responses(observation)
         with self.assertRaises(ValidationError):
             submit_observation(observation, actor=self.evaluator)
+
+    def test_blank_required_text_response_does_not_count_as_answered(self):
+        text_question = self.setup_result.question_set.questions.get(
+            response_type=RESPONSE_TYPE_TEXT
+        )
+        text_question.is_required = True
+        text_question.save(update_fields=["is_required", "updated_at"])
+        observation = create_coach_assessment_observation(
+            player=self.player,
+            evaluation_cycle=self.cycle,
+            evaluator=self.evaluator,
+            responses=self.required_response_payload(),
+        ).observation
+        ObservationResponse.objects.create(
+            observation=observation,
+            question=text_question,
+            response_type=RESPONSE_TYPE_TEXT,
+            text_value="  ",
+        )
+
+        with self.assertRaises(ValidationError):
+            validate_required_responses(observation)
 
     def test_default_question_set_wrapper(self):
         self.assertEqual(

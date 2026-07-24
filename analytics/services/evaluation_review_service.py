@@ -14,7 +14,10 @@ from analytics.models import (
     EvaluatorRole,
     Observation,
 )
-from analytics.services.permissions import can_review_submitted_evaluations, can_view_evaluation_review_detail
+from analytics.services.permissions import (
+    can_review_submitted_evaluations,
+    can_view_evaluation_review_detail,
+)
 from seasons.models import Season
 
 
@@ -51,6 +54,7 @@ class EvaluationReviewRow:
 class EvaluationReviewQuestionResponse:
     question_prompt: str
     category: str
+    is_required: bool
     numeric_value: object = None
     text_value: str = ""
 
@@ -105,7 +109,9 @@ def _display_user(user) -> str:
 
 def submitted_evaluation_queryset(filters: EvaluationReviewFilters | None = None):
     queryset = (
-        Observation.objects.select_related("player", "evaluation_cycle", "season", "evaluator", "evaluator_role")
+        Observation.objects.select_related(
+            "player", "evaluation_cycle", "season", "evaluator", "evaluator_role"
+        )
         .filter(
             observation_type_key=OBSERVATION_TYPE_COACH_ASSESSMENT,
             status=OBSERVATION_STATUS_SUBMITTED,
@@ -134,13 +140,22 @@ def submitted_evaluation_queryset(filters: EvaluationReviewFilters | None = None
         queryset = queryset.filter(evaluation_perspective=filters.perspective)
     if filters.team:
         queryset = queryset.filter(
-            Q(player_team_name_snapshot__gt="", player_team_name_snapshot__icontains=filters.team)
+            Q(
+                player_team_name_snapshot__gt="",
+                player_team_name_snapshot__icontains=filters.team,
+            )
             | Q(player_team_name_snapshot="", player__team_name__icontains=filters.team)
         )
     if filters.division:
         queryset = queryset.filter(
-            Q(player_division_snapshot__gt="", player_division_snapshot__icontains=filters.division)
-            | Q(player_division_snapshot="", player__division__icontains=filters.division)
+            Q(
+                player_division_snapshot__gt="",
+                player_division_snapshot__icontains=filters.division,
+            )
+            | Q(
+                player_division_snapshot="",
+                player__division__icontains=filters.division,
+            )
         )
     if filters.season.isdigit():
         queryset = queryset.filter(season_id=int(filters.season))
@@ -166,9 +181,16 @@ def get_evaluation_review_list(user, params) -> EvaluationReviewList:
         EvaluationReviewRow(
             observation_id=observation.id,
             player_name=observation.player.display_name,
-            season_name=observation.season_name_snapshot or (observation.season.name if observation.season_id else "Legacy / No Season"),
-            player_team=observation.player_team_name_snapshot or observation.player.team_name,
-            player_division=observation.player_division_snapshot or observation.player.division,
+            season_name=observation.season_name_snapshot
+            or (
+                observation.season.name
+                if observation.season_id
+                else "Legacy / No Season"
+            ),
+            player_team=observation.player_team_name_snapshot
+            or observation.player.team_name,
+            player_division=observation.player_division_snapshot
+            or observation.player.division,
             evaluator_name=_display_user(observation.evaluator),
             evaluator_role_name=observation.evaluator_role_name or "Evaluator",
             evaluation_perspective_label=observation.evaluation_perspective_label,
@@ -181,36 +203,58 @@ def get_evaluation_review_list(user, params) -> EvaluationReviewList:
         filters=filters,
         rows=rows,
         total_count=len(rows),
-        seasons=Season.objects.filter(is_active=True).order_by("-is_current", "-starts_on", "name"),
-        cycles=EvaluationCycle.objects.filter(is_active=True).order_by("-starts_on", "-created_at", "name"),
+        seasons=Season.objects.filter(is_active=True).order_by(
+            "-is_current", "-starts_on", "name"
+        ),
+        cycles=EvaluationCycle.objects.filter(is_active=True).order_by(
+            "-starts_on", "-created_at", "name"
+        ),
         evaluator_roles=EvaluatorRole.objects.filter(is_active=True).order_by("name"),
         perspective_choices=EVALUATION_PERSPECTIVE_CHOICES,
     )
 
 
 def get_evaluation_review_detail(user, observation_id: int) -> EvaluationReviewDetail:
-    observation = submitted_evaluation_queryset().get(pk=observation_id)
+    observation = (
+        submitted_evaluation_queryset()
+        .select_related("question_set")
+        .prefetch_related("responses__question")
+        .get(pk=observation_id)
+    )
     if not can_view_evaluation_review_detail(user, observation):
         raise PermissionDenied("You cannot review this evaluation.")
+    responses_by_question = {
+        response.question_id: response for response in observation.responses.all()
+    }
     responses = [
         EvaluationReviewQuestionResponse(
-            question_prompt=response.question.prompt,
-            category=response.question.category or "Questions",
-            numeric_value=response.numeric_value,
-            text_value=response.text_value,
+            question_prompt=question.prompt,
+            category=question.category or "Questions",
+            is_required=question.is_required,
+            numeric_value=(
+                responses_by_question[question.id].numeric_value
+                if question.id in responses_by_question
+                else None
+            ),
+            text_value=(
+                responses_by_question[question.id].text_value
+                if question.id in responses_by_question
+                else ""
+            ),
         )
-        for response in observation.responses.select_related("question").order_by(
-            "question__display_order",
-            "question_id",
-            "id",
-        )
+        for question in observation.question_set.questions.filter(
+            is_active=True
+        ).order_by("display_order", "id")
     ]
     return EvaluationReviewDetail(
         observation_id=observation.id,
         player_name=observation.player.display_name,
-        season_name=observation.season_name_snapshot or (observation.season.name if observation.season_id else "Legacy / No Season"),
-        player_team=observation.player_team_name_snapshot or observation.player.team_name,
-        player_division=observation.player_division_snapshot or observation.player.division,
+        season_name=observation.season_name_snapshot
+        or (observation.season.name if observation.season_id else "Legacy / No Season"),
+        player_team=observation.player_team_name_snapshot
+        or observation.player.team_name,
+        player_division=observation.player_division_snapshot
+        or observation.player.division,
         evaluator_name=_display_user(observation.evaluator),
         evaluator_role_name=observation.evaluator_role_name or "Evaluator",
         evaluation_perspective_label=observation.evaluation_perspective_label,

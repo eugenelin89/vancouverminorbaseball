@@ -183,6 +183,34 @@ class MyEvaluationsViewTests(TestCase):
         self.assertEqual(detail.observation_id, observation.id)
         self.assertFalse(hasattr(detail, "observation"))
 
+    def test_my_evaluation_detail_shows_unanswered_optional_questions(self):
+        optional_question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        optional_question.is_required = False
+        optional_question.save(update_fields=["is_required", "updated_at"])
+        observation = self.submitted_observation(note="Required answers only.")
+        self.client.force_login(self.player_user)
+
+        response = self.client.get(
+            reverse(
+                "analytics:my-evaluation-detail",
+                kwargs={"observation_id": observation.id},
+            )
+        )
+        detail = get_my_evaluation_detail(self.player_user, observation.id)
+        optional_response = next(
+            item
+            for item in detail.responses
+            if item.question_prompt == optional_question.prompt
+        )
+
+        self.assertContains(response, optional_question.prompt)
+        self.assertContains(response, "Optional")
+        self.assertContains(response, "Not answered")
+        self.assertFalse(optional_response.is_required)
+        self.assertIsNone(optional_response.numeric_value)
+
     def test_my_evaluations_show_self_label_without_external_identity(self):
         self_observation = self.submitted_observation(
             player=self.player, evaluator=self.player_user, note="My reflection."

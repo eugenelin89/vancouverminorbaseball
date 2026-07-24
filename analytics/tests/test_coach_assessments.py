@@ -8,6 +8,7 @@ from analytics.tests.helpers import (
     Decimal,
     EvaluationCycle,
     Observation,
+    ObservationResponse,
     Player,
     TestCase,
     User,
@@ -15,6 +16,8 @@ from analytics.tests.helpers import (
     create_coach_assessment_observation,
     create_season,
     ensure_default_coach_assessment_setup,
+    get_player_score_summary,
+    observation_metrics,
     patch,
     reverse,
     submit_observation,
@@ -71,6 +74,32 @@ class CoachAssessmentWorkflowTests(TestCase):
         self.assertIn(f"question_{question.id}", form.fields)
         self.assertEqual(
             form.fields[f"question_{question.id}"].label, "Edited dynamic question"
+        )
+
+    def test_dynamic_form_marks_optional_questions_not_required(self):
+        optional_question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        optional_question.is_required = False
+        optional_question.save(update_fields=["is_required", "updated_at"])
+        required_question = (
+            self.setup_result.question_set.questions.filter(
+                response_type=RESPONSE_TYPE_RATING_1_5,
+                is_required=True,
+            )
+            .exclude(id=optional_question.id)
+            .first()
+        )
+
+        form = CoachAssessmentForm(
+            question_set=self.setup_result.question_set, require_required=True
+        )
+
+        self.assertFalse(form.fields[f"question_{optional_question.id}"].required)
+        self.assertTrue(form.fields[f"question_{required_question.id}"].required)
+        self.assertEqual(
+            form.fields[f"question_{optional_question.id}"].label,
+            f"{optional_question.prompt} (Optional)",
         )
 
     def test_assessment_list_requires_login_and_lists_players(self):
@@ -186,6 +215,103 @@ class CoachAssessmentWorkflowTests(TestCase):
         self.assertEqual(observation.status, OBSERVATION_STATUS_SUBMITTED)
         self.assertIsNotNone(observation.submitted_at)
         self.assertEqual(observation.responses.count(), len(self.response_payload()))
+
+    def test_coach_can_submit_with_optional_question_blank(self):
+        optional_question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        optional_question.is_required = False
+        optional_question.save(update_fields=["is_required", "updated_at"])
+        self.client.force_login(self.coach)
+        data = {"action": "submit"}
+        data.update(self.response_payload())
+        data[f"question_{optional_question.id}"] = ""
+
+        response = self.client.post(
+            reverse(
+                "analytics:assessment-player", kwargs={"player_id": self.player.id}
+            ),
+            data,
+        )
+
+        observation = Observation.objects.get(player=self.player, evaluator=self.coach)
+        score_summary = get_player_score_summary(self.player)
+        metrics = observation_metrics(cycle=self.cycle)
+        expected_rating_count = (
+            self.setup_result.question_set.questions.filter(
+                response_type=RESPONSE_TYPE_RATING_1_5
+            ).count()
+            - 1
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(observation.status, OBSERVATION_STATUS_SUBMITTED)
+        self.assertFalse(
+            ObservationResponse.objects.filter(
+                observation=observation, question=optional_question
+            ).exists()
+        )
+        self.assertEqual(score_summary.rating_count, expected_rating_count)
+        self.assertEqual(
+            sum(row.count for row in metrics.by_category_average),
+            expected_rating_count,
+        )
+
+    def test_clearing_optional_draft_answer_removes_response(self):
+        optional_question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        optional_question.is_required = False
+        optional_question.save(update_fields=["is_required", "updated_at"])
+        self.client.force_login(self.coach)
+
+        self.client.post(
+            reverse(
+                "analytics:assessment-player", kwargs={"player_id": self.player.id}
+            ),
+            {"action": "save_draft", f"question_{optional_question.id}": "3"},
+        )
+        observation = Observation.objects.get(player=self.player, evaluator=self.coach)
+        self.client.post(
+            reverse(
+                "analytics:assessment-edit", kwargs={"observation_id": observation.id}
+            ),
+            {"action": "save_draft", f"question_{optional_question.id}": ""},
+        )
+
+        self.assertFalse(
+            ObservationResponse.objects.filter(
+                observation=observation, question=optional_question
+            ).exists()
+        )
+
+    def test_assessment_detail_shows_unanswered_optional_question(self):
+        optional_question = self.setup_result.question_set.questions.filter(
+            response_type=RESPONSE_TYPE_RATING_1_5
+        ).first()
+        optional_question.is_required = False
+        optional_question.save(update_fields=["is_required", "updated_at"])
+        self.client.force_login(self.coach)
+        data = {"action": "submit"}
+        data.update(self.response_payload())
+        data[f"question_{optional_question.id}"] = ""
+        self.client.post(
+            reverse(
+                "analytics:assessment-player", kwargs={"player_id": self.player.id}
+            ),
+            data,
+        )
+        observation = Observation.objects.get(player=self.player, evaluator=self.coach)
+
+        response = self.client.get(
+            reverse(
+                "analytics:assessment-detail",
+                kwargs={"observation_id": observation.id},
+            )
+        )
+
+        self.assertContains(response, optional_question.prompt)
+        self.assertContains(response, "Optional")
+        self.assertContains(response, "Not answered")
 
     def test_submitted_assessment_redirects_instead_of_creating_duplicate(self):
         self.client.force_login(self.coach)

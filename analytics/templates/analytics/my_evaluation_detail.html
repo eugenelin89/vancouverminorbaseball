@@ -21,6 +21,7 @@
             <h3>{{ response.category }}</h3>
             <div>
                 <strong>{{ response.question_prompt }}</strong>
+                {% if not response.is_required %}<span class="pdp-badge pdp-badge--muted">Optional</span>{% endif %}
                 {% if response.numeric_value %}
                     <span>{{ response.numeric_value|floatformat:0 }}</span>
                 {% elif response.text_value %}
