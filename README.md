@@ -158,6 +158,7 @@ Key environment variables:
 
 - `DJANGO_SECRET_KEY` is required.
 - `DJANGO_DEBUG` defaults to false.
+- `COACH_IMPORT_DEFAULT_PASSWORD` is required before creating new coach accounts through coach import.
 - `DJANGO_ALLOWED_HOSTS` defaults to `localhost,127.0.0.1`.
 - `DJANGO_STATIC_ROOT` defaults to `BASE_DIR / "staticfiles"`.
 - `DJANGO_MEDIA_ROOT` defaults to `BASE_DIR / "media"`.

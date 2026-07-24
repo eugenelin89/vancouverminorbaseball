@@ -61,6 +61,7 @@ Future production deployments should:
 - avoid production-only edits to tracked files;
 - keep secrets out of Git;
 - use environment variables for deployment-specific settings;
+- configure `COACH_IMPORT_DEFAULT_PASSWORD` before creating new imported coach accounts;
 - back up the database before migrations;
 - archive media before major upgrades;
 - verify migrations before applying them;

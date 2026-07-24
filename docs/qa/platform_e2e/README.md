@@ -205,7 +205,7 @@ Each future feature should receive:
 - Coach import belongs to Account Operations and creates or reuses coach accounts.
 - Player imports can optionally provision player accounts when staff select the account-provisioning option and map the `account_email` column.
 - Player account temporary passwords are based on the imported birthdate in `YYYYMMDD` format and are not displayed in the import result.
-- Coach account temporary passwords are secure random passwords shown only once on the coach import result page.
+- Coach account initial passwords use the configured coach import default password and are not displayed by the coach import workflow.
 - Imported coach accounts are active by default unless the CSV sets `is_active` to a false value.
 - Imported coaches do not receive Django staff or superuser access.
 - Coach import creates or updates season teams and coach assignments.

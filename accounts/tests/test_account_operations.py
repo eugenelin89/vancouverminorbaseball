@@ -1,3 +1,5 @@
+from django.test import override_settings
+
 from accounts.tests.helpers import (
     AccountListFilters,
     AccountRole,
@@ -34,6 +36,8 @@ from accounts.tests.helpers import (
     set_primary_user_player_link,
     update_account,
 )
+
+COACH_IMPORT_TEST_PASSWORD = "CoachImportDefault123!"
 
 
 class AccountOperationsServiceTests(TestCase):
@@ -785,6 +789,7 @@ class AccountOperationsServiceTests(TestCase):
         self.assertTrue(superuser.is_active)
 
 
+@override_settings(COACH_IMPORT_DEFAULT_PASSWORD=COACH_IMPORT_TEST_PASSWORD)
 class AccountOperationsViewTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(
@@ -1515,12 +1520,12 @@ class AccountOperationsViewTests(TestCase):
         )
         self.assertEqual(confirm_response.status_code, 200)
         self.assertContains(confirm_response, "Coach Import Result")
-        self.assertContains(confirm_response, "Temporary password")
+        self.assertContains(confirm_response, "configured default password")
+        self.assertNotContains(confirm_response, COACH_IMPORT_TEST_PASSWORD)
         user = User.objects.get(username="new.coach")
-        temporary_password = (
-            confirm_response.context["result"].rows[0].temporary_password
-        )
-        self.assertTrue(user.check_password(temporary_password))
+        result_row = confirm_response.context["result"].rows[0]
+        self.assertFalse(hasattr(result_row, "temporary_password"))
+        self.assertTrue(user.check_password(COACH_IMPORT_TEST_PASSWORD))
         self.assertTrue(user.is_active)
         self.assertEqual(user.account_profile.role, AccountRole.COACH)
         self.assertTrue(user.account_profile.must_change_password)
@@ -1539,9 +1544,9 @@ class AccountOperationsViewTests(TestCase):
         detail_response = self.client.get(
             reverse("accounts:user-detail", kwargs={"user_id": user.id})
         )
-        self.assertNotContains(detail_response, temporary_password)
+        self.assertNotContains(detail_response, COACH_IMPORT_TEST_PASSWORD)
         list_response = self.client.get(reverse("accounts:coach-import-list"))
-        self.assertNotContains(list_response, temporary_password)
+        self.assertNotContains(list_response, COACH_IMPORT_TEST_PASSWORD)
         preview_again = self.client.get(reverse("accounts:coach-import-preview"))
         self.assertEqual(preview_again.status_code, 302)
         confirm_again = self.client.get(reverse("accounts:coach-import-confirm"))
@@ -1601,9 +1606,8 @@ class AccountOperationsViewTests(TestCase):
         result = response.context["result"]
         self.assertEqual(result.existing_coaches_reused, 1)
         self.assertEqual(result.conflicts, 1)
-        temporary_password = result.rows[0].temporary_password
         existing_coach.refresh_from_db()
-        self.assertFalse(temporary_password)
+        self.assertFalse(hasattr(result.rows[0], "temporary_password"))
         self.assertFalse(existing_coach.account_profile.must_change_password)
         self.assertEqual(existing_coach.account_profile.role, AccountRole.COACH)
         self.assertEqual(

@@ -30,6 +30,7 @@ These tests must pass before a production release is accepted:
 - [ ] evaluation review (`REV-001`, `REV-003`)
 - [ ] direct URL permissions (`SEC-001` to `SEC-004`)
 - [ ] forced password change (`ACC-006`)
+- [ ] coach import default-password provisioning (`ACC-008`)
 - [ ] no duplicate submissions after refresh or repeat submit (`EVL-005`)
 - [ ] basic Analytics Command Center integrity (`ANA-001`)
 
@@ -65,7 +66,7 @@ Critical and High tests should be prioritized when release time is limited. Medi
 | --- | --- | --- |
 | Import data creation and idempotency | `IMP-001` to `IMP-003` | Critical |
 | Import preview and conflict reporting | `IMP-004` | High |
-| Account provisioning, activation, and passwords | `ACC-001`, `ACC-002`, `ACC-005`, `ACC-006` | Critical |
+| Account provisioning, activation, and passwords | `ACC-001`, `ACC-002`, `ACC-005`, `ACC-006`, `ACC-008` | Critical |
 | Username and email handling | `ACC-003`, `ACC-004` | High |
 | Manual account creation | `ACC-007` | High |
 | Active assignments and memberships | `ASN-001`, `ASN-002` | Critical |
@@ -140,7 +141,7 @@ Coach import:
 - Boolean values accepted for `is_active`: blank, `1`, `true`, `yes`, `y`, `active`, `0`, `false`, `no`, `n`, `inactive`.
 - Imported coach accounts are active by default unless `is_active` is false.
 - Imported coach accounts must change password on first login.
-- New coach temporary passwords are random and shown once on the result page.
+- New coach accounts use the configured default coach import password. The password is not displayed on preview, result, summaries, logs, or account detail pages.
 - Existing coach accounts are reused by email and keep their existing password.
 - Existing non-coach accounts with the same email are conflicts.
 - Coach import creates or reuses season teams and creates or updates coach season assignments.
@@ -272,9 +273,9 @@ Steps:
 - [ ] Confirm team and division are recognized.
 - [ ] Confirm assignment roles are Head Coach and Assistant Coach.
 - [ ] Confirm account action is Create Coach Account or Reuse Coach Account.
-- [ ] Confirm password behavior says temporary password will be generated only for new accounts.
+- [ ] Confirm password behavior says the configured default password will be used only for new accounts and that password change is required.
 - [ ] Confirm Import.
-- [ ] Copy temporary passwords from the result page immediately if new coach accounts were created.
+- [ ] Confirm no raw coach password is shown on the result page.
 
 Expected result:
 
@@ -670,19 +671,19 @@ For each:
 
 - [ ] Confirm expected initial active/inactive status.
 - [ ] If inactive, activate through Account Operations.
-- [ ] Sign in with temporary password.
+- [ ] Sign in with the expected initial password.
 - [ ] Confirm forced password change happens before normal platform pages.
 - [ ] Change password.
 - [ ] Confirm redirect to the correct landing page.
 - [ ] Log out.
 - [ ] Confirm login succeeds with the new password.
-- [ ] Confirm the old temporary password no longer works.
+- [ ] Confirm the old initial password no longer works.
 - [ ] Confirm password pages use Accounts routes and current platform branding.
 
 Password expectations:
 
 - Imported player temporary password: birthdate as `YYYYMMDD`.
-- Imported coach temporary password: random one-time value shown only on import result page.
+- Imported coach initial password: configured default coach import password, not shown by the application.
 - Manually created account temporary password: one-time value shown only on creation result page.
 
 Pass / Fail:
@@ -948,12 +949,12 @@ Steps:
 - [ ] Import the inactive coach fixture.
 - [ ] Confirm the inactive coach user is created or retained.
 - [ ] Confirm the inactive coach cannot sign in.
-- [ ] Confirm knowing the correct temporary password does not grant access while inactive.
+- [ ] Confirm knowing the correct initial password does not grant access while inactive.
 - [ ] Confirm staff can activate the account from Account Operations.
 - [ ] Confirm the activated user can sign in.
 - [ ] Confirm forced password change still applies.
 - [ ] Confirm the user can log out and sign in with the new password.
-- [ ] Confirm the original temporary password no longer works.
+- [ ] Confirm the original initial password no longer works.
 - [ ] Deactivate the account again.
 - [ ] Confirm login is blocked again.
 - [ ] Submit or locate a historical evaluation by the account before deactivation where practical.

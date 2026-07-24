@@ -62,6 +62,7 @@ Current prefixes:
 | `ACC-005` | Account activation lifecycle | Critical | Partial | Yes | Yes | Yes | Fully automatable | `platform_e2e_test_script.md` - Account Activation And Password Workflow |
 | `ACC-006` | Temporary password and forced password change | Critical | Yes | Yes | Yes | Yes | Semi-automatable | `platform_e2e_test_script.md` - Account Activation And Password Workflow |
 | `ACC-007` | Manual account creation | High | Yes | Yes | Yes | Partial | Semi-automatable | `platform_e2e_test_script.md` - Manual Creation |
+| `ACC-008` | Coach import default-password provisioning | Critical | Yes | Yes | Yes | Yes | Fully automatable | `platform_e2e_test_script.md` - Coach Import / Account Activation And Password Workflow |
 | `ASN-001` | Player roster membership | Critical | Yes | Yes | Yes | Partial | Fully automatable | `platform_e2e_test_script.md` - Player Import / Manual Creation |
 | `ASN-002` | Coach season assignment | Critical | Yes | Yes | Yes | Partial | Fully automatable | `platform_e2e_test_script.md` - Coach Import / Manual Creation |
 | `ASN-003` | Historical assignment preservation | High | No | No | Yes | Yes | Semi-automatable | `platform_e2e_test_script.md` - Archive and Deactivation Behavior Tests |

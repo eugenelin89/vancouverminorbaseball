@@ -1,7 +1,7 @@
 {% extends "pdp/base.html" %}
 
 {% block pdp_title %}Coach Import Result{% endblock %}
-{% block pdp_subtitle %}Copy temporary passwords now. They will not be shown again.{% endblock %}
+{% block pdp_subtitle %}New coach accounts use the configured default password and must change it at first login.{% endblock %}
 
 {% block pdp_content %}
 <section class="pdp-grid pdp-grid--single">
@@ -39,7 +39,6 @@
                         <th>Assignment</th>
                         <th>Password</th>
                         <th>Active</th>
-                        <th>Temporary password</th>
                         <th>Messages</th>
                     </tr>
                 </thead>
@@ -60,7 +59,6 @@
                             <td>{{ row.assignment_status|default:"-" }}</td>
                             <td>{{ row.password_behavior|default:"-" }}</td>
                             <td>{% if row.user_id %}{{ row.is_active|yesno:"Yes,No" }}{% else %}-{% endif %}</td>
-                            <td><strong>{{ row.temporary_password|default:"-" }}</strong></td>
                             <td>
                                 {% for message in row.messages %}
                                     <div>{{ message }}</div>
@@ -70,7 +68,7 @@
                             </td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="10">No rows processed.</td></tr>
+                        <tr><td colspan="9">No rows processed.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

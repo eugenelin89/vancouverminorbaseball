@@ -12,6 +12,7 @@
 - Change-impact guidance for selecting QA scope.
 - Lightweight maintenance conventions for future traceability changes.
 - Optional evaluation question traceability and regression coverage.
+- Coach import default-password provisioning traceability and QA guidance.
 
 ## Previous Milestones
 

@@ -245,7 +245,7 @@ The password-change page is:
 /accounts/password/
 ```
 
-Temporary passwords are shown only once when staff creates, imports, or resets an account. If the temporary password is lost, staff must reset it.
+Temporary passwords are shown only once when staff manually creates or resets an account. Imported player accounts use the documented player-import password rule. Imported coach accounts use the administrator-configured default coach password, which is not displayed in the import workflow.
 
 ### Account Profile
 

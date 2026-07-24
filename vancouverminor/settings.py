@@ -45,6 +45,10 @@ DEBUG = env_bool("DJANGO_DEBUG", default=False)
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
+COACH_IMPORT_DEFAULT_PASSWORD = os.environ.get(
+    "COACH_IMPORT_DEFAULT_PASSWORD", ""
+).strip()
+
 
 # Application definition
 

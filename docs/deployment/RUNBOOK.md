@@ -61,6 +61,7 @@ DJANGO_DEBUG
 DJANGO_ALLOWED_HOSTS
 DJANGO_STATIC_ROOT
 DJANGO_MEDIA_ROOT
+COACH_IMPORT_DEFAULT_PASSWORD
 ```
 
 Verify systemd configuration:
@@ -73,6 +74,13 @@ systemctl show vancouverminor.service --property=EnvironmentFiles
 Verify that production uses `EnvironmentFile=/etc/vancouverminorbaseball.env`.
 
 Do not commit `/etc/vancouverminorbaseball.env`.
+
+`COACH_IMPORT_DEFAULT_PASSWORD` must be set before staff create new coach
+accounts through coach import. Set it securely in
+`/etc/vancouverminorbaseball.env`, restart the application service after changing
+it, communicate it to coaches through an approved operational channel, and
+rotate it when appropriate. Do not paste the value into Git, logs, screenshots,
+or shared documentation.
 
 ## Deployment
 

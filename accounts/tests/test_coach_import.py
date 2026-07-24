@@ -1,3 +1,5 @@
+from django.test import override_settings
+
 from accounts.tests.helpers import (
     RESULT_CONFLICT,
     RESULT_CREATED,
@@ -15,11 +17,15 @@ from accounts.tests.helpers import (
     commit_coach_import,
     create_season,
     preview_coach_import,
+    reverse,
     set_account_role,
     username_for_person,
 )
 
+COACH_IMPORT_TEST_PASSWORD = "CoachImportDefault123!"
 
+
+@override_settings(COACH_IMPORT_DEFAULT_PASSWORD=COACH_IMPORT_TEST_PASSWORD)
 class CoachImportServiceTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(
@@ -36,16 +42,20 @@ class CoachImportServiceTests(TestCase):
             + "\n".join(rows)
         )
 
-    def test_valid_csv_creates_active_coach_with_one_time_password(self):
+    def test_valid_csv_creates_active_coach_with_default_password(self):
         result = commit_coach_import(
             self.staff,
             self.csv_text(
-                ["Casey,Coach,casey@example.com,,Reds,13U,true,Lead coach,C001"]
+                [
+                    "Casey,Coach,casey@example.com,,Reds,13U,true,Lead coach,C001",
+                    "Sam,Coach,sam@example.com,,Reds,13U,true,Assistant coach,C002",
+                ]
             ),
             season=self.season,
         )
 
         user = User.objects.get(email="casey@example.com")
+        second_user = User.objects.get(email="sam@example.com")
         profile = user.account_profile
         result_row = result.rows[0]
         self.assertEqual(result_row.status, RESULT_CREATED)
@@ -57,15 +67,19 @@ class CoachImportServiceTests(TestCase):
         self.assertTrue(profile.must_change_password)
         self.assertEqual(profile.metadata["team"], "Reds")
         self.assertEqual(profile.metadata["division"], "13U")
-        self.assertTrue(result_row.temporary_password)
-        self.assertTrue(user.check_password(result_row.temporary_password))
-        self.assertNotIn(result_row.temporary_password, repr(result_row))
+        self.assertFalse(hasattr(result_row, "temporary_password"))
+        self.assertTrue(user.check_password(COACH_IMPORT_TEST_PASSWORD))
+        self.assertTrue(second_user.check_password(COACH_IMPORT_TEST_PASSWORD))
+        self.assertNotEqual(user.password, COACH_IMPORT_TEST_PASSWORD)
+        self.assertNotEqual(second_user.password, COACH_IMPORT_TEST_PASSWORD)
+        self.assertNotIn(COACH_IMPORT_TEST_PASSWORD, repr(result_row))
+        self.assertNotIn(COACH_IMPORT_TEST_PASSWORD, str(result))
         self.assertFalse(UserPlayerLink.objects.filter(user=user).exists())
         self.assertEqual(Player.objects.count(), 0)
-        self.assertEqual(result.users_created, 1)
-        self.assertEqual(result.active_accounts, 1)
+        self.assertEqual(result.users_created, 2)
+        self.assertEqual(result.active_accounts, 2)
         self.assertEqual(result.inactive_accounts, 0)
-        self.assertEqual(result.password_change_required, 1)
+        self.assertEqual(result.password_change_required, 2)
         assignment = CoachSeasonAssignment.objects.select_related("season_team").get(
             user=user
         )
@@ -76,7 +90,110 @@ class CoachImportServiceTests(TestCase):
         )
         self.assertTrue(assignment.is_primary)
         self.assertEqual(result.season_teams_created, 1)
-        self.assertEqual(result.assignments_created, 1)
+        self.assertEqual(result.assignments_created, 2)
+
+    @override_settings(COACH_IMPORT_DEFAULT_PASSWORD="")
+    def test_missing_default_password_blocks_new_coaches_before_partial_creation(self):
+        with self.assertRaisesMessage(
+            ValidationError,
+            "COACH_IMPORT_DEFAULT_PASSWORD must be configured",
+        ):
+            commit_coach_import(
+                self.staff,
+                self.csv_text(
+                    [
+                        "Casey,Coach,casey@example.com,,Reds,13U,true,,",
+                        "Sam,Coach,sam@example.com,,Reds,13U,true,,",
+                    ]
+                ),
+                season=self.season,
+            )
+
+        self.assertFalse(
+            User.objects.filter(
+                email__in=["casey@example.com", "sam@example.com"]
+            ).exists()
+        )
+        self.assertFalse(CoachSeasonAssignment.objects.exists())
+
+    @override_settings(COACH_IMPORT_DEFAULT_PASSWORD="   ")
+    def test_blank_default_password_blocks_new_coaches(self):
+        with self.assertRaisesMessage(
+            ValidationError,
+            "COACH_IMPORT_DEFAULT_PASSWORD must be configured",
+        ):
+            commit_coach_import(
+                self.staff,
+                self.csv_text(["Blank,Coach,blank@example.com,,Reds,13U,true,,"]),
+                season=self.season,
+            )
+
+        self.assertFalse(User.objects.filter(email="blank@example.com").exists())
+
+    @override_settings(COACH_IMPORT_DEFAULT_PASSWORD="12345678")
+    def test_invalid_default_password_is_rejected_without_exposing_password(self):
+        with self.assertRaises(ValidationError) as context:
+            commit_coach_import(
+                self.staff,
+                self.csv_text(["Weak,Coach,weak@example.com,,Reds,13U,true,,"]),
+                season=self.season,
+            )
+
+        self.assertNotIn("12345678", str(context.exception))
+        self.assertFalse(User.objects.filter(email="weak@example.com").exists())
+
+    @override_settings(COACH_IMPORT_DEFAULT_PASSWORD="")
+    def test_reuse_only_import_does_not_require_default_password(self):
+        existing = User.objects.create_user(
+            username="existing.coach",
+            email="coach@example.com",
+            password="oldpass",
+        )
+        set_account_role(existing, AccountRole.COACH)
+
+        result = commit_coach_import(
+            self.staff,
+            self.csv_text(["Existing,Coach,coach@example.com,,Reds,13U,true,,"]),
+            season=self.season,
+        )
+
+        existing.refresh_from_db()
+        self.assertEqual(result.rows[0].status, RESULT_REUSED)
+        self.assertTrue(existing.check_password("oldpass"))
+
+    def test_imported_coach_must_change_shared_default_password_after_login(self):
+        commit_coach_import(
+            self.staff,
+            self.csv_text(["Login,Coach,login@example.com,,Reds,13U,true,,"]),
+            season=self.season,
+        )
+        user = User.objects.get(email="login@example.com")
+
+        self.assertTrue(
+            self.client.login(
+                username=user.username,
+                password=COACH_IMPORT_TEST_PASSWORD,
+            )
+        )
+        profile_response = self.client.get(reverse("accounts:profile"))
+        self.assertEqual(profile_response.status_code, 302)
+        self.assertEqual(profile_response["Location"], "/accounts/password/")
+
+        change_response = self.client.post(
+            reverse("accounts:password-change"),
+            {
+                "old_password": COACH_IMPORT_TEST_PASSWORD,
+                "new_password1": "DistinctCoachPassword123!",
+                "new_password2": "DistinctCoachPassword123!",
+            },
+        )
+
+        user.refresh_from_db()
+        user.account_profile.refresh_from_db()
+        self.assertEqual(change_response.status_code, 302)
+        self.assertFalse(user.account_profile.must_change_password)
+        self.assertTrue(user.check_password("DistinctCoachPassword123!"))
+        self.assertFalse(user.check_password(COACH_IMPORT_TEST_PASSWORD))
 
     def test_coach_import_requires_active_season(self):
         inactive = create_season(key="2025-spring", name="2025 Spring", is_active=False)
@@ -206,7 +323,7 @@ class CoachImportServiceTests(TestCase):
             User.objects.filter(email__iexact="coach@example.com").count(), 1
         )
         self.assertFalse(existing.account_profile.must_change_password)
-        self.assertFalse(result.rows[0].temporary_password)
+        self.assertFalse(hasattr(result.rows[0], "temporary_password"))
         self.assertEqual(existing.password, original_password_hash)
         self.assertEqual(existing.account_profile.role, AccountRole.COACH)
         self.assertEqual(CoachSeasonAssignment.objects.filter(user=existing).count(), 1)
@@ -236,7 +353,7 @@ class CoachImportServiceTests(TestCase):
         self.assertEqual(result.rows[0].status, RESULT_REUSED)
         self.assertFalse(existing.is_active)
         self.assertEqual(existing.password, original_password_hash)
-        self.assertFalse(result.rows[0].temporary_password)
+        self.assertFalse(hasattr(result.rows[0], "temporary_password"))
         self.assertFalse(profile.must_change_password)
         self.assertEqual(CoachSeasonAssignment.objects.filter(user=existing).count(), 1)
 
@@ -251,6 +368,8 @@ class CoachImportServiceTests(TestCase):
             season=self.season,
         )
         user = User.objects.get(email="return@example.com")
+        user.set_password("DistinctCoachPassword123!")
+        user.save(update_fields=["password"])
         original_password_hash = user.password
 
         second = commit_coach_import(
@@ -271,7 +390,9 @@ class CoachImportServiceTests(TestCase):
         self.assertEqual(CoachSeasonAssignment.objects.filter(user=user).count(), 1)
         self.assertEqual(assignment.starts_on.isoformat(), "2026-04-01")
         self.assertEqual(user.password, original_password_hash)
-        self.assertFalse(second.rows[0].temporary_password)
+        self.assertTrue(user.check_password("DistinctCoachPassword123!"))
+        self.assertFalse(hasattr(second.rows[0], "temporary_password"))
+        self.assertFalse(user.check_password(COACH_IMPORT_TEST_PASSWORD))
 
     def test_new_season_creates_new_assignment_and_distinct_team(self):
         commit_coach_import(
@@ -408,7 +529,7 @@ class CoachImportServiceTests(TestCase):
         self.assertEqual(profile.metadata["division"], "13U")
         self.assertEqual(profile.metadata["notes"], "Keep this")
         self.assertEqual(profile.metadata["custom"], "value")
-        self.assertFalse(result.rows[0].temporary_password)
+        self.assertFalse(hasattr(result.rows[0], "temporary_password"))
         self.assertFalse(profile.created_from_import)
         self.assertIsNone(profile.import_batch)
 

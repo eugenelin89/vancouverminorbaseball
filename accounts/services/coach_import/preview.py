@@ -249,7 +249,7 @@ def preview_row(
         assignment_label="Create Assignment",
         account_action="create",
         account_label="Create Coach Account",
-        password_behavior="Temporary password will be generated",
+        password_behavior="Configured default password; change required",
         status=STATUS_READY,
         messages=messages,
     )

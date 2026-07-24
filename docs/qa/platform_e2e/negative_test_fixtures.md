@@ -10,7 +10,7 @@ Purpose:
 
 - Verify that coach import supports inactive accounts.
 - Verify inactive imported accounts cannot sign in until staff activates them.
-- Verify activation does not change role, staff status, superuser status, assignment history, or temporary-password behavior.
+- Verify activation does not change role, staff status, superuser status, assignment history, or initial-password behavior.
 
 Prerequisites:
 
@@ -23,7 +23,7 @@ Expected outcome:
 - One coach account is created with role Coach.
 - `User.is_active` is false.
 - The coach season assignment is created as inactive.
-- A temporary password is shown once on the result page.
+- The account uses the configured coach import default password, which is not shown on the result page.
 - The inactive coach cannot sign in until activated through Account Operations.
 - After activation, the coach must change password before normal platform use.
 
@@ -56,7 +56,7 @@ Expected outcome:
 Cleanup:
 
 - Deactivate any new collision-test coach accounts.
-- Remove temporary passwords from notes.
+- Remove any operational password notes from shared test records.
 - Confirm no `players.Player` records or `UserPlayerLink` rows were created by the coach collision fixture.
 
 ## Player Account-Provisioning Collision Tests

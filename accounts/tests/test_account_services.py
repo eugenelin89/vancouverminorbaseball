@@ -1,3 +1,9 @@
+from django.test import override_settings
+
+from accounts.services.password_service import (
+    set_coach_import_default_password,
+    validate_coach_import_default_password,
+)
 from accounts.tests.helpers import (
     STATUS_ALREADY_LINKED,
     STATUS_CONFLICT,
@@ -120,6 +126,29 @@ class AccountPasswordServiceTests(TestCase):
 
         self.assertGreaterEqual(len(password), 12)
         self.assertNotEqual(password, generate_random_temporary_password())
+
+    @override_settings(COACH_IMPORT_DEFAULT_PASSWORD="CoachImportDefault123!")
+    def test_set_coach_import_default_password_hashes_configured_password(self):
+        user = User.objects.create_user(
+            username="coach.import",
+            first_name="Coach",
+            last_name="Import",
+            email="coach@example.com",
+        )
+
+        set_coach_import_default_password(user)
+        user.refresh_from_db()
+
+        self.assertNotEqual(user.password, "CoachImportDefault123!")
+        self.assertTrue(user.check_password("CoachImportDefault123!"))
+
+    @override_settings(COACH_IMPORT_DEFAULT_PASSWORD="")
+    def test_coach_import_default_password_requires_setting(self):
+        with self.assertRaisesMessage(
+            ValidationError,
+            "COACH_IMPORT_DEFAULT_PASSWORD must be configured",
+        ):
+            validate_coach_import_default_password()
 
 
 class AccountProvisioningServiceTests(TestCase):

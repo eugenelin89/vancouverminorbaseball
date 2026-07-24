@@ -116,7 +116,6 @@ class CoachImportResultRow:
     username: str = ""
     user_id: int | None = None
     is_active: bool = False
-    temporary_password: str = field(default="", repr=False)
     season_name: str = ""
     team: str = ""
     division: str = ""

@@ -31,7 +31,10 @@ from accounts.services.coach_import.result_models import (
     CoachImportRowPreview,
 )
 from accounts.services.email_service import find_existing_email_user
-from accounts.services.password_service import set_random_temporary_password
+from accounts.services.password_service import (
+    set_coach_import_default_password,
+    validate_coach_import_default_password,
+)
 from accounts.services.permissions import can_manage_accounts
 from accounts.services.profile_service import (
     get_or_create_account_profile,
@@ -45,6 +48,22 @@ User = get_user_model()
 def validate_actor(actor) -> None:
     if not can_manage_accounts(actor):
         raise ValidationError("Only staff users can import coaches.")
+
+
+def validate_ready_row_passwords(preview_rows: list[CoachImportRowPreview]) -> None:
+    """Validate shared coach-import password before creating any new users."""
+    users = [
+        User(
+            username=row.final_username,
+            first_name=row.first_name,
+            last_name=row.last_name,
+            email=row.email,
+        )
+        for row in preview_rows
+        if row.status == STATUS_READY
+    ]
+    if users:
+        validate_coach_import_default_password(users=users)
 
 
 @transaction.atomic
@@ -98,7 +117,7 @@ def create_coach(row: CoachImportRowPreview, season: Season) -> CoachImportResul
         email=row.email,
         is_active=row.is_active,
     )
-    temporary_password = set_random_temporary_password(user)
+    set_coach_import_default_password(user)
     profile = set_account_role(user, AccountRole.COACH)
     profile.must_change_password = True
     profile.metadata = {**profile_metadata(profile), **metadata_for_row(row)}
@@ -111,16 +130,16 @@ def create_coach(row: CoachImportRowPreview, season: Season) -> CoachImportResul
         username=user.username,
         user_id=user.id,
         is_active=user.is_active,
-        temporary_password=temporary_password,
         season_name=season.name,
         team=row.team,
         division=row.division,
         assignment_role_label=row.assignment_role_label,
         assignment_status=assignment_action,
-        password_behavior="Temporary password generated",
+        password_behavior="Configured default password; change required",
         messages=[
             status_message,
-            "temporary password generated",
+            "configured default password assigned",
+            "password change required",
             "season team created" if team_created else "season team reused",
             f"assignment {assignment_action}",
         ],
@@ -130,9 +149,10 @@ def create_coach(row: CoachImportRowPreview, season: Season) -> CoachImportResul
 def commit_coach_import(
     actor, csv_text: str, season: Season | None = None
 ) -> CoachImportResult:
-    """Create or reuse coach accounts from CSV text and return one-time passwords."""
+    """Create or reuse coach accounts from CSV text without exposing passwords."""
     validate_actor(actor)
     preview = preview_coach_import(csv_text, season=season)
+    validate_ready_row_passwords(preview.rows)
     result_rows = []
 
     for error in preview.row_errors:

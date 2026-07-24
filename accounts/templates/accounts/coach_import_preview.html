@@ -81,7 +81,7 @@
     <article class="pdp-card">
         <h2>Confirm</h2>
         <p>Only rows marked ready or reuse will be processed. Reused coach accounts keep their existing passwords unchanged.</p>
-        <p>Temporary passwords are generated and shown once only for newly created coach accounts.</p>
+        <p>Newly created coach accounts use the configured default coach password and must change it at first login. The password is not displayed by the import workflow.</p>
         <form method="post" action="{% url 'accounts:coach-import-confirm' %}" class="pdp-form">
             {% csrf_token %}
             <label>
