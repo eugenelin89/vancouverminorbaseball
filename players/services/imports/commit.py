@@ -366,6 +366,7 @@ def commit_import_batch(
             ),
         )
         result.account_provisioning = provisioning_summary.to_dict()
+        result.warnings.extend(provisioning_summary.warnings)
 
     locked_batch.status = PlayerImportStatus.COMMITTED
     locked_batch.rows_created = result.created
@@ -373,7 +374,7 @@ def commit_import_batch(
     locked_batch.rows_skipped = result.skipped
     locked_batch.rows_conflicted = result.conflicts
     locked_batch.import_summary = asdict(result)
-    locked_batch.row_errors = result.errors
+    locked_batch.row_errors = [*result.errors, *result.warnings]
     locked_batch.committed_at = timezone.now()
     locked_batch.save(
         update_fields=[

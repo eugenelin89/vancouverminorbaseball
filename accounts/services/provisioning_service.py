@@ -10,11 +10,16 @@ from django.db import transaction
 from accounts.models import AccountRole, UserPlayerLink, UserPlayerRelationship
 from accounts.services.email_service import find_existing_email_user, normalize_email
 from accounts.services.link_service import activate_link, link_user_to_player
-from accounts.services.password_service import mark_password_change_required, set_temporary_password
+from accounts.services.password_service import (
+    mark_password_change_required,
+    set_temporary_password,
+)
 from accounts.services.profile_service import get_or_create_account_profile
-from accounts.services.username_service import validate_available_username, username_for_player
+from accounts.services.username_service import (
+    username_for_player,
+    validate_available_username,
+)
 from players.models import Player, PlayerImportBatch
-
 
 User = get_user_model()
 
@@ -40,6 +45,9 @@ class ProvisioningResult:
     username: str = ""
     user_id: int | None = None
     messages: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    email_assigned: bool = False
+    email_omitted: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -55,6 +63,7 @@ class ProvisioningSummary:
     skipped: int = 0
     conflicts: int = 0
     messages: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     results: list[ProvisioningResult] = field(default_factory=list)
 
     def add_result(self, result: ProvisioningResult) -> None:
@@ -70,6 +79,7 @@ class ProvisioningSummary:
         elif result.status == STATUS_CONFLICT:
             self.conflicts += 1
         self.messages.extend(result.messages)
+        self.warnings.extend(result.warnings)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -81,6 +91,7 @@ class ProvisioningSummary:
             "skipped": self.skipped,
             "conflicts": self.conflicts,
             "messages": list(self.messages),
+            "warnings": list(self.warnings),
         }
 
 
@@ -113,14 +124,18 @@ def _find_safe_email_user(player: Player, email: str):
         return None, None
     link = (
         UserPlayerLink.objects.select_related("user", "player")
-        .filter(user=email_user, player=player, relationship=UserPlayerRelationship.SELF)
+        .filter(
+            user=email_user, player=player, relationship=UserPlayerRelationship.SELF
+        )
         .order_by("-is_active", "-is_primary", "id")
         .first()
     )
     return email_user, link
 
 
-def _apply_import_profile_state(user, import_batch, *, set_player_role: bool, created_from_import: bool):
+def _apply_import_profile_state(
+    user, import_batch, *, set_player_role: bool, created_from_import: bool
+):
     profile = get_or_create_account_profile(user)
     update_fields = []
     if set_player_role and profile.role not in {AccountRole.ADMIN, AccountRole.STAFF}:
@@ -150,18 +165,17 @@ def _ensure_active_self_link(link, import_batch):
     return activate_link(link)
 
 
-def _safe_linked_user_result(player, link, import_batch, email: str, row_number: int | None) -> ProvisioningResult:
+def _safe_linked_user_result(
+    player, link, import_batch, email: str, row_number: int | None
+) -> ProvisioningResult:
     normalized_email = normalize_email(email)
     existing_email_user = find_existing_email_user(normalized_email)
+    warnings = []
+    email_assigned = False
+    email_omitted = False
     if existing_email_user and existing_email_user.id != link.user_id:
-        return ProvisioningResult(
-            player_id=player.id,
-            row_number=row_number,
-            status=STATUS_CONFLICT,
-            username=link.user.username,
-            user_id=link.user_id,
-            messages=[_row_message(row_number, "Email belongs to a different existing user; account not provisioned.")],
-        )
+        warnings.append(_duplicate_email_warning(row_number, normalized_email))
+        email_omitted = True
     try:
         link = _ensure_active_self_link(link, import_batch)
     except ValidationError as exc:
@@ -173,17 +187,32 @@ def _safe_linked_user_result(player, link, import_batch, email: str, row_number:
             user_id=link.user_id,
             messages=[_row_message(row_number, "; ".join(exc.messages))],
         )
-    if normalized_email and not link.user.email:
+    if normalized_email and not link.user.email and not email_omitted:
         link.user.email = normalized_email
         link.user.save(update_fields=["email"])
-    _apply_import_profile_state(link.user, import_batch, set_player_role=False, created_from_import=False)
+        email_assigned = True
+    _apply_import_profile_state(
+        link.user, import_batch, set_player_role=False, created_from_import=False
+    )
     return ProvisioningResult(
         player_id=player.id,
         row_number=row_number,
         status=STATUS_ALREADY_LINKED,
         username=link.user.username,
         user_id=link.user_id,
-        messages=[_row_message(row_number, "Player already has a linked user account.")],
+        messages=[
+            _row_message(row_number, "Player already has a linked user account.")
+        ],
+        warnings=warnings,
+        email_assigned=email_assigned,
+        email_omitted=email_omitted,
+    )
+
+
+def _duplicate_email_warning(row_number: int | None, email: str) -> str:
+    return _row_message(
+        row_number,
+        f'Player account was created, but the login email "{email}" was already assigned to another account and was not added.',
     )
 
 
@@ -204,7 +233,9 @@ def provision_player_account(
 
     existing_link = _find_existing_self_link(player)
     if existing_link:
-        return _safe_linked_user_result(player, existing_link, import_batch, normalized_email, row_number)
+        return _safe_linked_user_result(
+            player, existing_link, import_batch, normalized_email, row_number
+        )
 
     email_user, same_player_link = _find_safe_email_user(player, normalized_email)
     if email_user:
@@ -220,34 +251,44 @@ def provision_player_account(
                     user_id=email_user.id,
                     messages=[_row_message(row_number, "; ".join(exc.messages))],
                 )
-            _apply_import_profile_state(email_user, import_batch, set_player_role=False, created_from_import=False)
+            _apply_import_profile_state(
+                email_user,
+                import_batch,
+                set_player_role=False,
+                created_from_import=False,
+            )
             return ProvisioningResult(
                 player_id=player.id,
                 row_number=row_number,
                 status=STATUS_LINKED_EXISTING,
                 username=email_user.username,
                 user_id=email_user.id,
-                messages=[_row_message(row_number, "Existing linked email user reused.")],
+                messages=[
+                    _row_message(row_number, "Existing linked email user reused.")
+                ],
+                email_assigned=bool(normalized_email),
             )
-        return ProvisioningResult(
-            player_id=player.id,
-            row_number=row_number,
-            status=STATUS_CONFLICT,
-            username=email_user.username,
-            user_id=email_user.id,
-            messages=[_row_message(row_number, "Email belongs to an unrelated existing user; account not provisioned.")],
-        )
+        email_warning = _duplicate_email_warning(row_number, normalized_email)
+        normalized_email = ""
+    else:
+        email_warning = ""
 
     if not player.birthdate:
         return ProvisioningResult(
             player_id=player.id,
             row_number=row_number,
             status=STATUS_SKIPPED,
-            messages=[_row_message(row_number, "Missing birthdate; account not provisioned.")],
+            messages=[
+                _row_message(row_number, "Missing birthdate; account not provisioned.")
+            ],
         )
 
     try:
-        username = validate_available_username(username) if username else username_for_player(player)
+        username = (
+            validate_available_username(username)
+            if username
+            else username_for_player(player)
+        )
     except ValidationError as exc:
         return ProvisioningResult(
             player_id=player.id,
@@ -256,10 +297,17 @@ def provision_player_account(
             messages=[_row_message(row_number, "; ".join(exc.messages))],
         )
 
-    user = User.objects.create(username=username, email=normalized_email, is_active=activate_user)
+    user = User.objects.create(
+        username=username, email=normalized_email, is_active=activate_user
+    )
     set_temporary_password(user, player)
     created_from_import = bool(import_batch)
-    profile = _apply_import_profile_state(user, import_batch, set_player_role=True, created_from_import=created_from_import)
+    profile = _apply_import_profile_state(
+        user,
+        import_batch,
+        set_player_role=True,
+        created_from_import=created_from_import,
+    )
     if not profile.must_change_password:
         mark_password_change_required(user, True)
     link_user_to_player(
@@ -277,6 +325,9 @@ def provision_player_account(
         username=user.username,
         user_id=user.id,
         messages=[_row_message(row_number, "Player account provisioned.")],
+        warnings=[email_warning] if email_warning else [],
+        email_assigned=bool(normalized_email),
+        email_omitted=bool(email_warning),
     )
 
 
@@ -297,7 +348,9 @@ def provision_accounts_for_import(
     """Provision accounts for committed player import rows."""
     _validate_import_batch(import_batch)
     options = options or ProvisioningOptions()
-    summary = ProvisioningSummary(enabled=options.enabled, activate_users=options.activate_users)
+    summary = ProvisioningSummary(
+        enabled=options.enabled, activate_users=options.activate_users
+    )
     if not options.enabled:
         return summary
 

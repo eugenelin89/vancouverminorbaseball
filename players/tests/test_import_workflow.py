@@ -604,7 +604,7 @@ class PlayerImportWorkflowTests(TestCase):
         self.assertFalse(User.objects.filter(username="eugene.lin").exists())
         self.assertEqual(batch.import_summary["account_provisioning"]["skipped"], 1)
 
-    def test_commit_with_provisioning_reports_duplicate_unrelated_email_conflict(self):
+    def test_commit_with_provisioning_omits_duplicate_email_but_creates_account(self):
         User.objects.create_user(username="existing", email="eugene@example.com")
         batch = create_import_batch(
             file_obj=self.upload(
@@ -625,5 +625,66 @@ class PlayerImportWorkflowTests(TestCase):
         self.assertTrue(
             Player.objects.filter(first_name="Eugene", last_name="Lin").exists()
         )
-        self.assertFalse(User.objects.filter(username="eugene.lin").exists())
-        self.assertEqual(batch.import_summary["account_provisioning"]["conflicts"], 1)
+        user = User.objects.get(username="eugene.lin")
+        self.assertEqual(user.email, "")
+        self.assertTrue(
+            UserPlayerLink.objects.filter(
+                user=user,
+                player__first_name="Eugene",
+                player__last_name="Lin",
+                relationship="self",
+            ).exists()
+        )
+        account_summary = batch.import_summary["account_provisioning"]
+        self.assertEqual(account_summary["users_created"], 1)
+        self.assertEqual(account_summary["conflicts"], 0)
+        self.assertEqual(len(account_summary["warnings"]), 1)
+        self.assertIn("eugene@example.com", account_summary["warnings"][0])
+        self.assertIn(account_summary["warnings"][0], batch.row_errors)
+
+    def test_commit_with_provisioning_allows_sibling_rows_sharing_login_email(self):
+        batch = create_import_batch(
+            file_obj=self.upload(
+                body=(
+                    b"First,Last,DOB,Email,Division,Team\n"
+                    b"Boaz,Singerman,2013-03-31,family@example.com,13U,Dodgers\n"
+                    b"Shael,Singerman,2013-03-31,family@example.com,13U,Dodgers\n"
+                )
+            ),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+            provision_player_accounts=True,
+            season=self.season,
+        )
+        mapping = dict(batch.mapping_config)
+        mapping["account_email"] = "Email"
+        build_import_preview(import_batch=batch, mapping_config=mapping)
+
+        commit_import_batch(import_batch=batch, actor=self.staff)
+
+        batch.refresh_from_db()
+        boaz = User.objects.get(username="boaz.singerman")
+        shael = User.objects.get(username="shael.singerman")
+        self.assertEqual(boaz.email, "family@example.com")
+        self.assertEqual(shael.email, "")
+        self.assertEqual(UserPlayerLink.objects.filter(user=boaz).count(), 1)
+        self.assertEqual(UserPlayerLink.objects.filter(user=shael).count(), 1)
+        account_summary = batch.import_summary["account_provisioning"]
+        self.assertEqual(account_summary["users_created"], 2)
+        self.assertEqual(account_summary["conflicts"], 0)
+        self.assertEqual(len(account_summary["warnings"]), 1)
+        self.assertIn("family@example.com", account_summary["warnings"][0])
+        self.assertNotIn("20130331", str(batch.import_summary))
+
+    def test_generic_email_header_is_not_auto_mapped_as_player_login_email(self):
+        batch = create_import_batch(
+            file_obj=self.upload(
+                body=b"First,Last,DOB,Email,Division,Team\nEugene,Lin,2012-05-01,eugene@example.com,13U,Expos\n"
+            ),
+            source=SOURCE_MEMBER_LIST,
+            uploaded_by=self.staff,
+            provision_player_accounts=True,
+            season=self.season,
+        )
+
+        self.assertNotIn("account_email", batch.mapping_config)

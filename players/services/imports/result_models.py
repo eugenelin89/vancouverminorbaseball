@@ -74,4 +74,5 @@ class ImportCommitResult:
     memberships_created: int = 0
     memberships_updated: int = 0
     errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     account_provisioning: dict[str, Any] = field(default_factory=dict)

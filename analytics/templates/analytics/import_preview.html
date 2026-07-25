@@ -19,7 +19,9 @@
     {% if preview.account_provisioning.enabled %}
         <p>
             Account provisioning enabled; new accounts will be activated immediately and must change password on first login.
-            {% if preview.account_provisioning.email_column %}Email column: {{ preview.account_provisioning.email_column }}.{% endif %}
+            Player login email is optional. Leave it blank unless the mapped email belongs to the player's own login account.
+            Duplicate login emails create accounts with blank email and a staff warning.
+            {% if preview.account_provisioning.email_column %}Player login email column: {{ preview.account_provisioning.email_column }}.{% endif %}
         </p>
     {% endif %}
     {% if preview.summary %}

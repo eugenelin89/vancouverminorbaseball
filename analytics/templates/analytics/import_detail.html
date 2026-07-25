@@ -41,6 +41,14 @@
                 {% endfor %}
             </ul>
         {% endif %}
+        {% if import_batch.import_summary.account_provisioning.warnings %}
+            <h4>Warnings</h4>
+            <ul>
+                {% for warning in import_batch.import_summary.account_provisioning.warnings %}
+                    <li>{{ warning }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     {% endif %}
     <a class="button button--ghost" href="{% url 'analytics:import-list' %}">Back to Imports</a>
 </article>

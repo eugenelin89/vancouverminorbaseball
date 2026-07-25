@@ -192,6 +192,26 @@ class AccountProvisioningServiceTests(TestCase):
         self.assertTrue(link.created_from_import)
         self.assertEqual(link.import_batch, self.import_batch)
 
+    def test_provision_player_account_allows_blank_login_email(self):
+        result = provision_player_account(
+            self.player,
+            import_batch=self.import_batch,
+            actor=self.staff,
+            row_number=2,
+        )
+
+        user = User.objects.get(username="jose.garcia")
+        self.assertEqual(result.status, STATUS_CREATED)
+        self.assertEqual(user.email, "")
+        self.assertFalse(result.email_assigned)
+        self.assertFalse(result.email_omitted)
+        self.assertTrue(user.check_password("20120501"))
+        self.assertTrue(
+            UserPlayerLink.objects.filter(
+                user=user, player=self.player, relationship=UserPlayerRelationship.SELF
+            ).exists()
+        )
+
     def test_provision_player_account_can_activate_user_when_explicit(self):
         result = provision_player_account(
             self.player, import_batch=self.import_batch, activate_user=True
@@ -316,15 +336,29 @@ class AccountProvisioningServiceTests(TestCase):
             1,
         )
 
-    def test_provision_player_account_conflicts_on_unrelated_email(self):
+    def test_provision_player_account_omits_duplicate_email_without_blocking_account(
+        self,
+    ):
         User.objects.create_user(username="other", email="player@example.com")
 
         result = provision_player_account(
-            self.player, import_batch=self.import_batch, email="PLAYER@example.com"
+            self.player,
+            import_batch=self.import_batch,
+            email="PLAYER@example.com",
+            row_number=2,
         )
 
-        self.assertEqual(result.status, STATUS_CONFLICT)
-        self.assertFalse(UserPlayerLink.objects.filter(player=self.player).exists())
+        user = User.objects.get(username="jose.garcia")
+        self.assertEqual(result.status, STATUS_CREATED)
+        self.assertEqual(result.user_id, user.id)
+        self.assertEqual(user.email, "")
+        self.assertFalse(result.email_assigned)
+        self.assertTrue(result.email_omitted)
+        self.assertIn("login email", result.warnings[0])
+        self.assertIn("player@example.com", result.warnings[0])
+        self.assertTrue(
+            UserPlayerLink.objects.filter(player=self.player, user=user).exists()
+        )
 
     def test_provision_player_account_does_not_downgrade_existing_staff_link(self):
         staff_profile = get_or_create_account_profile(self.staff)
@@ -362,8 +396,37 @@ class AccountProvisioningServiceTests(TestCase):
         self.assertIsInstance(summary, ProvisioningSummary)
         self.assertEqual(serialized["users_created"], 1)
         self.assertEqual(serialized["already_linked"], 0)
+        self.assertEqual(serialized["warnings"], [])
         self.assertNotIn("20120501", str(serialized))
         self.assertNotIn("password", str(serialized).casefold())
+
+    def test_provisioning_summary_records_duplicate_email_warning_without_conflict(
+        self,
+    ):
+        User.objects.create_user(username="other", email="family@example.com")
+
+        summary = provision_accounts_for_import(
+            self.import_batch,
+            [
+                {
+                    "player": self.player,
+                    "row_number": 2,
+                    "original_row": {"Email": "family@example.com"},
+                }
+            ],
+            actor=self.staff,
+            options=ProvisioningOptions(
+                enabled=True, activate_users=True, email_column="Email"
+            ),
+        )
+
+        serialized = summary.to_dict()
+        user = User.objects.get(username="jose.garcia")
+        self.assertEqual(summary.users_created, 1)
+        self.assertEqual(summary.conflicts, 0)
+        self.assertEqual(user.email, "")
+        self.assertEqual(len(serialized["warnings"]), 1)
+        self.assertIn("family@example.com", serialized["warnings"][0])
 
 
 class AccountRegressionTests(TestCase):
