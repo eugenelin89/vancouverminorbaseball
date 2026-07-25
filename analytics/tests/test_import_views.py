@@ -241,6 +241,44 @@ class AnalyticsImportViewTests(TestCase):
         self.assertContains(response, "Users Created")
         self.assertNotContains(response, "20120501")
 
+    def test_import_detail_displays_persisted_provisioning_warnings(self):
+        self.client.force_login(self.staff)
+        warning = (
+            'Row 2: Player account was created, but the login email "family@example.com" '
+            "was already assigned to another account and was not added. The new account "
+            "has a blank email."
+        )
+        batch = PlayerImportBatch.objects.create(
+            source=SOURCE_MEMBER_LIST,
+            original_filename="member.csv",
+            uploaded_by=self.staff,
+            season=self.season,
+            status="committed",
+            import_summary={
+                "warnings": [warning],
+                "account_provisioning": {
+                    "enabled": True,
+                    "users_created": 1,
+                    "users_linked": 0,
+                    "already_linked": 0,
+                    "skipped": 0,
+                    "conflicts": 0,
+                    "messages": [],
+                    "warnings": [warning],
+                },
+            },
+            row_errors=[],
+        )
+
+        response = self.client.get(
+            reverse("analytics:import-detail", kwargs={"pk": batch.pk})
+        )
+
+        self.assertContains(response, "Warnings")
+        self.assertContains(response, "family@example.com")
+        self.assertContains(response, "new account has a blank email")
+        self.assertNotContains(response, "Issues")
+
     def test_conflict_page_displays_review_rows(self):
         self.client.force_login(self.staff)
         Player.objects.create(

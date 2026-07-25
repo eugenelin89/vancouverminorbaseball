@@ -640,7 +640,10 @@ class PlayerImportWorkflowTests(TestCase):
         self.assertEqual(account_summary["conflicts"], 0)
         self.assertEqual(len(account_summary["warnings"]), 1)
         self.assertIn("eugene@example.com", account_summary["warnings"][0])
-        self.assertIn(account_summary["warnings"][0], batch.row_errors)
+        self.assertEqual(batch.import_summary["warnings"], account_summary["warnings"])
+        self.assertEqual(batch.row_errors, [])
+        self.assertNotIn("20120501", str(batch.import_summary))
+        self.assertNotIn("20120501", str(batch.row_errors))
 
     def test_commit_with_provisioning_allows_sibling_rows_sharing_login_email(self):
         batch = create_import_batch(
@@ -674,7 +677,10 @@ class PlayerImportWorkflowTests(TestCase):
         self.assertEqual(account_summary["conflicts"], 0)
         self.assertEqual(len(account_summary["warnings"]), 1)
         self.assertIn("family@example.com", account_summary["warnings"][0])
+        self.assertEqual(batch.import_summary["warnings"], account_summary["warnings"])
+        self.assertEqual(batch.row_errors, [])
         self.assertNotIn("20130331", str(batch.import_summary))
+        self.assertNotIn("20130331", str(batch.row_errors))
 
     def test_generic_email_header_is_not_auto_mapped_as_player_login_email(self):
         batch = create_import_batch(

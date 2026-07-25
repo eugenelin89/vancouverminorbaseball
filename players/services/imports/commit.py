@@ -374,7 +374,7 @@ def commit_import_batch(
     locked_batch.rows_skipped = result.skipped
     locked_batch.rows_conflicted = result.conflicts
     locked_batch.import_summary = asdict(result)
-    locked_batch.row_errors = [*result.errors, *result.warnings]
+    locked_batch.row_errors = result.errors
     locked_batch.committed_at = timezone.now()
     locked_batch.save(
         update_fields=[

@@ -356,9 +356,47 @@ class AccountProvisioningServiceTests(TestCase):
         self.assertTrue(result.email_omitted)
         self.assertIn("login email", result.warnings[0])
         self.assertIn("player@example.com", result.warnings[0])
+        self.assertIn("Player account was created", result.warnings[0])
+        self.assertIn("new account has a blank email", result.warnings[0])
+        self.assertNotIn("existing player account", result.warnings[0])
         self.assertTrue(
             UserPlayerLink.objects.filter(player=self.player, user=user).exists()
         )
+
+    def test_provision_player_account_existing_link_warning_does_not_claim_creation(
+        self,
+    ):
+        linked_user = User.objects.create_user(
+            username="linked.player", email="linked@example.com"
+        )
+        other_user = User.objects.create_user(
+            username="other", email="family@example.com"
+        )
+        link_user_to_player(
+            linked_user,
+            self.player,
+            relationship=UserPlayerRelationship.SELF,
+            is_primary=True,
+        )
+
+        result = provision_player_account(
+            self.player,
+            import_batch=self.import_batch,
+            email=other_user.email,
+            row_number=2,
+        )
+
+        linked_user.refresh_from_db()
+        self.assertEqual(result.status, STATUS_ALREADY_LINKED)
+        self.assertEqual(result.user_id, linked_user.id)
+        self.assertEqual(linked_user.email, "linked@example.com")
+        self.assertFalse(result.email_assigned)
+        self.assertTrue(result.email_omitted)
+        self.assertEqual(len(result.warnings), 1)
+        self.assertIn("family@example.com", result.warnings[0])
+        self.assertIn("existing player account", result.warnings[0])
+        self.assertIn("left unchanged", result.warnings[0])
+        self.assertNotIn("Player account was created", result.warnings[0])
 
     def test_provision_player_account_does_not_downgrade_existing_staff_link(self):
         staff_profile = get_or_create_account_profile(self.staff)
@@ -427,6 +465,8 @@ class AccountProvisioningServiceTests(TestCase):
         self.assertEqual(user.email, "")
         self.assertEqual(len(serialized["warnings"]), 1)
         self.assertIn("family@example.com", serialized["warnings"][0])
+        self.assertIn("Player account was created", serialized["warnings"][0])
+        self.assertNotIn("20120501", str(serialized))
 
 
 class AccountRegressionTests(TestCase):

@@ -174,7 +174,11 @@ def _safe_linked_user_result(
     email_assigned = False
     email_omitted = False
     if existing_email_user and existing_email_user.id != link.user_id:
-        warnings.append(_duplicate_email_warning(row_number, normalized_email))
+        warnings.append(
+            _duplicate_email_warning(
+                row_number, normalized_email, account_created=False
+            )
+        )
         email_omitted = True
     try:
         link = _ensure_active_self_link(link, import_batch)
@@ -209,10 +213,24 @@ def _safe_linked_user_result(
     )
 
 
-def _duplicate_email_warning(row_number: int | None, email: str) -> str:
+def _duplicate_email_warning(
+    row_number: int | None, email: str, *, account_created: bool
+) -> str:
+    if account_created:
+        message = (
+            f'Player account was created, but the login email "{email}" was '
+            "already assigned to another account and was not added. The new "
+            "account has a blank email."
+        )
+    else:
+        message = (
+            f'The login email "{email}" was already assigned to another account '
+            "and was not added to the existing player account. The existing "
+            "account was left unchanged."
+        )
     return _row_message(
         row_number,
-        f'Player account was created, but the login email "{email}" was already assigned to another account and was not added.',
+        message,
     )
 
 
@@ -268,7 +286,9 @@ def provision_player_account(
                 ],
                 email_assigned=bool(normalized_email),
             )
-        email_warning = _duplicate_email_warning(row_number, normalized_email)
+        email_warning = _duplicate_email_warning(
+            row_number, normalized_email, account_created=True
+        )
         normalized_email = ""
     else:
         email_warning = ""

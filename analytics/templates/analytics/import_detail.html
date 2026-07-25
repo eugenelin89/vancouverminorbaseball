@@ -25,6 +25,14 @@
             {% endfor %}
         </ul>
     {% endif %}
+    {% if import_batch.import_summary.warnings %}
+        <h3>Warnings</h3>
+        <ul>
+            {% for warning in import_batch.import_summary.warnings %}
+                <li>{{ warning }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     {% if import_batch.import_summary.account_provisioning.enabled %}
         <h3>Account provisioning</h3>
         <div class="pdp-stat-grid">
