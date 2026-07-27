@@ -2631,6 +2631,120 @@ table.tryout-table td:last-child {
     .tryout-table {
         min-width: 620px;
     }
+
+    .draft-table[data-responsive="cards"],
+    .team-table[data-responsive="cards"],
+    .scholarship-table[data-responsive="cards"],
+    .tryout-table[data-responsive="cards"] {
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 0.85rem;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .draft-table[data-responsive="cards"] thead,
+    .team-table[data-responsive="cards"] thead,
+    .scholarship-table[data-responsive="cards"] thead,
+    .tryout-table[data-responsive="cards"] thead {
+        display: none;
+    }
+
+    .draft-table[data-responsive="cards"],
+    .draft-table[data-responsive="cards"] tbody,
+    .draft-table[data-responsive="cards"] tr,
+    .draft-table[data-responsive="cards"] td,
+    .team-table[data-responsive="cards"],
+    .team-table[data-responsive="cards"] tbody,
+    .team-table[data-responsive="cards"] tr,
+    .team-table[data-responsive="cards"] td,
+    .scholarship-table[data-responsive="cards"],
+    .scholarship-table[data-responsive="cards"] tbody,
+    .scholarship-table[data-responsive="cards"] tr,
+    .scholarship-table[data-responsive="cards"] td,
+    .tryout-table[data-responsive="cards"],
+    .tryout-table[data-responsive="cards"] tbody,
+    .tryout-table[data-responsive="cards"] tr,
+    .tryout-table[data-responsive="cards"] td {
+        display: block;
+        width: 100%;
+    }
+
+    .draft-table[data-responsive="cards"] tr,
+    .team-table[data-responsive="cards"] tr,
+    .scholarship-table[data-responsive="cards"] tr,
+    .tryout-table[data-responsive="cards"] tr {
+        overflow: hidden;
+        border: 1px solid rgba(16, 42, 67, 0.1);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 10px 28px rgba(16, 42, 67, 0.08);
+    }
+
+    .draft-table[data-responsive="cards"] td,
+    .team-table[data-responsive="cards"] td,
+    .scholarship-table[data-responsive="cards"] td,
+    .tryout-table[data-responsive="cards"] td {
+        display: grid;
+        grid-template-columns: minmax(7.5rem, 0.42fr) minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: start;
+        border: 0;
+        border-bottom: 1px solid rgba(16, 42, 67, 0.07);
+        padding: 0.78rem 0.9rem;
+        text-align: left;
+        overflow-wrap: anywhere;
+    }
+
+    .draft-table[data-responsive="cards"] td:first-child,
+    .team-table[data-responsive="cards"] td:first-child,
+    .scholarship-table[data-responsive="cards"] td:first-child,
+    .tryout-table[data-responsive="cards"] td:first-child {
+        background: rgba(47, 111, 235, 0.08);
+        font-weight: 800;
+        color: var(--color-navy);
+    }
+
+    .draft-table[data-responsive="cards"] td:last-child,
+    .team-table[data-responsive="cards"] td:last-child,
+    .scholarship-table[data-responsive="cards"] td:last-child,
+    .tryout-table[data-responsive="cards"] td:last-child {
+        border-bottom: 0;
+    }
+
+    .draft-table[data-responsive="cards"] td::before,
+    .team-table[data-responsive="cards"] td::before,
+    .scholarship-table[data-responsive="cards"] td::before,
+    .tryout-table[data-responsive="cards"] td::before {
+        content: attr(data-label);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+
+    .draft-table[data-responsive="cards"] td[data-label=""],
+    .draft-table[data-responsive="cards"] td:not([data-label]),
+    .team-table[data-responsive="cards"] td[data-label=""],
+    .team-table[data-responsive="cards"] td:not([data-label]),
+    .scholarship-table[data-responsive="cards"] td[data-label=""],
+    .scholarship-table[data-responsive="cards"] td:not([data-label]),
+    .tryout-table[data-responsive="cards"] td[data-label=""],
+    .tryout-table[data-responsive="cards"] td:not([data-label]) {
+        display: block;
+    }
+
+    .draft-table[data-responsive="cards"] td[data-label=""]::before,
+    .draft-table[data-responsive="cards"] td:not([data-label])::before,
+    .team-table[data-responsive="cards"] td[data-label=""]::before,
+    .team-table[data-responsive="cards"] td:not([data-label])::before,
+    .scholarship-table[data-responsive="cards"] td[data-label=""]::before,
+    .scholarship-table[data-responsive="cards"] td:not([data-label])::before,
+    .tryout-table[data-responsive="cards"] td[data-label=""]::before,
+    .tryout-table[data-responsive="cards"] td:not([data-label])::before {
+        content: none;
+    }
 }
 
 @media (max-width: 380px) {

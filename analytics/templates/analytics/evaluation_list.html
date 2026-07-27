@@ -25,8 +25,8 @@
             <button class="button button--primary" type="submit">Filter</button>
         </form>
         <p>{{ cycle.name }}</p>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Player</th>
@@ -40,12 +40,12 @@
                 <tbody>
                     {% for item in player_statuses %}
                         <tr>
-                            <td>{{ item.player.display_name }}</td>
-                            <td>{{ item.player_division }}</td>
-                            <td>{{ item.player_team }}</td>
-                            <td>{{ item.evaluation_perspective_label }}</td>
-                            <td>{% include "analytics/_assessment_status_badge.html" with status=item.status %}</td>
-                            <td>
+                            <td data-label="Player">{{ item.player.display_name }}</td>
+                            <td data-label="Division">{{ item.player_division }}</td>
+                            <td data-label="Team">{{ item.player_team }}</td>
+                            <td data-label="Type">{{ item.evaluation_perspective_label }}</td>
+                            <td data-label="My submission">{% include "analytics/_assessment_status_badge.html" with status=item.status %}</td>
+                            <td data-label="Action">
                                 {% if not item.can_evaluate %}
                                     <span class="pdp-badge pdp-badge--muted">Unavailable</span>
                                 {% elif item.observation and item.status == "submitted" %}

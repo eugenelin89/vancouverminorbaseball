@@ -59,8 +59,8 @@
 
     <article class="pdp-card">
         <h2>Linked Players</h2>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Player</th>
@@ -74,12 +74,12 @@
                 <tbody>
                     {% for row in linked_players %}
                         <tr>
-                            <td>{{ row.player.display_name }}</td>
-                            <td>{{ row.relationship }}</td>
-                            <td>{% if row.is_primary %}Yes{% else %}No{% endif %}</td>
-                            <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
-                            <td>{% if row.created_from_import %}Yes{% else %}No{% endif %}</td>
-                            <td>{{ row.import_label|default:"-" }}</td>
+                            <td data-label="Player">{{ row.player.display_name }}</td>
+                            <td data-label="Relationship">{{ row.relationship }}</td>
+                            <td data-label="Primary">{% if row.is_primary %}Yes{% else %}No{% endif %}</td>
+                            <td data-label="Active">{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                            <td data-label="Imported">{% if row.created_from_import %}Yes{% else %}No{% endif %}</td>
+                            <td data-label="Import Batch">{{ row.import_label|default:"-" }}</td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="6">No linked players found.</td></tr>

@@ -42,16 +42,16 @@
 <article class="pdp-card">
     <h2>Imported Context</h2>
     {% if source_rows %}
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead><tr><th>Source</th><th>File</th><th>Row</th><th>Imported</th></tr></thead>
                 <tbody>
                     {% for row in source_rows %}
                         <tr>
-                            <td>{{ row.source }}</td>
-                            <td>{{ row.source_filename|default:"-" }}</td>
-                            <td>{{ row.row_number|default:"-" }}</td>
-                            <td>{{ row.imported_at }}</td>
+                            <td data-label="Source">{{ row.source }}</td>
+                            <td data-label="File">{{ row.source_filename|default:"-" }}</td>
+                            <td data-label="Row">{{ row.row_number|default:"-" }}</td>
+                            <td data-label="Imported">{{ row.imported_at }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -65,17 +65,17 @@
 <article class="pdp-card">
     <h2>Draft Context</h2>
     {% if draft_contexts %}
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead><tr><th>Draft</th><th>Status</th><th>Team</th><th>Pick</th><th>Round</th></tr></thead>
                 <tbody>
                     {% for context in draft_contexts %}
                         <tr>
-                            <td>{{ context.draft_player.draft.name }}</td>
-                            <td>{{ context.match_status }}</td>
-                            <td>{% if context.selected_team %}{{ context.selected_team.name }}{% elif context.current_team %}{{ context.current_team.name }}{% else %}-{% endif %}</td>
-                            <td>{{ context.pick_number|default:"-" }}</td>
-                            <td>{{ context.selected_round|default:"-" }}</td>
+                            <td data-label="Draft">{{ context.draft_player.draft.name }}</td>
+                            <td data-label="Status">{{ context.match_status }}</td>
+                            <td data-label="Team">{% if context.selected_team %}{{ context.selected_team.name }}{% elif context.current_team %}{{ context.current_team.name }}{% else %}-{% endif %}</td>
+                            <td data-label="Pick">{{ context.pick_number|default:"-" }}</td>
+                            <td data-label="Round">{{ context.selected_round|default:"-" }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

@@ -30,8 +30,8 @@
 
     <article class="pdp-card">
         <h2>Rows</h2>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Row</th>
@@ -51,18 +51,18 @@
                 <tbody>
                     {% for row in preview.rows %}
                         <tr>
-                            <td>{{ row.row_number }}</td>
-                            <td>{{ row.first_name }} {{ row.last_name }}</td>
-                            <td>{{ row.email }}</td>
-                            <td>{{ row.final_username|default:"-" }}</td>
-                            <td>{{ row.division }} {{ row.team }}</td>
-                            <td>{{ row.assignment_role_label }}</td>
-                            <td>{{ row.account_label|default:"-" }}</td>
-                            <td>{{ row.assignment_label|default:"-" }}</td>
-                            <td>{{ row.password_behavior|default:"-" }}</td>
-                            <td>{{ row.is_active|yesno:"Yes,No" }}</td>
-                            <td>{{ row.status }}</td>
-                            <td>
+                            <td data-label="Row">{{ row.row_number }}</td>
+                            <td data-label="Name">{{ row.first_name }} {{ row.last_name }}</td>
+                            <td data-label="Email">{{ row.email }}</td>
+                            <td data-label="Username">{{ row.final_username|default:"-" }}</td>
+                            <td data-label="Team">{{ row.division }} {{ row.team }}</td>
+                            <td data-label="Role">{{ row.assignment_role_label }}</td>
+                            <td data-label="Account">{{ row.account_label|default:"-" }}</td>
+                            <td data-label="Assignment">{{ row.assignment_label|default:"-" }}</td>
+                            <td data-label="Password">{{ row.password_behavior|default:"-" }}</td>
+                            <td data-label="Active">{{ row.is_active|yesno:"Yes,No" }}</td>
+                            <td data-label="Status">{{ row.status }}</td>
+                            <td data-label="Messages">
                                 {% for message in row.messages %}
                                     <div>{{ message }}</div>
                                 {% empty %}

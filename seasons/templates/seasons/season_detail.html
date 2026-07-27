@@ -26,20 +26,20 @@
 
 <article class="pdp-card">
     <h2>Teams</h2>
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr><th>Team</th><th>Division</th><th>Active</th><th>Memberships</th><th>Assignments</th><th></th></tr>
             </thead>
             <tbody>
                 {% for team in teams %}
                     <tr>
-                        <td>{{ team.name }}</td>
-                        <td>{{ team.division }}</td>
-                        <td>{% if team.is_active %}Active{% else %}Inactive{% endif %}</td>
-                        <td>{{ team.membership_count }}</td>
-                        <td>{{ team.assignment_count }}</td>
-                        <td><a class="button button--ghost" href="{% url 'seasons:team-edit' team.id %}">Edit</a></td>
+                        <td data-label="Team">{{ team.name }}</td>
+                        <td data-label="Division">{{ team.division }}</td>
+                        <td data-label="Active">{% if team.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td data-label="Memberships">{{ team.membership_count }}</td>
+                        <td data-label="Assignments">{{ team.assignment_count }}</td>
+                        <td data-label="Action"><a class="button button--ghost" href="{% url 'seasons:team-edit' team.id %}">Edit</a></td>
                     </tr>
                 {% empty %}
                     <tr><td colspan="6">No teams are recorded for this season.</td></tr>

@@ -22,8 +22,8 @@
         </label>
         <button class="button button--primary" type="submit">Filter</button>
     </form>
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr>
                     <th>Player</th>
@@ -40,15 +40,15 @@
             <tbody>
                 {% for observation in observations %}
                     <tr>
-                        <td>{{ observation.player.display_name }}</td>
-                        <td>{{ observation.season_name_snapshot|default:"Legacy / No Season" }}</td>
-                        <td>{{ observation.player_division_snapshot|default:observation.player.division }} {{ observation.player_team_name_snapshot|default:observation.player.team_name }}</td>
-                        <td>{{ observation.evaluation_cycle.name }}</td>
-                        <td>{{ observation.evaluator }}</td>
-                        <td>{{ observation.evaluation_perspective_label }}</td>
-                        <td>{{ observation.get_status_display }}</td>
-                        <td>{{ observation.submitted_at|default:"" }}</td>
-                        <td><a class="button button--ghost" href="{% url 'analytics:observation-review-detail' observation_id=observation.id %}">Review</a></td>
+                        <td data-label="Player">{{ observation.player.display_name }}</td>
+                        <td data-label="Season">{{ observation.season_name_snapshot|default:"Legacy / No Season" }}</td>
+                        <td data-label="Roster">{{ observation.player_division_snapshot|default:observation.player.division }} {{ observation.player_team_name_snapshot|default:observation.player.team_name }}</td>
+                        <td data-label="Cycle">{{ observation.evaluation_cycle.name }}</td>
+                        <td data-label="Evaluator">{{ observation.evaluator }}</td>
+                        <td data-label="Type">{{ observation.evaluation_perspective_label }}</td>
+                        <td data-label="Status">{{ observation.get_status_display }}</td>
+                        <td data-label="Submitted">{{ observation.submitted_at|default:"" }}</td>
+                        <td data-label="Action"><a class="button button--ghost" href="{% url 'analytics:observation-review-detail' observation_id=observation.id %}">Review</a></td>
                     </tr>
                 {% empty %}
                     <tr><td colspan="9">No observations found.</td></tr>

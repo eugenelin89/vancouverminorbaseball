@@ -9,8 +9,8 @@
         <h2>Import batches</h2>
         <a class="button button--primary" href="{% url 'analytics:import-new' %}">New Import</a>
     </div>
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr>
                     <th>File</th>
@@ -25,13 +25,13 @@
             <tbody>
                 {% for batch in import_batches %}
                     <tr>
-                        <td><a href="{% url 'analytics:import-detail' pk=batch.pk %}">{{ batch.original_filename }}</a></td>
-                        <td>{% if batch.season %}{{ batch.season }}{% else %}Legacy / No Season{% endif %}</td>
-                        <td>{{ batch.source }}</td>
-                        <td>{{ batch.get_status_display }}</td>
-                        <td>{{ batch.rows_processed }}</td>
-                        <td>{{ batch.rows_created }}</td>
-                        <td>{{ batch.rows_updated }}</td>
+                        <td data-label="File"><a href="{% url 'analytics:import-detail' pk=batch.pk %}">{{ batch.original_filename }}</a></td>
+                        <td data-label="Season">{% if batch.season %}{{ batch.season }}{% else %}Legacy / No Season{% endif %}</td>
+                        <td data-label="Source">{{ batch.source }}</td>
+                        <td data-label="Status">{{ batch.get_status_display }}</td>
+                        <td data-label="Rows">{{ batch.rows_processed }}</td>
+                        <td data-label="Created">{{ batch.rows_created }}</td>
+                        <td data-label="Updated">{{ batch.rows_updated }}</td>
                     </tr>
                 {% empty %}
                     <tr><td colspan="7">No imports yet.</td></tr>

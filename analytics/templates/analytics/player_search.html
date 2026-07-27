@@ -70,8 +70,8 @@
 
 <article class="pdp-card">
     <h2>{{ result_count }} player{{ result_count|pluralize }}</h2>
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr>
                     <th>Player</th>
@@ -85,12 +85,12 @@
             <tbody>
                 {% for player in players %}
                     <tr>
-                        <td>{{ player.display_name }}</td>
-                        <td>{{ player.division }}</td>
-                        <td>{{ player.team_name }}</td>
-                        <td>{{ player.birth_year|default:"" }}</td>
-                        <td>{% if player.is_active %}Active{% else %}Inactive{% endif %}</td>
-                        <td>
+                        <td data-label="Player">{{ player.display_name }}</td>
+                        <td data-label="Division">{{ player.division }}</td>
+                        <td data-label="Team">{{ player.team_name }}</td>
+                        <td data-label="Birth year">{{ player.birth_year|default:"" }}</td>
+                        <td data-label="Status">{% if player.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td data-label="Actions">
                             <a class="button button--ghost" href="{% url 'analytics:player-profile' player_id=player.id %}">Profile</a>
                             <a class="button button--ghost" href="{% url 'analytics:player-compare' %}?players={{ player.id }}">Compare</a>
                         </td>

@@ -37,12 +37,20 @@ class AnalyticsImportViewTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_staff_can_open_import_list(self):
+        PlayerImportBatch.objects.create(
+            source=SOURCE_MEMBER_LIST,
+            original_filename="member.csv",
+            uploaded_by=self.staff,
+            season=self.season,
+        )
         self.client.force_login(self.staff)
 
         response = self.client.get(reverse("analytics:import-list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Player Imports")
+        self.assertContains(response, 'data-responsive="cards"')
+        self.assertContains(response, 'data-label="File"')
 
     def test_upload_redirects_to_preview(self):
         self.client.force_login(self.staff)

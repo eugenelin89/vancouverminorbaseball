@@ -873,6 +873,8 @@ class AccountOperationsViewTests(TestCase):
         self.assertNotContains(response, "regular")
         self.assertContains(response, "Bulk action")
         self.assertContains(response, "Select all accounts shown")
+        self.assertContains(response, 'data-responsive="cards"')
+        self.assertContains(response, 'data-label="Email"')
 
     def test_user_list_bulk_post_requires_staff(self):
         self.client.force_login(self.regular)
@@ -1514,6 +1516,8 @@ class AccountOperationsViewTests(TestCase):
         self.assertEqual(preview_response.status_code, 200)
         self.assertContains(preview_response, "Ready to create")
         self.assertContains(preview_response, "new.coach@example.com")
+        self.assertContains(preview_response, 'data-responsive="cards"')
+        self.assertContains(preview_response, 'data-label="Email"')
 
         confirm_response = self.client.post(
             reverse("accounts:coach-import-confirm"), {"confirm": "on"}

@@ -35,8 +35,8 @@
 
     <article class="pdp-card">
         <h2>Existing Links</h2>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Player</th>
@@ -50,12 +50,12 @@
                 <tbody>
                     {% for row in linked_players %}
                         <tr>
-                            <td>{{ row.player.display_name }}</td>
-                            <td>{{ row.relationship }}</td>
-                            <td>{% if row.is_primary %}Yes{% else %}No{% endif %}</td>
-                            <td>{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
-                            <td>{% if row.created_from_import %}Yes{% else %}No{% endif %}</td>
-                            <td>
+                            <td data-label="Player">{{ row.player.display_name }}</td>
+                            <td data-label="Relationship">{{ row.relationship }}</td>
+                            <td data-label="Primary">{% if row.is_primary %}Yes{% else %}No{% endif %}</td>
+                            <td data-label="Status">{% if row.is_active %}Active{% else %}Inactive{% endif %}</td>
+                            <td data-label="Imported">{% if row.created_from_import %}Yes{% else %}No{% endif %}</td>
+                            <td data-label="Actions">
                                 <div class="pdp-actions">
                                     {% if row.is_active %}
                                         <form method="post">

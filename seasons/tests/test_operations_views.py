@@ -325,6 +325,8 @@ class SeasonOperationsUITests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Page 1 of 2")
+        self.assertContains(response, 'data-responsive="cards"')
+        self.assertContains(response, 'data-label="Team"')
         self.assertContains(
             response, f"?season={self.spring.id}&amp;active=yes&amp;page=2"
         )

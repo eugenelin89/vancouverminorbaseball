@@ -154,6 +154,9 @@ class EvaluationReviewViewTests(TestCase):
         self.assertContains(response, "Casey Coach")
         self.assertContains(response, "Sam Coach")
         self.assertContains(response, "Self Evaluation")
+        self.assertContains(response, 'data-responsive="cards"')
+        self.assertContains(response, 'data-label="Evaluator"')
+        self.assertContains(response, 'data-label="Role"')
         self.assertContains(
             response,
             reverse(

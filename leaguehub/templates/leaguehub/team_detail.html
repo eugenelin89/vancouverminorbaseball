@@ -41,8 +41,8 @@
             <a class="button button--ghost" href="{{ leaguehub_standings_url }}">Full Standings</a>
         </div>
         {% if team_standing %}
-            <div class="table-wrap">
-                <table class="pdp-table">
+            <div class="table-wrap table-wrap--cards">
+                <table class="pdp-table" data-responsive="cards">
                     <thead>
                         <tr>
                             <th>GP</th>
@@ -57,14 +57,14 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>{{ team_standing.games_played }}</td>
-                            <td>{{ team_standing.wins }}</td>
-                            <td>{{ team_standing.losses }}</td>
-                            <td>{{ team_standing.ties }}</td>
-                            <td>{{ team_standing.points }}</td>
-                            <td>{{ team_standing.runs_for }}</td>
-                            <td>{{ team_standing.runs_against }}</td>
-                            <td>{{ team_standing.run_differential }}</td>
+                            <td data-label="GP">{{ team_standing.games_played }}</td>
+                            <td data-label="W">{{ team_standing.wins }}</td>
+                            <td data-label="L">{{ team_standing.losses }}</td>
+                            <td data-label="T">{{ team_standing.ties }}</td>
+                            <td data-label="Pts">{{ team_standing.points }}</td>
+                            <td data-label="RF">{{ team_standing.runs_for }}</td>
+                            <td data-label="RA">{{ team_standing.runs_against }}</td>
+                            <td data-label="Diff">{{ team_standing.run_differential }}</td>
                         </tr>
                     </tbody>
                 </table>

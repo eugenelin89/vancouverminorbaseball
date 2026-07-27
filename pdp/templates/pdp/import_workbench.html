@@ -58,8 +58,8 @@
     <section class="pdp-grid pdp-grid--single">
         <article class="pdp-card">
             <h2>Account provisioning report</h2>
-            <div class="table-wrap">
-                <table class="pdp-table">
+            <div class="table-wrap table-wrap--cards">
+                <table class="pdp-table" data-responsive="cards">
                     <thead>
                         <tr>
                             <th>Player</th>
@@ -71,10 +71,10 @@
                     <tbody>
                         {% for item in onboarding_report %}
                             <tr>
-                                <td>{{ item.player_name }}</td>
-                                <td>{{ item.username }}</td>
-                                <td>{{ item.created|yesno:"Yes,No" }}</td>
-                                <td>{{ item.password_reset|yesno:"Yes,No" }}</td>
+                                <td data-label="Player">{{ item.player_name }}</td>
+                                <td data-label="Username">{{ item.username }}</td>
+                                <td data-label="Created">{{ item.created|yesno:"Yes,No" }}</td>
+                                <td data-label="Password Reset">{{ item.password_reset|yesno:"Yes,No" }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

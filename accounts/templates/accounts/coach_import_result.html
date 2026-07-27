@@ -27,8 +27,8 @@
 
     <article class="pdp-card">
         <h2>Rows</h2>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Row</th>
@@ -45,21 +45,21 @@
                 <tbody>
                     {% for row in result.rows %}
                         <tr>
-                            <td>{{ row.row_number|default:"-" }}</td>
-                            <td>{{ row.status }}</td>
-                            <td>
+                            <td data-label="Row">{{ row.row_number|default:"-" }}</td>
+                            <td data-label="Status">{{ row.status }}</td>
+                            <td data-label="Username">
                                 {% if row.user_id %}
                                     <a href="{% url 'accounts:user-detail' user_id=row.user_id %}">{{ row.username }}</a>
                                 {% else %}
                                     {{ row.username|default:"-" }}
                                 {% endif %}
                             </td>
-                            <td>{{ row.division }} {{ row.team }}</td>
-                            <td>{{ row.assignment_role_label|default:"-" }}</td>
-                            <td>{{ row.assignment_status|default:"-" }}</td>
-                            <td>{{ row.password_behavior|default:"-" }}</td>
-                            <td>{% if row.user_id %}{{ row.is_active|yesno:"Yes,No" }}{% else %}-{% endif %}</td>
-                            <td>
+                            <td data-label="Team">{{ row.division }} {{ row.team }}</td>
+                            <td data-label="Role">{{ row.assignment_role_label|default:"-" }}</td>
+                            <td data-label="Assignment">{{ row.assignment_status|default:"-" }}</td>
+                            <td data-label="Password">{{ row.password_behavior|default:"-" }}</td>
+                            <td data-label="Active">{% if row.user_id %}{{ row.is_active|yesno:"Yes,No" }}{% else %}-{% endif %}</td>
+                            <td data-label="Messages">
                                 {% for message in row.messages %}
                                     <div>{{ message }}</div>
                                 {% empty %}

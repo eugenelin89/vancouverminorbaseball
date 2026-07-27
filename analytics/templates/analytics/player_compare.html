@@ -18,16 +18,16 @@
         <button class="button button--primary" type="submit">Find Players</button>
     </form>
     {% if players %}
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead><tr><th>Player</th><th>Division</th><th>Team</th><th></th></tr></thead>
                 <tbody>
                     {% for player in players %}
                         <tr>
-                            <td>{{ player.display_name }}</td>
-                            <td>{{ player.division }}</td>
-                            <td>{{ player.team_name }}</td>
-                            <td><a class="button button--ghost" href="{% url 'analytics:player-compare' %}?players={{ player.id }}">Compare</a></td>
+                            <td data-label="Player">{{ player.display_name }}</td>
+                            <td data-label="Division">{{ player.division }}</td>
+                            <td data-label="Team">{{ player.team_name }}</td>
+                            <td data-label="Action"><a class="button button--ghost" href="{% url 'analytics:player-compare' %}?players={{ player.id }}">Compare</a></td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -41,8 +41,8 @@
     {% if comparison.empty %}
         <p>Select players to compare.</p>
     {% else %}
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Player</th>
@@ -59,33 +59,33 @@
                 <tbody>
                     {% for summary in comparison.summaries %}
                         <tr>
-                            <td><a href="{% url 'analytics:player-profile' player_id=summary.player.id %}">{{ summary.player.display_name }}</a></td>
-                            <td>{{ summary.player.team_name|default:"-" }} / {{ summary.player.division|default:"-" }}</td>
-                            <td>
+                            <td data-label="Player"><a href="{% url 'analytics:player-profile' player_id=summary.player.id %}">{{ summary.player.display_name }}</a></td>
+                            <td data-label="Team / Division">{{ summary.player.team_name|default:"-" }} / {{ summary.player.division|default:"-" }}</td>
+                            <td data-label="Tags">
                                 {% for tag in summary.tags %}
                                     {{ tag.name }}{% if not forloop.last %}, {% endif %}
                                 {% empty %}
                                     -
                                 {% endfor %}
                             </td>
-                            <td>{% if summary.submitted_observation_count %}{{ summary.submitted_observation_count }}{% else %}No submitted assessments{% endif %}</td>
-                            <td>{{ summary.evaluator_count }}</td>
-                            <td>{% if summary.average_rating %}{{ summary.average_rating|floatformat:1 }}{% else %}-{% endif %}</td>
-                            <td>
+                            <td data-label="Assessments">{% if summary.submitted_observation_count %}{{ summary.submitted_observation_count }}{% else %}No submitted assessments{% endif %}</td>
+                            <td data-label="Evaluators">{{ summary.evaluator_count }}</td>
+                            <td data-label="Average">{% if summary.average_rating %}{{ summary.average_rating|floatformat:1 }}{% else %}-{% endif %}</td>
+                            <td data-label="Category Scores">
                                 {% for category in summary.category_scores %}
                                     <div>{{ category.category }}: {% if category.average_rating %}{{ category.average_rating|floatformat:1 }}{% else %}-{% endif %}</div>
                                 {% empty %}
                                     -
                                 {% endfor %}
                             </td>
-                            <td>
+                            <td data-label="Notes">
                                 {% for note in summary.notes %}
                                     <div>{{ note }}</div>
                                 {% empty %}
                                     -
                                 {% endfor %}
                             </td>
-                            <td>
+                            <td data-label="Draft Context">
                                 {% for context in summary.draft_contexts %}
                                     <div>
                                         {{ context.draft_player.draft.name }}:

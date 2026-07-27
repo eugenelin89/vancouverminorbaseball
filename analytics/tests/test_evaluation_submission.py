@@ -125,6 +125,9 @@ class EvaluationAccessSubmissionViewTests(TestCase):
         self.assertContains(response, "Evaluate Player")
         self.assertContains(response, "My submission")
         self.assertContains(response, "Self Evaluation")
+        self.assertContains(response, 'data-responsive="cards"')
+        self.assertContains(response, 'data-label="Player"')
+        self.assertContains(response, 'data-label="My submission"')
         self.assertContains(
             response,
             reverse(

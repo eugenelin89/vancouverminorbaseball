@@ -125,7 +125,7 @@
                             <h3>Assessment Sessions</h3>
                             <p>Tentative sessions are noted; arrive early for check-in.</p>
                         </div>
-                        <table class="tryout-table">
+                        <table class="tryout-table" data-responsive="cards">
                             <thead>
                                 <tr>
                                     <th scope="col">Day</th>
@@ -137,10 +137,10 @@
                             <tbody>
                                 {% for slot in registration.tryouts.schedule %}
                                     <tr{% if slot.tentative %} class="is-tentative"{% endif %}>
-                                        <td>{{ slot.day }}</td>
-                                        <td>{{ slot.date }}</td>
-                                        <td>{{ slot.time }}</td>
-                                        <td>{{ slot.group }}</td>
+                                        <td data-label="Day">{{ slot.day }}</td>
+                                        <td data-label="Date">{{ slot.date }}</td>
+                                        <td data-label="Time">{{ slot.time }}</td>
+                                        <td data-label="Group">{{ slot.group }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

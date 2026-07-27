@@ -13,8 +13,8 @@
                     <h2>{{ category }}</h2>
                 </div>
             </div>
-            <div class="table-wrap">
-                <table class="pdp-table">
+            <div class="table-wrap table-wrap--cards">
+                <table class="pdp-table" data-responsive="cards">
                     <thead>
                         <tr>
                             <th>Metric</th>
@@ -25,9 +25,9 @@
                     <tbody>
                         {% for metric in metrics %}
                             <tr>
-                                <td>{{ metric.display_name }}</td>
-                                <td>{{ metric.numeric_value|default:metric.text_value|default:metric.raw_value }}</td>
-                                <td>{{ metric.evaluation_event.name }} · {{ metric.evaluation_event.evaluated_on }}</td>
+                                <td data-label="Metric">{{ metric.display_name }}</td>
+                                <td data-label="Value">{{ metric.numeric_value|default:metric.text_value|default:metric.raw_value }}</td>
+                                <td data-label="Event">{{ metric.evaluation_event.name }} · {{ metric.evaluation_event.evaluated_on }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

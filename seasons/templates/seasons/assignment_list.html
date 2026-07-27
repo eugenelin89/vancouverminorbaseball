@@ -39,21 +39,21 @@
     </form>
 </article>
 <article class="pdp-card">
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr><th>Coach</th><th>Season</th><th>Team</th><th>Role</th><th>Primary</th><th>Active</th><th></th></tr>
             </thead>
             <tbody>
                 {% for assignment in assignments %}
                     <tr>
-                        <td>{{ assignment.user.get_full_name|default:assignment.user.username }}</td>
-                        <td>{{ assignment.season.name }}</td>
-                        <td>{{ assignment.season_team.division }} {{ assignment.season_team.name }}</td>
-                        <td>{{ assignment.get_assignment_role_display }}</td>
-                        <td>{% if assignment.is_primary %}Yes{% else %}No{% endif %}</td>
-                        <td>{% if assignment.is_active %}Active{% else %}Inactive{% endif %}</td>
-                        <td>
+                        <td data-label="Coach">{{ assignment.user.get_full_name|default:assignment.user.username }}</td>
+                        <td data-label="Season">{{ assignment.season.name }}</td>
+                        <td data-label="Team">{{ assignment.season_team.division }} {{ assignment.season_team.name }}</td>
+                        <td data-label="Role">{{ assignment.get_assignment_role_display }}</td>
+                        <td data-label="Primary">{% if assignment.is_primary %}Yes{% else %}No{% endif %}</td>
+                        <td data-label="Active">{% if assignment.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td data-label="Actions">
                             <a class="button button--ghost" href="{% url 'seasons:coach-history' assignment.user_id %}">History</a>
                             <a class="button button--ghost" href="{% url 'seasons:coach-assignment-edit' assignment.id %}">Edit</a>
                         </td>

@@ -39,21 +39,21 @@
     </form>
 </article>
 <article class="pdp-card">
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr><th>Player</th><th>Season</th><th>Team</th><th>Status</th><th>Primary</th><th>Active</th><th></th></tr>
             </thead>
             <tbody>
                 {% for membership in memberships %}
                     <tr>
-                        <td>{{ membership.player.display_name }}</td>
-                        <td>{{ membership.season.name }}</td>
-                        <td>{{ membership.season_team.division }} {{ membership.season_team.name }}</td>
-                        <td>{{ membership.get_status_display }}</td>
-                        <td>{% if membership.is_primary %}Yes{% else %}No{% endif %}</td>
-                        <td>{% if membership.is_active %}Active{% else %}Inactive{% endif %}</td>
-                        <td>
+                        <td data-label="Player">{{ membership.player.display_name }}</td>
+                        <td data-label="Season">{{ membership.season.name }}</td>
+                        <td data-label="Team">{{ membership.season_team.division }} {{ membership.season_team.name }}</td>
+                        <td data-label="Status">{{ membership.get_status_display }}</td>
+                        <td data-label="Primary">{% if membership.is_primary %}Yes{% else %}No{% endif %}</td>
+                        <td data-label="Active">{% if membership.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td data-label="Actions">
                             <a class="button button--ghost" href="{% url 'seasons:player-history' membership.player_id %}">History</a>
                             <a class="button button--ghost" href="{% url 'seasons:membership-edit' membership.id %}">Edit</a>
                         </td>

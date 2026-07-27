@@ -97,16 +97,16 @@
                     <h3>Bulk Operation Result</h3>
                     <p>{{ bulk_result.successful }} succeeded, {{ bulk_result.failed }} failed, {{ bulk_result.processed }} processed.</p>
                     {% if bulk_result.errors %}
-                        <div class="table-wrap">
-                            <table class="pdp-table">
+                        <div class="table-wrap table-wrap--cards">
+                            <table class="pdp-table" data-responsive="cards">
                                 <thead>
                                     <tr><th>Account</th><th>Error</th></tr>
                                 </thead>
                                 <tbody>
                                     {% for error in bulk_result.errors %}
                                         <tr>
-                                            <td>{{ error.username }}</td>
-                                            <td>{{ error.message }}</td>
+                                            <td data-label="Account">{{ error.username }}</td>
+                                            <td data-label="Error">{{ error.message }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -115,8 +115,8 @@
                     {% endif %}
                 </section>
             {% endif %}
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Select</th>
@@ -136,33 +136,33 @@
                 <tbody>
                     {% for row in rows %}
                         <tr>
-                            <td>
+                            <td data-label="Select">
                                 <input type="hidden" name="visible_user_ids" value="{{ row.user.id }}">
                                 <input type="checkbox" name="user_ids" value="{{ row.user.id }}">
                             </td>
-                            <td>{{ row.user.username }}</td>
-                            <td>{{ row.user.get_full_name|default:"-" }}</td>
-                            <td>{{ row.user.email|default:"-" }}</td>
-                            <td>{{ row.role_label }}</td>
-                            <td>{% if row.user.is_active %}Active{% else %}Inactive{% endif %}</td>
-                            <td>{% if row.user.is_staff %}Yes{% else %}No{% endif %}</td>
-                            <td>{% if row.user.is_superuser %}Yes{% else %}No{% endif %}</td>
-                            <td>
+                            <td data-label="Username">{{ row.user.username }}</td>
+                            <td data-label="Name">{{ row.user.get_full_name|default:"-" }}</td>
+                            <td data-label="Email">{{ row.user.email|default:"-" }}</td>
+                            <td data-label="Role">{{ row.role_label }}</td>
+                            <td data-label="Active">{% if row.user.is_active %}Active{% else %}Inactive{% endif %}</td>
+                            <td data-label="Staff">{% if row.user.is_staff %}Yes{% else %}No{% endif %}</td>
+                            <td data-label="Superuser">{% if row.user.is_superuser %}Yes{% else %}No{% endif %}</td>
+                            <td data-label="Password Change">
                                 {% if row.user.account_profile.must_change_password %}
                                     Required
                                 {% else %}
                                     No
                                 {% endif %}
                             </td>
-                            <td>{{ row.linked_player_count }}</td>
-                            <td>
+                            <td data-label="Player Links">{{ row.linked_player_count }}</td>
+                            <td data-label="Imported">
                                 {% if row.user.account_profile.created_from_import %}
                                     Yes
                                 {% else %}
                                     No
                                 {% endif %}
                             </td>
-                            <td><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
+                            <td data-label="Action"><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="12">No accounts match these filters.</td></tr>

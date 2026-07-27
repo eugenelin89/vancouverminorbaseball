@@ -32,7 +32,7 @@
                 <a class="button button--primary" href="{% url 'drafts:create' %}">New Draft</a>
             </div>
             <div class="draft-table-wrap">
-                <table class="draft-table">
+                <table class="draft-table" data-responsive="cards">
                     <thead>
                         <tr>
                             <th>Draft</th>
@@ -46,15 +46,15 @@
                     <tbody>
                         {% for draft in drafts %}
                             <tr>
-                                <td>
+                                <td data-label="Draft">
                                     <strong>{{ draft.name }}</strong>
                                     <div class="draft-table__meta">{{ draft.year }} · {{ draft.division }}</div>
                                 </td>
-                                <td><span class="status-badge status-badge--{{ draft.status }}">{{ draft.get_status_display }}</span></td>
-                                <td>{{ draft.teams.count }}</td>
-                                <td>{{ draft.total_player_count }}</td>
-                                <td>{{ draft.updated_at|date:"M j, Y g:i A" }}</td>
-                                <td class="draft-table__actions">
+                                <td data-label="Status"><span class="status-badge status-badge--{{ draft.status }}">{{ draft.get_status_display }}</span></td>
+                                <td data-label="Teams">{{ draft.teams.count }}</td>
+                                <td data-label="Players">{{ draft.total_player_count }}</td>
+                                <td data-label="Updated">{{ draft.updated_at|date:"M j, Y g:i A" }}</td>
+                                <td data-label="Actions" class="draft-table__actions">
                                     <a href="{% url 'drafts:command-center' slug=draft.slug %}">Open room</a>
                                     <span class="draft-table__divider">·</span>
                                     <a href="{% url 'drafts:public-live' slug=draft.slug %}">Public board</a>

@@ -37,8 +37,8 @@
             <div><strong>{{ preview.summary.memberships_update }}</strong><span>Memberships Update</span></div>
         </div>
     {% endif %}
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr>
                     <th>Row</th>
@@ -53,13 +53,13 @@
             <tbody>
                 {% for row in preview.rows %}
                     <tr>
-                        <td>{{ row.row_number }}</td>
-                        <td>{{ row.identity.first_name }} {{ row.identity.last_name }}</td>
-                        <td>{{ row.roster.division }} {{ row.roster.team_name }}</td>
-                        <td>{{ row.action }}</td>
-                        <td>{{ row.membership.label }}</td>
-                        <td>{% if row.matched_player_name %}{{ row.matched_player_name }}{% else %}{{ row.match_status }}{% endif %}</td>
-                        <td>
+                        <td data-label="Row">{{ row.row_number }}</td>
+                        <td data-label="Player">{{ row.identity.first_name }} {{ row.identity.last_name }}</td>
+                        <td data-label="Roster">{{ row.roster.division }} {{ row.roster.team_name }}</td>
+                        <td data-label="Action">{{ row.action }}</td>
+                        <td data-label="Membership">{{ row.membership.label }}</td>
+                        <td data-label="Match">{% if row.matched_player_name %}{{ row.matched_player_name }}{% else %}{{ row.match_status }}{% endif %}</td>
+                        <td data-label="Issues">
                             {% if row.errors %}{{ row.errors|join:", " }}{% endif %}
                             {% if row.field_conflicts %}{{ row.field_conflicts|length }} conflict{{ row.field_conflicts|length|pluralize }}{% endif %}
                             {% if row.candidate_names %}{{ row.candidate_names|join:", " }}{% endif %}

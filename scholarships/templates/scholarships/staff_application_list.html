@@ -35,7 +35,7 @@
     <article class="scholarship-panel">
         <p class="scholarship-section-label">Applications</p>
         <div class="table-shell">
-            <table class="scholarship-table">
+            <table class="scholarship-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>Applicant</th>
@@ -48,14 +48,14 @@
                 <tbody>
                     {% for application in object_list %}
                         <tr>
-                            <td>
+                            <td data-label="Applicant">
                                 <strong>{{ application.player_full_name }}</strong>
                                 <div class="table-subtext">{{ application.applicant.email }}</div>
                             </td>
-                            <td>{{ application.cycle.year }}</td>
-                            <td><span class="status-pill status-pill--{{ application.status }}">{{ application.get_status_display }}</span></td>
-                            <td>{% if application.submitted_at %}{{ application.submitted_at|date:"M j, Y" }}{% else %}Draft{% endif %}</td>
-                            <td class="table-actions">
+                            <td data-label="Cycle">{{ application.cycle.year }}</td>
+                            <td data-label="Status"><span class="status-pill status-pill--{{ application.status }}">{{ application.get_status_display }}</span></td>
+                            <td data-label="Submitted">{% if application.submitted_at %}{{ application.submitted_at|date:"M j, Y" }}{% else %}Draft{% endif %}</td>
+                            <td data-label="Actions" class="table-actions">
                                 <a href="{% url 'scholarships:staff-application-detail' pk=application.pk %}">Open</a>
                                 <a href="{% url 'scholarships:staff-application-download' pk=application.pk %}">Download</a>
                             </td>
@@ -89,4 +89,3 @@
     </article>
 </section>
 {% endblock %}
-

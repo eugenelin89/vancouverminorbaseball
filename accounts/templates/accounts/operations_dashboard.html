@@ -33,18 +33,18 @@
 
     <article class="pdp-card">
         <h2>Accounts Requiring Password Change</h2>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr><th>Username</th><th>Name</th><th>Role</th><th></th></tr>
                 </thead>
                 <tbody>
                     {% for row in users_requiring_password_change %}
                         <tr>
-                            <td>{{ row.user.username }}</td>
-                            <td>{{ row.user.get_full_name|default:"-" }}</td>
-                            <td>{{ row.role_label }}</td>
-                            <td><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
+                            <td data-label="Username">{{ row.user.username }}</td>
+                            <td data-label="Name">{{ row.user.get_full_name|default:"-" }}</td>
+                            <td data-label="Role">{{ row.role_label }}</td>
+                            <td data-label="Action"><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="4">No accounts currently require password change.</td></tr>
@@ -56,18 +56,18 @@
 
     <article class="pdp-card">
         <h2>Users Without Player Links</h2>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr><th>Username</th><th>Name</th><th>Role</th><th></th></tr>
                 </thead>
                 <tbody>
                     {% for row in unlinked_users %}
                         <tr>
-                            <td>{{ row.user.username }}</td>
-                            <td>{{ row.user.get_full_name|default:"-" }}</td>
-                            <td>{{ row.role_label }}</td>
-                            <td><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
+                            <td data-label="Username">{{ row.user.username }}</td>
+                            <td data-label="Name">{{ row.user.get_full_name|default:"-" }}</td>
+                            <td data-label="Role">{{ row.role_label }}</td>
+                            <td data-label="Action"><a class="button button--ghost" href="{{ row.detail_url }}">Open</a></td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="4">No unlinked users found.</td></tr>

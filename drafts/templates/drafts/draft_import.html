@@ -36,7 +36,7 @@
                         </div>
                     </div>
                     <div class="draft-table-wrap">
-                        <table class="draft-table">
+                        <table class="draft-table" data-responsive="cards">
                             <thead>
                                 <tr>
                                     <th>Row</th>
@@ -48,16 +48,16 @@
                             <tbody>
                                 {% for row in preview.rows %}
                                     <tr>
-                                        <td>{{ row.row_number }}</td>
-                                        <td>{{ row.cleaned_row.first_name }} {{ row.cleaned_row.last_name }}</td>
-                                        <td>
+                                        <td data-label="Row">{{ row.row_number }}</td>
+                                        <td data-label="Player">{{ row.cleaned_row.first_name }} {{ row.cleaned_row.last_name }}</td>
+                                        <td data-label="Status">
                                             {% if row.imported %}
                                                 <span class="status-badge status-badge--open">Ready</span>
                                             {% else %}
                                                 <span class="status-badge status-badge--closed">Rejected</span>
                                             {% endif %}
                                         </td>
-                                        <td>
+                                        <td data-label="Details">
                                             {% if row.errors %}
                                                 {{ row.errors|join:", " }}
                                             {% else %}

@@ -14,8 +14,8 @@
             </div>
             <a class="button button--ghost" href="{% url 'leaguehub:dashboard' league_slug=league_season.league.slug season_slug=league_season.season.slug %}">Back To Dashboard</a>
         </div>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -33,16 +33,16 @@
                 <tbody>
                     {% for row in standings %}
                         <tr>
-                            <td>{{ row.rank }}</td>
-                            <td><strong><a href="{{ row.team_url }}">{{ row.team_name }}</a></strong></td>
-                            <td>{{ row.games_played }}</td>
-                            <td>{{ row.wins }}</td>
-                            <td>{{ row.losses }}</td>
-                            <td>{{ row.ties }}</td>
-                            <td>{{ row.points }}</td>
-                            <td>{{ row.runs_for }}</td>
-                            <td>{{ row.runs_against }}</td>
-                            <td>{{ row.run_differential }}</td>
+                            <td data-label="#">{{ row.rank }}</td>
+                            <td data-label="Team"><strong><a href="{{ row.team_url }}">{{ row.team_name }}</a></strong></td>
+                            <td data-label="GP">{{ row.games_played }}</td>
+                            <td data-label="W">{{ row.wins }}</td>
+                            <td data-label="L">{{ row.losses }}</td>
+                            <td data-label="T">{{ row.ties }}</td>
+                            <td data-label="Pts">{{ row.points }}</td>
+                            <td data-label="RF">{{ row.runs_for }}</td>
+                            <td data-label="RA">{{ row.runs_against }}</td>
+                            <td data-label="Diff">{{ row.run_differential }}</td>
                         </tr>
                     {% empty %}
                         <tr><td colspan="10">No verified standings data yet.</td></tr>

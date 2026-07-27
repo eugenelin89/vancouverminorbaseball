@@ -57,14 +57,14 @@
             </div>
             <a class="button button--ghost" href="{% url 'leaguehub:dashboard' league_slug=league_season.league.slug season_slug=league_season.season.slug %}">Season Dashboard</a>
         </div>
-        <div class="table-wrap">
-            <table class="pdp-table">
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
                 <thead>
                     <tr><th>Team</th><th>Score</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td><a href="{{ game_display.away_team_url }}">{{ game_display.away_team.name }}</a></td><td>{{ game_display.away_score|default_if_none:"-" }}</td></tr>
-                    <tr><td><a href="{{ game_display.home_team_url }}">{{ game_display.home_team.name }}</a></td><td>{{ game_display.home_score|default_if_none:"-" }}</td></tr>
+                    <tr><td data-label="Team"><a href="{{ game_display.away_team_url }}">{{ game_display.away_team.name }}</a></td><td data-label="Score">{{ game_display.away_score|default_if_none:"-" }}</td></tr>
+                    <tr><td data-label="Team"><a href="{{ game_display.home_team_url }}">{{ game_display.home_team.name }}</a></td><td data-label="Score">{{ game_display.home_score|default_if_none:"-" }}</td></tr>
                 </tbody>
             </table>
         </div>

@@ -8,8 +8,8 @@
     <div class="pdp-actions">
         <a class="button button--primary" href="{% url 'seasons:season-new' %}">Create Season</a>
     </div>
-    <div class="table-wrap">
-        <table class="pdp-table">
+    <div class="table-wrap table-wrap--cards">
+        <table class="pdp-table" data-responsive="cards">
             <thead>
                 <tr>
                     <th>Season</th>
@@ -25,14 +25,14 @@
             <tbody>
                 {% for season in seasons %}
                     <tr>
-                        <td>{{ season.name }}<br><small>{{ season.key }}</small></td>
-                        <td>{{ season.starts_on|default:"-" }} - {{ season.ends_on|default:"-" }}</td>
-                        <td>{% if season.is_current %}Yes{% else %}No{% endif %}</td>
-                        <td>{% if season.is_active %}Active{% else %}Inactive{% endif %}</td>
-                        <td>{{ season.team_count }}</td>
-                        <td>{{ season.membership_count }}</td>
-                        <td>{{ season.assignment_count }}</td>
-                        <td><a class="button button--ghost" href="{% url 'seasons:season-detail' season.id %}">Open</a></td>
+                        <td data-label="Season">{{ season.name }}<br><small>{{ season.key }}</small></td>
+                        <td data-label="Dates">{{ season.starts_on|default:"-" }} - {{ season.ends_on|default:"-" }}</td>
+                        <td data-label="Current">{% if season.is_current %}Yes{% else %}No{% endif %}</td>
+                        <td data-label="Active">{% if season.is_active %}Active{% else %}Inactive{% endif %}</td>
+                        <td data-label="Teams">{{ season.team_count }}</td>
+                        <td data-label="Memberships">{{ season.membership_count }}</td>
+                        <td data-label="Assignments">{{ season.assignment_count }}</td>
+                        <td data-label="Action"><a class="button button--ghost" href="{% url 'seasons:season-detail' season.id %}">Open</a></td>
                     </tr>
                 {% empty %}
                     <tr><td colspan="8">No seasons have been created.</td></tr>
