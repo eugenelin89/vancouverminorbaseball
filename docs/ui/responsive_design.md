@@ -67,6 +67,53 @@ on mobile, with full-width inputs and buttons where practical.
 The PDP-style form utility `.pdp-form` uses a responsive grid so labels and
 controls remain readable on mobile without fixed widths.
 
+## Evaluation Report Detail Pages
+
+Submitted/read-only evaluation detail pages should use the report pattern rather
+than a plain definition list. This pattern is intended for:
+
+- submitted evaluation review
+- My Evaluations detail
+- coach assessment detail
+- staff observation review detail
+
+Use the shared `.evaluation-report` structure when rendering read-only
+evaluation results.
+
+The report should include:
+
+- a strong header with player name, evaluation type, and submitted/status badge
+- a compact metadata grid for evaluator, role, season, team, division, cycle, and
+  submitted date
+- an optional score summary that averages numeric rating answers only
+- category sections with category-level summaries when numeric data exists
+- question cards where the question text is visually distinct from the score or
+  text answer
+- a muted `Not answered` state for unanswered questions
+- actions grouped in `.evaluation-actions`
+
+Score presentation:
+
+- show numeric ratings as `N / 5`
+- never display unanswered ratings as zero
+- explain that averages exclude text-only and unanswered questions
+- keep score text understandable without relying on colour
+
+Mobile behavior:
+
+- the header, metadata grid, category summaries, and question cards stack below
+  `640px`
+- action buttons should be full width on mobile
+- long player names, evaluator names, usernames, and cycle names must wrap safely
+- no horizontal scrolling should be required
+
+Print behavior:
+
+- hide navigation and report actions
+- reduce decorative backgrounds and shadows
+- keep the player name, evaluation type, context, and answers visible
+- avoid splitting category and question cards where practical
+
 ## Pages Converted To Mobile Cards
 
 The responsive card pattern is used across representative high-traffic workflows:

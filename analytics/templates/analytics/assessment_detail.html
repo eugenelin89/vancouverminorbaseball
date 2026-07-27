@@ -4,39 +4,96 @@
 {% block analytics_subtitle %}{{ observation.evaluation_cycle.name }} · {{ observation.get_status_display }}{% endblock %}
 
 {% block analytics_content %}
-<article class="pdp-card">
-    <h2>Assessment</h2>
-    <p>Type: {{ observation.evaluation_perspective_label }}</p>
-    <p>Season: {{ observation.season_name_snapshot|default:"Legacy / No Season" }}</p>
-    <p>Roster: {{ observation.player_division_snapshot|default:observation.player.division }} {{ observation.player_team_name_snapshot|default:observation.player.team_name }}</p>
-    {% if observation.evaluator_team_name_snapshot %}
-        <p>Evaluator Assignment: {{ observation.evaluator_assignment_role_snapshot }} · {{ observation.evaluator_division_snapshot }} {{ observation.evaluator_team_name_snapshot }}</p>
-    {% endif %}
-    <p>Evaluator: {{ observation.evaluator }} · Role: {{ observation.evaluator_role_name }}</p>
-    {% if observation.submitted_at %}<p>Submitted: {{ observation.submitted_at }}</p>{% endif %}
-    {% for group in question_groups %}
-        <section class="pdp-list__item pdp-list__item--stack">
-            <h3>{{ group.category }}</h3>
-            {% for item in group.questions %}
-                <div>
-                    <strong>{{ item.question.prompt }}</strong>
-                    {% if not item.question.is_required %}<span class="pdp-badge pdp-badge--muted">Optional</span>{% endif %}
-                    {% if item.response %}
-                        {% if item.response.numeric_value %}
-                            <span>{{ item.response.numeric_value|floatformat:0 }}</span>
-                        {% else %}
-                            <p>{{ item.response.text_value }}</p>
-                        {% endif %}
-                    {% else %}
-                        <span>Not answered</span>
-                    {% endif %}
+<article class="evaluation-report">
+    <header class="evaluation-report__header">
+        <div class="evaluation-report__headline">
+            <p class="evaluation-report__eyebrow">Evaluation Detail</p>
+            <h2>{{ observation.player.display_name }}</h2>
+            <div class="evaluation-report__badges" aria-label="Evaluation status">
+                <span class="evaluation-report__badge">{{ observation.evaluation_perspective_label }}</span>
+                <span class="evaluation-report__badge{% if observation.status == 'submitted' %} evaluation-report__badge--submitted{% endif %}">{{ observation.get_status_display }}</span>
+            </div>
+        </div>
+        <div class="evaluation-report__score-card">
+            <span class="evaluation-report__score-label">Workflow status</span>
+            <strong>{{ observation.get_status_display }}</strong>
+            <span>{{ observation.evaluation_cycle.name }}</span>
+        </div>
+    </header>
+
+    <section class="evaluation-report__meta-grid" aria-label="Evaluation context">
+        <div class="evaluation-report__meta-item">
+            <span>Evaluator</span>
+            <strong>{{ observation.evaluator }}</strong>
+        </div>
+        <div class="evaluation-report__meta-item">
+            <span>Evaluator role</span>
+            <strong>{{ observation.evaluator_role_name }}</strong>
+        </div>
+        <div class="evaluation-report__meta-item">
+            <span>Season</span>
+            <strong>{{ observation.season_name_snapshot|default:"Legacy / No Season" }}</strong>
+        </div>
+        <div class="evaluation-report__meta-item">
+            <span>Roster</span>
+            <strong>{{ observation.player_division_snapshot|default:observation.player.division }} {{ observation.player_team_name_snapshot|default:observation.player.team_name }}</strong>
+        </div>
+        {% if observation.evaluator_team_name_snapshot %}
+            <div class="evaluation-report__meta-item evaluation-report__meta-item--wide">
+                <span>Evaluator assignment</span>
+                <strong>{{ observation.evaluator_assignment_role_snapshot }} · {{ observation.evaluator_division_snapshot }} {{ observation.evaluator_team_name_snapshot }}</strong>
+            </div>
+        {% endif %}
+        <div class="evaluation-report__meta-item evaluation-report__meta-item--wide">
+            <span>Submitted</span>
+            <strong>{% if observation.submitted_at %}{{ observation.submitted_at|date:"M j, Y" }}{% else %}Not submitted{% endif %}</strong>
+        </div>
+    </section>
+
+    <section class="evaluation-report__body" aria-label="Evaluation answers">
+        {% for group in question_groups %}
+            <section class="evaluation-category">
+                <header class="evaluation-category__header">
+                    <div>
+                        <p class="evaluation-report__eyebrow">Category</p>
+                        <h3>{{ group.category }}</h3>
+                    </div>
+                </header>
+                <div class="evaluation-question-list">
+                    {% for item in group.questions %}
+                        <article class="evaluation-question">
+                            <div class="evaluation-question__prompt">
+                                <h4>{{ item.question.prompt }}</h4>
+                                {% if not item.question.is_required %}<span class="pdp-badge pdp-badge--muted">Optional</span>{% endif %}
+                            </div>
+                            {% if item.response %}
+                                {% if item.response.numeric_value %}
+                                    <div class="evaluation-question__score" aria-label="Rating {{ item.response.numeric_value|floatformat:0 }} out of 5">
+                                        <strong>{{ item.response.numeric_value|floatformat:0 }}</strong>
+                                        <span>/ 5</span>
+                                    </div>
+                                {% else %}
+                                    <div class="evaluation-question__answer">
+                                        <span>Comment</span>
+                                        <p>{{ item.response.text_value|linebreaksbr }}</p>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="evaluation-question__empty">Not answered</div>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </section>
-    {% endfor %}
-    {% if can_edit %}
-        <a class="button button--primary" href="{% url 'analytics:assessment-edit' observation_id=observation.id %}">Edit</a>
-    {% endif %}
-    <a class="button button--ghost" href="{{ back_url }}">Back</a>
+            </section>
+        {% endfor %}
+    </section>
+
+    <footer class="evaluation-actions">
+        {% if can_edit %}
+            <a class="button button--primary" href="{% url 'analytics:assessment-edit' observation_id=observation.id %}">Edit</a>
+        {% endif %}
+        <a class="button button--ghost" href="{{ back_url }}">Back</a>
+        <button class="button button--ghost evaluation-actions__print" type="button" onclick="window.print()">Print</button>
+    </footer>
 </article>
 {% endblock %}

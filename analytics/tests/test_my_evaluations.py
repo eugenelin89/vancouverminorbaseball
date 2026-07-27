@@ -208,6 +208,9 @@ class MyEvaluationsViewTests(TestCase):
         self.assertContains(response, optional_question.prompt)
         self.assertContains(response, "Optional")
         self.assertContains(response, "Not answered")
+        self.assertContains(response, 'class="evaluation-report"')
+        self.assertContains(response, "Overall rating")
+        self.assertContains(response, 'class="evaluation-question__empty"')
         self.assertFalse(optional_response.is_required)
         self.assertIsNone(optional_response.numeric_value)
 

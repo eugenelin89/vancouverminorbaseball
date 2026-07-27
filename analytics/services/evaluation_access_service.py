@@ -25,6 +25,12 @@ from analytics.services.permissions import (
     can_view_my_evaluation_detail,
     can_view_my_evaluations,
 )
+from analytics.services.evaluation_report_service import (
+    EvaluationReportCategorySummary,
+    EvaluationReportOverallSummary,
+    build_category_summaries,
+    build_overall_summary,
+)
 from players.models import Player
 
 
@@ -77,6 +83,8 @@ class MyEvaluationDetail:
     submitted_at: object
     cycle_name: str
     responses: list[MyEvaluationQuestionResponse]
+    category_summaries: list[EvaluationReportCategorySummary]
+    overall_summary: EvaluationReportOverallSummary
 
 
 def get_evaluation_target_list(user, params) -> EvaluationTargetList:
@@ -221,6 +229,7 @@ def get_my_evaluation_detail(user, observation_id: int) -> MyEvaluationDetail:
             is_active=True
         ).order_by("display_order", "id")
     ]
+    category_summaries = build_category_summaries(responses)
     return MyEvaluationDetail(
         observation_id=observation.id,
         player=observation.player,
@@ -229,4 +238,6 @@ def get_my_evaluation_detail(user, observation_id: int) -> MyEvaluationDetail:
         submitted_at=observation.submitted_at,
         cycle_name=observation.evaluation_cycle.name,
         responses=responses,
+        category_summaries=category_summaries,
+        overall_summary=build_overall_summary(category_summaries),
     )

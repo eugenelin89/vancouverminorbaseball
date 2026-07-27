@@ -1,0 +1,125 @@
+<article class="evaluation-report">
+    <header class="evaluation-report__header">
+        <div class="evaluation-report__headline">
+            <p class="evaluation-report__eyebrow">{{ report_eyebrow|default:"Submitted Evaluation" }}</p>
+            <h2>{{ player_name }}</h2>
+            <div class="evaluation-report__badges" aria-label="Evaluation status">
+                <span class="evaluation-report__badge">{{ evaluation_type }}</span>
+                <span class="evaluation-report__badge evaluation-report__badge--submitted">Submitted</span>
+            </div>
+        </div>
+        <div class="evaluation-report__score-card">
+            <span class="evaluation-report__score-label">Overall rating</span>
+            {% if overall_summary.average_rating %}
+                <strong>{{ overall_summary.average_rating|floatformat:1 }} / 5</strong>
+                <span>{{ overall_summary.rated_count }} rated question{{ overall_summary.rated_count|pluralize }}</span>
+            {% else %}
+                <strong>Not rated</strong>
+                <span>No numeric ratings submitted</span>
+            {% endif %}
+        </div>
+    </header>
+
+    <section class="evaluation-report__meta-grid" aria-label="Evaluation context">
+        {% if evaluator_name %}
+            <div class="evaluation-report__meta-item">
+                <span>Evaluator</span>
+                <strong>{{ evaluator_name }}</strong>
+            </div>
+        {% endif %}
+        <div class="evaluation-report__meta-item">
+            <span>Evaluator Role</span>
+            <strong>{{ evaluator_role_name }}</strong>
+        </div>
+        <div class="evaluation-report__meta-item">
+            <span>Submitted</span>
+            <strong>{% if submitted_at %}{{ submitted_at|date:"M j, Y" }}{% else %}Not submitted{% endif %}</strong>
+        </div>
+        {% if season_name %}
+            <div class="evaluation-report__meta-item">
+                <span>Season</span>
+                <strong>{{ season_name }}</strong>
+            </div>
+        {% endif %}
+        {% if player_team %}
+            <div class="evaluation-report__meta-item">
+                <span>Team</span>
+                <strong>{{ player_team }}</strong>
+            </div>
+        {% endif %}
+        {% if player_division %}
+            <div class="evaluation-report__meta-item">
+                <span>Division</span>
+                <strong>{{ player_division }}</strong>
+            </div>
+        {% endif %}
+        <div class="evaluation-report__meta-item evaluation-report__meta-item--wide">
+            <span>Cycle</span>
+            <strong>{{ cycle_name }}</strong>
+        </div>
+    </section>
+
+    <section class="evaluation-report__summary-strip" aria-label="Evaluation answer summary">
+        <div>
+            <span>Questions answered</span>
+            <strong>{{ overall_summary.answered_count }} / {{ overall_summary.question_count }}</strong>
+        </div>
+        <div>
+            <span>Rated questions</span>
+            <strong>{{ overall_summary.rated_count }}</strong>
+        </div>
+        <p>Overall and category ratings average numeric answers only. Text-only and unanswered questions are excluded.</p>
+    </section>
+
+    <section class="evaluation-report__body" aria-label="Evaluation answers">
+        {% for category in category_summaries %}
+            <section class="evaluation-category">
+                <header class="evaluation-category__header">
+                    <div>
+                        <p class="evaluation-report__eyebrow">Category</p>
+                        <h3>{{ category.name }}</h3>
+                    </div>
+                    <div class="evaluation-category__summary">
+                        {% if category.average_rating %}
+                            <strong>{{ category.average_rating|floatformat:1 }} / 5</strong>
+                            <span>{{ category.rated_count }} rated · {{ category.answered_count }} / {{ category.question_count }} answered</span>
+                        {% else %}
+                            <strong>No rating</strong>
+                            <span>{{ category.answered_count }} / {{ category.question_count }} answered</span>
+                        {% endif %}
+                    </div>
+                </header>
+                <div class="evaluation-question-list">
+                    {% for response in category.responses %}
+                        <article class="evaluation-question">
+                            <div class="evaluation-question__prompt">
+                                <h4>{{ response.question_prompt }}</h4>
+                                {% if not response.is_required %}<span class="pdp-badge pdp-badge--muted">Optional</span>{% endif %}
+                            </div>
+                            {% if response.numeric_value %}
+                                <div class="evaluation-question__score" aria-label="Rating {{ response.numeric_value|floatformat:0 }} out of 5">
+                                    <strong>{{ response.numeric_value|floatformat:0 }}</strong>
+                                    <span>/ 5</span>
+                                </div>
+                            {% elif response.text_value %}
+                                <div class="evaluation-question__answer">
+                                    <span>Comment</span>
+                                    <p>{{ response.text_value|linebreaksbr }}</p>
+                                </div>
+                            {% else %}
+                                <div class="evaluation-question__empty">Not answered</div>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        {% empty %}
+            <div class="evaluation-report__empty">No responses are available.</div>
+        {% endfor %}
+    </section>
+
+    <footer class="evaluation-actions">
+        <a class="button button--ghost" href="{{ back_url }}">{{ back_label|default:"Back" }}</a>
+        <button class="button button--secondary evaluation-actions__print" type="button" onclick="window.print()">Print</button>
+    </footer>
+</article>

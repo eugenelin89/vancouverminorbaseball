@@ -199,6 +199,12 @@ class EvaluationReviewViewTests(TestCase):
         self.assertContains(response, optional_question.prompt)
         self.assertContains(response, "Optional")
         self.assertContains(response, "Not answered")
+        self.assertContains(response, 'class="evaluation-report"')
+        self.assertContains(response, "Overall rating")
+        self.assertContains(response, "Questions answered")
+        self.assertContains(response, "numeric answers only")
+        self.assertContains(response, 'class="evaluation-category"')
+        self.assertContains(response, 'class="evaluation-question__empty"')
 
     def test_coach_review_access_rules(self):
         self.submitted_observation()
@@ -365,6 +371,7 @@ class EvaluationReviewViewTests(TestCase):
         self.assertContains(response, "Casey Coach")
         self.assertContains(response, "Coach")
         self.assertContains(response, "Review detail note.")
+        self.assertContains(response, 'class="evaluation-report__meta-grid"')
         self.assertNotContains(response, self.coach.email)
         self.assertNotContains(response, "Reopen")
         self.assertEqual(post_response.status_code, 405)
