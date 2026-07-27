@@ -2745,6 +2745,57 @@ table.tryout-table td:last-child {
     .tryout-table[data-responsive="cards"] td:not([data-label])::before {
         content: none;
     }
+
+    .draft-table[data-responsive="cards"] td[data-label="Action"],
+    .draft-table[data-responsive="cards"] td[data-label="Actions"],
+    .team-table[data-responsive="cards"] td[data-label="Action"],
+    .team-table[data-responsive="cards"] td[data-label="Actions"],
+    .scholarship-table[data-responsive="cards"] td[data-label="Action"],
+    .scholarship-table[data-responsive="cards"] td[data-label="Actions"],
+    .tryout-table[data-responsive="cards"] td[data-label="Action"],
+    .tryout-table[data-responsive="cards"] td[data-label="Actions"] {
+        display: flex;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .draft-table[data-responsive="cards"] td[data-label="Action"]::before,
+    .draft-table[data-responsive="cards"] td[data-label="Actions"]::before,
+    .team-table[data-responsive="cards"] td[data-label="Action"]::before,
+    .team-table[data-responsive="cards"] td[data-label="Actions"]::before,
+    .scholarship-table[data-responsive="cards"] td[data-label="Action"]::before,
+    .scholarship-table[data-responsive="cards"] td[data-label="Actions"]::before,
+    .tryout-table[data-responsive="cards"] td[data-label="Action"]::before,
+    .tryout-table[data-responsive="cards"] td[data-label="Actions"]::before {
+        display: block;
+        margin-bottom: 0;
+    }
+
+    .draft-table[data-responsive="cards"] td[data-label="Action"] a,
+    .draft-table[data-responsive="cards"] td[data-label="Action"] button,
+    .draft-table[data-responsive="cards"] td[data-label="Actions"] a,
+    .draft-table[data-responsive="cards"] td[data-label="Actions"] button,
+    .team-table[data-responsive="cards"] td[data-label="Action"] a,
+    .team-table[data-responsive="cards"] td[data-label="Action"] button,
+    .team-table[data-responsive="cards"] td[data-label="Actions"] a,
+    .team-table[data-responsive="cards"] td[data-label="Actions"] button,
+    .scholarship-table[data-responsive="cards"] td[data-label="Action"] a,
+    .scholarship-table[data-responsive="cards"] td[data-label="Action"] button,
+    .scholarship-table[data-responsive="cards"] td[data-label="Actions"] a,
+    .scholarship-table[data-responsive="cards"] td[data-label="Actions"] button,
+    .tryout-table[data-responsive="cards"] td[data-label="Action"] a,
+    .tryout-table[data-responsive="cards"] td[data-label="Action"] button,
+    .tryout-table[data-responsive="cards"] td[data-label="Actions"] a,
+    .tryout-table[data-responsive="cards"] td[data-label="Actions"] button {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 2.75rem;
+        justify-content: center;
+        text-align: center;
+        white-space: nowrap;
+    }
 }
 
 @media (max-width: 380px) {

@@ -433,10 +433,39 @@
         content: none;
     }
 
+    .pdp-table[data-responsive="cards"] td[data-label="Action"],
+    .pdp-table[data-responsive="cards"] td[data-label="Actions"] {
+        display: flex;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .pdp-table[data-responsive="cards"] td[data-label="Action"]::before,
+    .pdp-table[data-responsive="cards"] td[data-label="Actions"]::before {
+        display: block;
+        margin-bottom: 0;
+    }
+
     .pdp-table[data-responsive="cards"] td .button,
     .pdp-table[data-responsive="cards"] td button {
         width: 100%;
         justify-content: center;
+    }
+
+    .pdp-table[data-responsive="cards"] td[data-label="Action"] .button,
+    .pdp-table[data-responsive="cards"] td[data-label="Action"] button,
+    .pdp-table[data-responsive="cards"] td[data-label="Action"] a,
+    .pdp-table[data-responsive="cards"] td[data-label="Actions"] .button,
+    .pdp-table[data-responsive="cards"] td[data-label="Actions"] button,
+    .pdp-table[data-responsive="cards"] td[data-label="Actions"] a {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 2.75rem;
+        justify-content: center;
+        text-align: center;
+        white-space: nowrap;
     }
 
     .pdp-table th,
