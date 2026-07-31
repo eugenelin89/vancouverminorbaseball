@@ -16,9 +16,13 @@ from analytics.forms import (
     parse_conflict_resolutions,
 )
 from analytics.models import (
-    ASSESSMENT_IMPORT_ROW_AMBIGUOUS,
-    ASSESSMENT_IMPORT_ROW_INVALID,
-    ASSESSMENT_IMPORT_ROW_UNMATCHED,
+    ASSESSMENT_CONFLICT_UNRESOLVED,
+    ASSESSMENT_IMPORT_ROW_SKIPPED,
+    ASSESSMENT_IMPORT_STATUS_FAILED,
+    ASSESSMENT_MATCH_AMBIGUOUS,
+    ASSESSMENT_MATCH_UNMATCHED,
+    ASSESSMENT_VALIDATION_INVALID,
+    ASSESSMENT_VALIDATION_VALID,
     EVALUATION_PERSPECTIVE_CHOICES,
     OBSERVATION_STATUS_SUBMITTED,
     OBSERVATION_TYPE_COACH_ASSESSMENT,
@@ -30,9 +34,11 @@ from analytics.models import (
 )
 from analytics.services.assessment_feature import assessments_enabled
 from analytics.services.assessment_import_service import (
+    acknowledge_assessment_import_warnings,
     assessment_records_for_player,
     commit_assessment_import_batch,
     create_assessment_import_batch,
+    preserve_manual_override_conflicts,
     resolve_assessment_import_row,
     summarize_import_batch,
 )
@@ -391,6 +397,12 @@ class AssessmentImportUploadView(AssessmentFeatureRequiredMixin, FormView):
         except ValidationError as exc:
             form.add_error(None, exc)
             return self.render_to_response(self.get_context_data(form=form))
+        if batch.status == ASSESSMENT_IMPORT_STATUS_FAILED:
+            messages.error(
+                self.request,
+                "Assessment workbook could not be parsed safely. Review the persisted failure details.",
+            )
+            return redirect("analytics:assessment-import-detail", pk=batch.pk)
         messages.success(
             self.request,
             "Assessment workbook uploaded. Review matches before committing.",
@@ -404,7 +416,13 @@ class AssessmentImportBatchMixin(AssessmentFeatureRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         self.assessment_import_batch = get_object_or_404(
             AssessmentImportBatch.objects.select_related(
-                "event", "event__season", "import_template"
+                "event",
+                "event__season",
+                "event__template",
+                "event__scoring_profile",
+                "import_template",
+                "import_template__assessment_template",
+                "warnings_acknowledged_by",
             ),
             pk=kwargs["pk"],
         )
@@ -423,9 +441,27 @@ class AssessmentImportPreviewView(AssessmentImportBatchMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["rows"] = self.assessment_import_batch.rows.select_related(
-            "player", "roster_membership"
+            "player", "roster_membership", "roster_membership__season_team"
         )
         return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            acknowledge_assessment_import_warnings(
+                batch=self.assessment_import_batch,
+                actor=request.user,
+                token=request.POST.get("acknowledgement_token", ""),
+            )
+        except (PermissionDenied, ValidationError) as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(
+                request, "Current assessment import warnings acknowledged."
+            )
+        return redirect(
+            "analytics:assessment-import-preview",
+            pk=self.assessment_import_batch.pk,
+        )
 
 
 class AssessmentImportResolveView(AssessmentImportBatchMixin, TemplateView):
@@ -433,11 +469,8 @@ class AssessmentImportResolveView(AssessmentImportBatchMixin, TemplateView):
 
     def _review_rows(self):
         return self.assessment_import_batch.rows.select_related("player").filter(
-            status__in=[
-                ASSESSMENT_IMPORT_ROW_UNMATCHED,
-                ASSESSMENT_IMPORT_ROW_AMBIGUOUS,
-                ASSESSMENT_IMPORT_ROW_INVALID,
-            ]
+            validation_status=ASSESSMENT_VALIDATION_VALID,
+            match_status__in=[ASSESSMENT_MATCH_UNMATCHED, ASSESSMENT_MATCH_AMBIGUOUS],
         )
 
     def get_context_data(self, **kwargs):
@@ -446,9 +479,17 @@ class AssessmentImportResolveView(AssessmentImportBatchMixin, TemplateView):
             (row, AssessmentImportRowResolutionForm(row=row))
             for row in self._review_rows()
         ]
+        context["invalid_rows"] = self.assessment_import_batch.rows.filter(
+            validation_status=ASSESSMENT_VALIDATION_INVALID
+        ).exclude(status=ASSESSMENT_IMPORT_ROW_SKIPPED)
+        context["conflict_rows"] = self.assessment_import_batch.rows.filter(
+            conflict_status=ASSESSMENT_CONFLICT_UNRESOLVED
+        ).exclude(status=ASSESSMENT_IMPORT_ROW_SKIPPED)
         return context
 
     def post(self, request, *args, **kwargs):
+        saved = 0
+        failed = 0
         for row in self._review_rows():
             form = AssessmentImportRowResolutionForm(
                 data={
@@ -458,12 +499,41 @@ class AssessmentImportResolveView(AssessmentImportBatchMixin, TemplateView):
                 row=row,
             )
             if form.is_valid():
-                resolve_assessment_import_row(
-                    row=row,
-                    player=form.cleaned_data.get("player"),
-                    skip=form.cleaned_data.get("skip"),
-                )
-        messages.success(request, "Assessment import resolutions updated.")
+                try:
+                    resolve_assessment_import_row(
+                        row=row,
+                        player=form.cleaned_data.get("player"),
+                        skip=form.cleaned_data.get("skip"),
+                    )
+                except ValidationError as exc:
+                    failed += 1
+                    messages.error(request, f"{row.raw_identity}: {exc}")
+                else:
+                    saved += 1
+            else:
+                failed += 1
+                messages.error(request, f"{row.raw_identity}: {form.errors.as_text()}")
+        for row in self.assessment_import_batch.rows.filter(
+            validation_status=ASSESSMENT_VALIDATION_INVALID
+        ).exclude(status=ASSESSMENT_IMPORT_ROW_SKIPPED):
+            if request.POST.get(f"row_{row.pk}_skip"):
+                resolve_assessment_import_row(row=row, player=None, skip=True)
+                saved += 1
+        for row in self.assessment_import_batch.rows.filter(
+            conflict_status=ASSESSMENT_CONFLICT_UNRESOLVED
+        ).exclude(status=ASSESSMENT_IMPORT_ROW_SKIPPED):
+            if request.POST.get(f"row_{row.pk}_preserve_manual"):
+                try:
+                    preserve_manual_override_conflicts(row=row, actor=request.user)
+                except (PermissionDenied, ValidationError) as exc:
+                    failed += 1
+                    messages.error(request, f"{row.raw_identity}: {exc}")
+                else:
+                    saved += 1
+        if saved:
+            messages.success(request, f"Updated {saved} assessment import row(s).")
+        if failed:
+            messages.error(request, f"{failed} row resolution(s) require attention.")
         return redirect(
             "analytics:assessment-import-preview",
             pk=self.assessment_import_batch.pk,
@@ -485,7 +555,7 @@ class AssessmentImportConfirmView(AssessmentImportBatchMixin, View):
             )
         messages.success(
             request,
-            f"Assessment import committed. Created {result.created}, updated {result.updated}, skipped {result.skipped}.",
+            f"Assessment import committed. Created {result.created}, updated {result.updated}, unchanged {result.unchanged}, skipped {result.skipped}.",
         )
         return redirect(
             "analytics:assessment-import-detail", pk=self.assessment_import_batch.pk

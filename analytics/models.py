@@ -115,6 +115,34 @@ ASSESSMENT_IMPORT_ROW_STATUS_CHOICES = [
     (ASSESSMENT_IMPORT_ROW_COMMITTED, "Committed"),
 ]
 
+ASSESSMENT_MATCH_MATCHED = "matched"
+ASSESSMENT_MATCH_UNMATCHED = "unmatched"
+ASSESSMENT_MATCH_AMBIGUOUS = "ambiguous"
+
+ASSESSMENT_MATCH_STATUS_CHOICES = [
+    (ASSESSMENT_MATCH_MATCHED, "Matched"),
+    (ASSESSMENT_MATCH_UNMATCHED, "Unmatched"),
+    (ASSESSMENT_MATCH_AMBIGUOUS, "Ambiguous"),
+]
+
+ASSESSMENT_VALIDATION_VALID = "valid"
+ASSESSMENT_VALIDATION_INVALID = "invalid"
+
+ASSESSMENT_VALIDATION_STATUS_CHOICES = [
+    (ASSESSMENT_VALIDATION_VALID, "Valid"),
+    (ASSESSMENT_VALIDATION_INVALID, "Invalid"),
+]
+
+ASSESSMENT_CONFLICT_NONE = "none"
+ASSESSMENT_CONFLICT_UNRESOLVED = "unresolved"
+ASSESSMENT_CONFLICT_RESOLVED = "resolved"
+
+ASSESSMENT_CONFLICT_STATUS_CHOICES = [
+    (ASSESSMENT_CONFLICT_NONE, "No conflict"),
+    (ASSESSMENT_CONFLICT_UNRESOLVED, "Unresolved"),
+    (ASSESSMENT_CONFLICT_RESOLVED, "Resolved"),
+]
+
 ASSESSMENT_VALUE_SOURCE_IMPORTED = "imported"
 ASSESSMENT_VALUE_SOURCE_MANUAL = "manual"
 ASSESSMENT_VALUE_SOURCE_MANUAL_CORRECTED = "manual_corrected"
@@ -599,6 +627,40 @@ class AssessmentMetricDefinition(TimeStampedModel):
             models.Index(fields=["is_active", "key"]),
         ]
 
+    def has_historical_use(self) -> bool:
+        if not self.pk:
+            return False
+        return self.template_metrics.filter(
+            Q(template__events__player_assessments__status=ASSESSMENT_STATUS_COMMITTED)
+            | Q(
+                template__events__import_batches__status=ASSESSMENT_IMPORT_STATUS_COMMITTED
+            )
+        ).exists()
+
+    def save(self, *args, **kwargs):
+        if self.pk and self.has_historical_use():
+            original = AssessmentMetricDefinition.objects.get(pk=self.pk)
+            for field_name in [
+                "key",
+                "name",
+                "description",
+                "default_value_type",
+                "default_unit",
+                "metadata",
+            ]:
+                if getattr(original, field_name) != getattr(self, field_name):
+                    raise ValidationError(
+                        {
+                            field_name: "Metric meaning cannot change after historical use."
+                        }
+                    )
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.has_historical_use():
+            raise ValidationError("Metrics with historical use cannot be deleted.")
+        return super().delete(*args, **kwargs)
+
     def __str__(self) -> str:
         return self.name
 
@@ -627,25 +689,47 @@ class AssessmentTemplate(TimeStampedModel):
             models.Index(fields=["is_active", "key"]),
         ]
 
-    def has_committed_assessments(self) -> bool:
+    def has_historical_use(self) -> bool:
         if not self.pk:
             return False
-        return PlayerAssessment.objects.filter(
-            event__template_id=self.pk,
-            status=ASSESSMENT_STATUS_COMMITTED,
-        ).exists()
+        return (
+            PlayerAssessment.objects.filter(
+                event__template_id=self.pk,
+                status=ASSESSMENT_STATUS_COMMITTED,
+            ).exists()
+            or AssessmentImportBatch.objects.filter(
+                event__template_id=self.pk,
+                status=ASSESSMENT_IMPORT_STATUS_COMMITTED,
+            ).exists()
+        )
+
+    def has_committed_assessments(self) -> bool:
+        return self.has_historical_use()
 
     def save(self, *args, **kwargs):
-        if self.pk and self.has_committed_assessments():
+        if self.pk:
             original = AssessmentTemplate.objects.get(pk=self.pk)
-            locked_fields = ["key", "version"]
-            for field_name in locked_fields:
-                if getattr(original, field_name) != getattr(self, field_name):
-                    raise ValidationError(
-                        {field_name: "Template identity cannot change after use."}
-                    )
-            self.is_locked = True
+            if original.is_locked or self.has_historical_use():
+                locked_fields = [
+                    "key",
+                    "version",
+                    "name",
+                    "description",
+                    "effective_from",
+                    "metadata",
+                ]
+                for field_name in locked_fields:
+                    if getattr(original, field_name) != getattr(self, field_name):
+                        raise ValidationError(
+                            {field_name: "Locked template identity cannot change."}
+                        )
+                self.is_locked = True
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.is_locked or self.has_historical_use():
+            raise ValidationError("Locked assessment templates cannot be deleted.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.name} v{self.version}"
@@ -719,9 +803,26 @@ class AssessmentTemplateMetric(TimeStampedModel):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        if self.pk and self.template.has_committed_assessments():
-            original = AssessmentTemplateMetric.objects.get(pk=self.pk)
+        original = AssessmentTemplateMetric.objects.filter(pk=self.pk).first()
+        original_template = original.template if original else None
+        template_locked = (
+            self.template.is_locked
+            or self.template.has_historical_use()
+            or bool(
+                original_template
+                and (
+                    original_template.is_locked
+                    or original_template.has_historical_use()
+                )
+            )
+        )
+        if template_locked and original is None:
+            raise ValidationError(
+                {"template": "Metrics cannot be added to a locked assessment template."}
+            )
+        if original and template_locked:
             locked_fields = [
+                "template_id",
                 "metric_id",
                 "category",
                 "display_name",
@@ -735,22 +836,39 @@ class AssessmentTemplateMetric(TimeStampedModel):
                 "rating_scale_max",
                 "direction",
                 "rubric",
+                "help_text",
+                "metadata",
             ]
             for field_name in locked_fields:
                 if getattr(original, field_name) != getattr(self, field_name):
                     raise ValidationError(
-                        {field_name: "Template metrics cannot change after use."}
+                        {field_name: "Locked template metrics cannot change."}
                     )
             self.template.is_locked = True
             self.template.save(update_fields=["is_locked", "updated_at"])
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        persisted = AssessmentTemplateMetric.objects.select_related("template").get(
+            pk=self.pk
+        )
+        if persisted.template.is_locked or persisted.template.has_historical_use():
+            raise ValidationError("Metrics cannot be removed from a locked template.")
+        return super().delete(*args, **kwargs)
+
     def __str__(self) -> str:
         return self.display_name
 
 
 class AssessmentScoringProfile(TimeStampedModel):
+    assessment_template = models.ForeignKey(
+        AssessmentTemplate,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="scoring_profiles",
+    )
     key = models.SlugField(max_length=120)
     name = models.CharField(max_length=160)
     version = models.PositiveIntegerField(default=1)
@@ -776,27 +894,54 @@ class AssessmentScoringProfile(TimeStampedModel):
     def has_committed_assessments(self) -> bool:
         if not self.pk:
             return False
-        return PlayerAssessment.objects.filter(
-            event__scoring_profile_id=self.pk,
-            status=ASSESSMENT_STATUS_COMMITTED,
-        ).exists()
+        return (
+            PlayerAssessment.objects.filter(
+                event__scoring_profile_id=self.pk,
+                status=ASSESSMENT_STATUS_COMMITTED,
+            ).exists()
+            or AssessmentImportBatch.objects.filter(
+                event__scoring_profile_id=self.pk,
+                status=ASSESSMENT_IMPORT_STATUS_COMMITTED,
+            ).exists()
+        )
 
     def save(self, *args, **kwargs):
-        if self.pk and self.has_committed_assessments():
+        if self.pk:
             original = AssessmentScoringProfile.objects.get(pk=self.pk)
-            for field_name in ["key", "version", "config"]:
-                if getattr(original, field_name) != getattr(self, field_name):
-                    raise ValidationError(
-                        {field_name: "Scoring profile cannot change after use."}
-                    )
-            self.is_locked = True
+            if original.is_locked or self.has_committed_assessments():
+                for field_name in [
+                    "key",
+                    "version",
+                    "name",
+                    "description",
+                    "assessment_template_id",
+                    "config",
+                    "metadata",
+                ]:
+                    if getattr(original, field_name) != getattr(self, field_name):
+                        raise ValidationError(
+                            {field_name: "Locked scoring profile cannot change."}
+                        )
+                self.is_locked = True
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.is_locked or self.has_committed_assessments():
+            raise ValidationError("Locked scoring profiles cannot be deleted.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.name} v{self.version}"
 
 
 class AssessmentImportTemplate(TimeStampedModel):
+    assessment_template = models.ForeignKey(
+        AssessmentTemplate,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="import_templates",
+    )
     key = models.SlugField(max_length=120)
     name = models.CharField(max_length=160)
     version = models.PositiveIntegerField(default=1)
@@ -827,15 +972,29 @@ class AssessmentImportTemplate(TimeStampedModel):
         ).exists()
 
     def save(self, *args, **kwargs):
-        if self.pk and self.has_committed_imports():
+        if self.pk:
             original = AssessmentImportTemplate.objects.get(pk=self.pk)
-            for field_name in ["key", "version", "config"]:
-                if getattr(original, field_name) != getattr(self, field_name):
-                    raise ValidationError(
-                        {field_name: "Import template cannot change after use."}
-                    )
-            self.is_locked = True
+            if original.is_locked or self.has_committed_imports():
+                for field_name in [
+                    "key",
+                    "version",
+                    "name",
+                    "description",
+                    "assessment_template_id",
+                    "config",
+                    "metadata",
+                ]:
+                    if getattr(original, field_name) != getattr(self, field_name):
+                        raise ValidationError(
+                            {field_name: "Locked import template cannot change."}
+                        )
+                self.is_locked = True
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.is_locked or self.has_committed_imports():
+            raise ValidationError("Locked import templates cannot be deleted.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.name} v{self.version}"
@@ -872,16 +1031,62 @@ class AssessmentEvent(TimeStampedModel):
         ]
 
     def clean(self):
+        errors = {}
         if self.starts_on and self.ends_on and self.ends_on < self.starts_on:
-            raise ValidationError(
-                {"ends_on": "Assessment event end date cannot be before start date."}
-            )
+            errors["ends_on"] = "Assessment event end date cannot be before start date."
+        if self.scoring_profile_id:
+            compatible_template_id = self.scoring_profile.assessment_template_id
+            if not compatible_template_id:
+                errors["scoring_profile"] = (
+                    "Scoring profile must identify its compatible assessment template."
+                )
+            elif self.template_id and compatible_template_id != self.template_id:
+                errors["scoring_profile"] = (
+                    "Scoring profile is not compatible with this assessment template."
+                )
+        if errors:
+            raise ValidationError(errors)
+
+    def has_historical_use(self) -> bool:
+        if not self.pk:
+            return False
+        return (
+            self.player_assessments.filter(status=ASSESSMENT_STATUS_COMMITTED).exists()
+            or self.import_batches.filter(
+                status=ASSESSMENT_IMPORT_STATUS_COMMITTED
+            ).exists()
+        )
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = unique_slug_for_model(self, self.name)
+        if self.pk and self.has_historical_use():
+            original = AssessmentEvent.objects.get(pk=self.pk)
+            locked_fields = [
+                "name",
+                "slug",
+                "season_id",
+                "division",
+                "starts_on",
+                "ends_on",
+                "template_id",
+                "scoring_profile_id",
+                "metadata",
+            ]
+            for field_name in locked_fields:
+                if getattr(original, field_name) != getattr(self, field_name):
+                    raise ValidationError(
+                        {
+                            field_name: "Assessment event history cannot change after use."
+                        }
+                    )
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.has_historical_use():
+            raise ValidationError("Used assessment events cannot be deleted.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name
@@ -912,6 +1117,20 @@ class AssessmentImportBatch(TimeStampedModel):
     )
     preview_snapshot = models.JSONField(default=dict, blank=True)
     config_snapshot = models.JSONField(default=dict, blank=True)
+    config_checksum = models.CharField(max_length=64, blank=True)
+    validation_errors = models.JSONField(default=list, blank=True)
+    validation_warnings = models.JSONField(default=list, blank=True)
+    required_warning_codes = models.JSONField(default=list, blank=True)
+    preview_version = models.PositiveIntegerField(default=1)
+    acknowledgement_token = models.CharField(max_length=64, blank=True)
+    warnings_acknowledged_at = models.DateTimeField(null=True, blank=True)
+    warnings_acknowledged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="acknowledged_assessment_import_batches",
+    )
     import_summary = models.JSONField(default=dict, blank=True)
     committed_at = models.DateTimeField(null=True, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
@@ -924,13 +1143,59 @@ class AssessmentImportBatch(TimeStampedModel):
             models.Index(fields=["uploaded_by", "-created_at"]),
         ]
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            original = AssessmentImportBatch.objects.get(pk=self.pk)
+            frozen_fields = [
+                "event_id",
+                "import_template_id",
+                "uploaded_by_id",
+                "original_filename",
+                "workbook_sha256",
+                "config_snapshot",
+                "config_checksum",
+            ]
+            for field_name in frozen_fields:
+                if getattr(original, field_name) != getattr(self, field_name):
+                    raise ValidationError(
+                        {
+                            field_name: "Assessment import source configuration is immutable."
+                        }
+                    )
+            if original.status == ASSESSMENT_IMPORT_STATUS_COMMITTED:
+                committed_fields = [
+                    "status",
+                    "preview_snapshot",
+                    "validation_errors",
+                    "validation_warnings",
+                    "required_warning_codes",
+                    "preview_version",
+                    "acknowledgement_token",
+                    "warnings_acknowledged_at",
+                    "warnings_acknowledged_by_id",
+                    "import_summary",
+                    "committed_at",
+                    "metadata",
+                ]
+                for field_name in committed_fields:
+                    if getattr(original, field_name) != getattr(self, field_name):
+                        raise ValidationError(
+                            {field_name: "Committed assessment imports are immutable."}
+                        )
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.status == ASSESSMENT_IMPORT_STATUS_COMMITTED:
+            raise ValidationError("Committed assessment imports cannot be deleted.")
+        return super().delete(*args, **kwargs)
+
     def __str__(self) -> str:
         return self.original_filename
 
 
 class PlayerAssessment(TimeStampedModel):
     player = models.ForeignKey(
-        "players.Player", on_delete=models.CASCADE, related_name="assessment_records"
+        "players.Player", on_delete=models.PROTECT, related_name="assessment_records"
     )
     event = models.ForeignKey(
         AssessmentEvent, on_delete=models.PROTECT, related_name="player_assessments"
@@ -946,7 +1211,7 @@ class PlayerAssessment(TimeStampedModel):
         AssessmentImportBatch,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="player_assessments",
     )
     source_row_key = models.CharField(max_length=180, blank=True)
@@ -994,8 +1259,31 @@ class PlayerAssessment(TimeStampedModel):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
+        if self.pk:
+            original = PlayerAssessment.objects.get(pk=self.pk)
+            if original.status == ASSESSMENT_STATUS_COMMITTED:
+                for field_name in [
+                    "status",
+                    "player_id",
+                    "event_id",
+                    "roster_membership_id",
+                    "import_batch_id",
+                    "source_row_key",
+                    "metadata",
+                ]:
+                    if getattr(original, field_name) != getattr(self, field_name):
+                        raise ValidationError(
+                            {
+                                field_name: "Committed assessment provenance cannot change."
+                            }
+                        )
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.status == ASSESSMENT_STATUS_COMMITTED:
+            raise ValidationError("Committed player assessments cannot be deleted.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.event}: {self.player}"
@@ -1029,8 +1317,25 @@ class AssessmentImportRow(TimeStampedModel):
         choices=ASSESSMENT_IMPORT_ROW_STATUS_CHOICES,
         default=ASSESSMENT_IMPORT_ROW_UNMATCHED,
     )
+    match_status = models.CharField(
+        max_length=40,
+        choices=ASSESSMENT_MATCH_STATUS_CHOICES,
+        default=ASSESSMENT_MATCH_UNMATCHED,
+    )
+    validation_status = models.CharField(
+        max_length=40,
+        choices=ASSESSMENT_VALIDATION_STATUS_CHOICES,
+        default=ASSESSMENT_VALIDATION_VALID,
+    )
+    conflict_status = models.CharField(
+        max_length=40,
+        choices=ASSESSMENT_CONFLICT_STATUS_CHOICES,
+        default=ASSESSMENT_CONFLICT_NONE,
+    )
     errors = models.JSONField(default=list, blank=True)
+    warnings = models.JSONField(default=list, blank=True)
     values_snapshot = models.JSONField(default=list, blank=True)
+    metric_changes = models.JSONField(default=list, blank=True)
     raw_row = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
 
@@ -1047,6 +1352,28 @@ class AssessmentImportRow(TimeStampedModel):
             models.Index(fields=["player", "batch"]),
             models.Index(fields=["source_sheet", "source_row"]),
         ]
+
+    def save(self, *args, **kwargs):
+        original = (
+            AssessmentImportRow.objects.select_related("batch")
+            .filter(pk=self.pk)
+            .first()
+        )
+        if original and original.batch.status == ASSESSMENT_IMPORT_STATUS_COMMITTED:
+            for field in self._meta.fields:
+                if field.name in {"updated_at"}:
+                    continue
+                if getattr(original, field.attname) != getattr(self, field.attname):
+                    raise ValidationError(
+                        {field.name: "Committed assessment import rows are immutable."}
+                    )
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        persisted = AssessmentImportRow.objects.select_related("batch").get(pk=self.pk)
+        if persisted.batch.status == ASSESSMENT_IMPORT_STATUS_COMMITTED:
+            raise ValidationError("Committed assessment import rows cannot be deleted.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.batch} row {self.source_row}"
@@ -1093,7 +1420,7 @@ class AssessmentValue(TimeStampedModel):
         AssessmentImportRow,
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="assessment_values",
     )
     metadata = models.JSONField(default=dict, blank=True)
@@ -1127,8 +1454,106 @@ class AssessmentValue(TimeStampedModel):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
+        allow_committed_change = getattr(self, "_allow_committed_change", False)
+        original = (
+            AssessmentValue.objects.select_related("player_assessment")
+            .filter(pk=self.pk)
+            .first()
+        )
+        source_is_committed = bool(
+            original
+            and original.player_assessment.status == ASSESSMENT_STATUS_COMMITTED
+        )
+        target_is_committed = bool(
+            self.player_assessment_id
+            and self.player_assessment.status == ASSESSMENT_STATUS_COMMITTED
+        )
+        if (source_is_committed or target_is_committed) and not allow_committed_change:
+            if original is None:
+                raise ValidationError(
+                    "Values cannot be added directly to a committed assessment."
+                )
+            semantic_fields = [
+                "player_assessment_id",
+                "template_metric_id",
+                "numeric_value",
+                "rating_value",
+                "rating_scale_min",
+                "rating_scale_max",
+                "text_value",
+                "choice_value",
+                "raw_value",
+                "normalized_value",
+                "unit",
+                "source_sheet",
+                "source_row",
+                "source_column",
+                "source_header",
+                "source_kind",
+                "is_imported",
+                "is_manual_override",
+                "import_row_id",
+                "metadata",
+            ]
+            for field_name in semantic_fields:
+                if getattr(original, field_name) != getattr(self, field_name):
+                    raise ValidationError(
+                        {
+                            field_name: (
+                                "Committed assessment values require an approved "
+                                "correction service."
+                            )
+                        }
+                    )
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        persisted = AssessmentValue.objects.select_related("player_assessment").get(
+            pk=self.pk
+        )
+        if (
+            persisted.player_assessment.status == ASSESSMENT_STATUS_COMMITTED
+            and not getattr(self, "_allow_committed_change", False)
+        ):
+            raise ValidationError(
+                "Committed assessment values cannot be deleted directly."
+            )
+        return super().delete(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"{self.player_assessment} - {self.template_metric}"
+
+
+class AssessmentValueCorrection(TimeStampedModel):
+    assessment_value = models.ForeignKey(
+        AssessmentValue,
+        on_delete=models.PROTECT,
+        related_name="corrections",
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="assessment_value_corrections",
+    )
+    reason = models.TextField()
+    previous_snapshot = models.JSONField(default=dict)
+    new_snapshot = models.JSONField(default=dict)
+    provenance = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [models.Index(fields=["assessment_value", "-created_at"])]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValidationError("Assessment correction audit records are immutable.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Assessment correction audit records cannot be deleted.")
+
+    def __str__(self) -> str:
+        return f"Correction for {self.assessment_value}"

@@ -1,28 +1,31 @@
 {% extends "analytics/base.html" %}
 
-{% block analytics_title %}Resolve Assessment Import Rows{% endblock %}
+{% block analytics_title %}Resolve Assessment Import{% endblock %}
 {% block analytics_subtitle %}{{ import_batch.original_filename }}{% endblock %}
 
 {% block analytics_content %}
-<article class="pdp-card">
-    <h2>Rows Needing Review</h2>
-    {% if forms %}
-        <form method="post">
-            {% csrf_token %}
+<form method="post">
+    {% csrf_token %}
+
+    <article class="pdp-card">
+        <h2>Identity Resolution</h2>
+        <p>Choosing a player resolves identity only. It cannot clear workbook or numeric validation errors.</p>
+        {% if forms %}
             <div class="table-wrap table-wrap--cards">
                 <table class="pdp-table" data-responsive="cards">
-                    <thead><tr><th>Workbook Name</th><th>Status</th><th>Player</th><th>Skip</th></tr></thead>
+                    <thead><tr><th>Workbook Player</th><th>Match reason</th><th>Player</th><th>Skip</th></tr></thead>
                     <tbody>
                         {% for row, form in forms %}
                             <tr>
-                                <td data-label="Workbook Name">{{ row.raw_identity }}</td>
-                                <td data-label="Status">{{ row.get_status_display }}</td>
+                                <td data-label="Workbook Player">{{ row.raw_identity }}</td>
+                                <td data-label="Match reason">
+                                    {{ row.metadata.match_reason }}
+                                    {% for candidate in row.metadata.candidate_contexts %}<br><small>{{ candidate.birth_year|default:"Birth year unknown" }} · {{ candidate.division|default:"No division" }} · {{ candidate.team|default:"No team" }}</small>{% endfor %}
+                                </td>
                                 <td data-label="Player">
                                     <select name="row_{{ row.pk }}_player">
                                         <option value="">---------</option>
-                                        {% for player in form.fields.player.queryset %}
-                                            <option value="{{ player.pk }}">{{ player.display_name }}</option>
-                                        {% endfor %}
+                                        {% for player in form.fields.player.queryset %}<option value="{{ player.pk }}">{{ player.display_name }}</option>{% endfor %}
                                     </select>
                                 </td>
                                 <td data-label="Skip"><input type="checkbox" name="row_{{ row.pk }}_skip" value="1"></td>
@@ -31,11 +34,62 @@
                     </tbody>
                 </table>
             </div>
-            <button class="button button--primary" type="submit">Save Resolutions</button>
-        </form>
-    {% else %}
-        <p>No rows require review.</p>
-        <p><a class="button button--primary" href="{% url 'analytics:assessment-import-preview' pk=import_batch.pk %}">Back to Preview</a></p>
-    {% endif %}
-</article>
+        {% else %}
+            <p>No player identities require resolution.</p>
+        {% endif %}
+    </article>
+
+    <article class="pdp-card">
+        <h2>Invalid Data Rows</h2>
+        <p>Correct the workbook or mapping version, or explicitly skip the affected row.</p>
+        {% if invalid_rows %}
+            <div class="table-wrap table-wrap--cards">
+                <table class="pdp-table" data-responsive="cards">
+                    <thead><tr><th>Workbook Player</th><th>Errors</th><th>Skip</th></tr></thead>
+                    <tbody>
+                        {% for row in invalid_rows %}
+                            <tr>
+                                <td data-label="Workbook Player">{{ row.raw_identity|default:"Missing identity" }}</td>
+                                <td data-label="Errors">{% for issue in row.errors %}{{ issue.message|default:issue }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+                                <td data-label="Skip"><input type="checkbox" name="row_{{ row.pk }}_skip" value="1"></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No data-validation rows require action.</p>
+        {% endif %}
+    </article>
+
+    <article class="pdp-card">
+        <h2>Manual Correction Conflicts</h2>
+        <p>Workbook imports cannot replace manual corrections. Preserve the manual value to continue.</p>
+        {% if conflict_rows %}
+            <div class="table-wrap table-wrap--cards">
+                <table class="pdp-table" data-responsive="cards">
+                    <thead><tr><th>Workbook Player</th><th>Conflicting metrics</th><th>Resolution</th></tr></thead>
+                    <tbody>
+                        {% for row in conflict_rows %}
+                            <tr>
+                                <td data-label="Workbook Player">{{ row.raw_identity }}</td>
+                                <td data-label="Conflicting metrics">
+                                    {% for change in row.metric_changes %}{% if change.action == "conflict" %}{{ change.header }}{% if not forloop.last %}<br>{% endif %}{% endif %}{% endfor %}
+                                </td>
+                                <td data-label="Resolution"><label><input type="checkbox" name="row_{{ row.pk }}_preserve_manual" value="1"> Preserve manual values</label></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No manual-correction conflicts require action.</p>
+        {% endif %}
+    </article>
+
+    <p>
+        <button class="button button--primary" type="submit">Save Resolutions</button>
+        <a class="button button--ghost" href="{% url 'analytics:assessment-import-preview' pk=import_batch.pk %}">Back to Preview</a>
+    </p>
+</form>
 {% endblock %}

@@ -668,15 +668,33 @@ Typical workflow:
 1. Confirm the assessment configuration and event have been created.
 2. Open Assessment Imports.
 3. Upload the `.xlsx` workbook.
-4. Review the preview.
-5. Resolve unmatched, ambiguous, or invalid player rows.
-6. Skip rows that should not be imported.
-7. Confirm the import.
-8. Review imported assessment values from the Assessment Event or a player profile.
+4. Confirm the filename, event, season/division, template versions, row counts, and workbook checksums.
+5. Review workbook errors and warnings. Required workbook errors must be corrected in the source file or mapping before import.
+6. Review every player match and the metric-level planned changes.
+7. Resolve unmatched or ambiguous identities. Choosing a player does not fix invalid workbook data.
+8. Correct the workbook or explicitly skip invalid rows.
+9. Review zero-to-missing transformations and values marked **Unit not confirmed**.
+10. Acknowledge required warnings for the current preview.
+11. Confirm the import only when the page reports that it is ready.
+12. Review imported assessment values from the Assessment Event or a player profile.
 
 Assessment imports do not create players, teams, roster memberships, or coach assignments. They only attach assessment values to existing players.
 
 Ranking sheets in the workbook are used for quality review only. They are not imported as ordinary player metrics.
+
+For the 2026 13U workbook:
+
+- subjective ratings use a 1–3 scale and display as values such as `2 / 3`;
+- `Assessment Data` is required and `Pitching Data` is optional;
+- a player may be absent from the pitching sheet;
+- physical measurement units are not stated by the workbook and display as **Unit not confirmed**;
+- zero Bat Speed, Time 2 Contact, Exit Velocity Average, or Exit Velocity Maximum is treated as missing and requires acknowledgement;
+- other zero physical measurements are rejected;
+- a blank mapped cell can clear a prior imported value during re-import, but it cannot clear a staff correction.
+
+The preview uses separate statuses for player matching, data validation, planned action, and conflicts. An import is blocked until all required errors, unresolved matches, conflicts, and warning acknowledgements are handled. Refreshing or changing the preview invalidates an earlier warning acknowledgement.
+
+On re-import, each metric is shown as create, update, unchanged, clear, skip, protected manual, conflict, or invalid. Unchanged values are not rewritten. Staff corrections are protected and cannot be overwritten by a workbook.
 
 ## Player Imports
 

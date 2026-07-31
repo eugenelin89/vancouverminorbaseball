@@ -63,6 +63,7 @@ Future production deployments should:
 - use environment variables for deployment-specific settings;
 - configure `COACH_IMPORT_DEFAULT_PASSWORD` before creating new imported coach accounts;
 - enable `ANALYTICS_ASSESSMENTS_ENABLED` only for staged rollout of workbook assessment imports;
+- retain conservative `ANALYTICS_ASSESSMENT_MAX_UPLOAD_BYTES` and `ANALYTICS_ASSESSMENT_MAX_UNCOMPRESSED_BYTES` limits;
 - back up the database before migrations;
 - archive media before major upgrades;
 - verify migrations before applying them;

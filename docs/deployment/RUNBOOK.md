@@ -63,6 +63,8 @@ DJANGO_STATIC_ROOT
 DJANGO_MEDIA_ROOT
 COACH_IMPORT_DEFAULT_PASSWORD
 ANALYTICS_ASSESSMENTS_ENABLED
+ANALYTICS_ASSESSMENT_MAX_UPLOAD_BYTES
+ANALYTICS_ASSESSMENT_MAX_UNCOMPRESSED_BYTES
 ```
 
 Verify systemd configuration:
@@ -87,6 +89,11 @@ or shared documentation.
 assessment configuration has been bootstrapped, assessment events have been
 created, and staff are ready to import workbook assessment data.
 
+Assessment workbook uploads default to a 10 MiB file limit and a 50 MiB
+uncompressed archive limit. Override `ANALYTICS_ASSESSMENT_MAX_UPLOAD_BYTES` or
+`ANALYTICS_ASSESSMENT_MAX_UNCOMPRESSED_BYTES` only after reviewing production
+memory limits. Lower values are safer; do not raise them casually.
+
 Bootstrap the initial 2026 13U assessment configuration without importing player
 results:
 
@@ -95,8 +102,45 @@ python manage.py bootstrap_2026_13u_assessment --dry-run
 python manage.py bootstrap_2026_13u_assessment
 ```
 
-Then enable the feature flag in the environment and restart the application
-service.
+Do not enable the feature as part of a routine deploy. Use the controlled rollout below.
+
+### Controlled Assessment Rollout
+
+#### Stage 1: Back Up And Deploy Disabled
+
+1. Record the current production commit.
+2. Back up `db.sqlite3` and archive media.
+3. Pull the reviewed release and install `requirements.txt`.
+4. Keep `ANALYTICS_ASSESSMENTS_ENABLED=false`.
+5. Run Django checks, review `migrate --plan`, apply migrations, and collect static files if changed.
+6. Restart Gunicorn and verify current self, peer, coach, staff, and guest evaluation workflows.
+7. Confirm assessment navigation is absent.
+
+#### Stage 2: Bootstrap Configuration
+
+1. Run `bootstrap_2026_13u_assessment --dry-run`.
+2. Review every sheet/header requirement, 1–3 rating scale, unit status, zero policy, and blank policy.
+3. Run the bootstrap normally only when the dry run is correct.
+4. Do not import player data during bootstrap.
+
+#### Stage 3: Enable Staff-Only Preview
+
+1. Set `ANALYTICS_ASSESSMENTS_ENABLED=true` and restart Gunicorn.
+2. Confirm only staff can access the pages.
+3. Create/select the assessment event and upload the workbook.
+4. Review every match, warning, zero transformation, unverified unit, and planned action.
+5. Confirm preview created no player-assessment values.
+
+#### Stage 4: Controlled Import
+
+1. Take a second database backup.
+2. Confirm the fully resolved and acknowledged import.
+3. Reconcile database aggregate counts with workbook aggregate counts.
+4. Inspect representative player records and keep the feature staff-only.
+
+### Assessment Rollback
+
+For immediate visual rollback, set `ANALYTICS_ASSESSMENTS_ENABLED=false` and restart Gunicorn. The assessment migrations are additive, so existing evaluations remain available. Do not reverse assessment migrations after production assessment data exists; restore a verified pre-import database backup only as part of an approved destructive rollback.
 
 ## Deployment
 

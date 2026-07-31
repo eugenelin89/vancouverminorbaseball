@@ -14,7 +14,17 @@
         <dt>Uploaded</dt><dd>{{ import_batch.created_at }}</dd>
         <dt>Committed</dt><dd>{{ import_batch.committed_at|default:"-" }}</dd>
         <dt>Workbook checksum</dt><dd>{{ import_batch.workbook_sha256 }}</dd>
+        <dt>Import mapping</dt><dd>{{ import_batch.import_template }} · {{ import_batch.config_checksum }}</dd>
+        <dt>Preview version</dt><dd>{{ import_batch.preview_version }}</dd>
     </dl>
-    <p>{{ summary.rows }} rows · {{ summary.matched }} matched · {{ summary.unmatched }} unmatched · {{ summary.ambiguous }} ambiguous · {{ summary.invalid }} invalid · {{ summary.skipped }} skipped</p>
+    {% if import_batch.validation_errors %}
+        <h3>Workbook errors</h3>
+        <ul class="form-error">{% for issue in import_batch.validation_errors %}<li>{{ issue.message|default:issue }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if import_batch.validation_warnings %}
+        <h3>Workbook warnings</h3>
+        <ul>{% for issue in import_batch.validation_warnings %}<li>{{ issue.message|default:issue }}</li>{% endfor %}</ul>
+    {% endif %}
+    <p>{{ summary.rows }} rows · {{ summary.matched }} matched · {{ summary.unmatched }} unmatched · {{ summary.ambiguous }} ambiguous · {{ summary.invalid }} invalid · {{ summary.conflicts }} conflicts · {{ summary.skipped }} skipped</p>
 </article>
 {% endblock %}

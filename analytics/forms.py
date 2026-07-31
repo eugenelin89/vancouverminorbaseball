@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 from analytics.models import (
     AssessmentEvent,
@@ -130,16 +131,36 @@ class AssessmentImportUploadForm(forms.Form):
             .order_by("-starts_on", "name")
         )
         self.fields["import_template"].queryset = (
-            AssessmentImportTemplate.objects.filter(is_active=True).order_by(
-                "key", "-version"
+            AssessmentImportTemplate.objects.filter(
+                is_active=True,
+                assessment_template__events__is_active=True,
             )
+            .select_related("assessment_template")
+            .distinct()
+            .order_by("key", "-version")
         )
 
     def clean_workbook(self):
         workbook = self.cleaned_data["workbook"]
         if not workbook.name.lower().endswith(".xlsx"):
             raise forms.ValidationError("Upload an .xlsx workbook.")
+        maximum = settings.ANALYTICS_ASSESSMENT_MAX_UPLOAD_BYTES
+        if workbook.size > maximum:
+            raise forms.ValidationError(
+                f"Workbook exceeds the configured {maximum}-byte upload limit."
+            )
         return workbook
+
+    def clean(self):
+        cleaned_data = super().clean()
+        event = cleaned_data.get("event")
+        import_template = cleaned_data.get("import_template")
+        if event and import_template:
+            if import_template.assessment_template_id != event.template_id:
+                raise forms.ValidationError(
+                    "Import template is not compatible with the selected assessment event."
+                )
+        return cleaned_data
 
 
 class AssessmentImportRowResolutionForm(forms.Form):

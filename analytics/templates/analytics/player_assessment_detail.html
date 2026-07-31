@@ -19,8 +19,8 @@
                         <tr>
                             <td data-label="Metric">{{ value.template_metric.display_name }}</td>
                             <td data-label="Category">{{ value.template_metric.category|default:"-" }}</td>
-                            <td data-label="Value">{% if value.numeric_value != None %}{{ value.numeric_value }}{% elif value.rating_value != None %}{{ value.rating_value }}{% elif value.text_value %}{{ value.text_value }}{% else %}{{ value.raw_value|default:"-" }}{% endif %}</td>
-                            <td data-label="Unit">{{ value.unit|default:"-" }}</td>
+                            <td data-label="Value">{% if value.numeric_value != None %}{{ value.numeric_value }}{% elif value.rating_value != None %}{{ value.rating_value|floatformat:0 }} / {{ value.rating_scale_max|floatformat:0 }}{% elif value.text_value %}{{ value.text_value }}{% else %}{{ value.raw_value|default:"-" }}{% endif %}</td>
+                            <td data-label="Unit">{% if value.metadata.unit_status == "unverified" %}Unit not confirmed{% else %}{{ value.unit|default:"-" }}{% endif %}</td>
                             <td data-label="Source">{{ value.source_sheet }} row {{ value.source_row }}</td>
                         </tr>
                     {% endfor %}

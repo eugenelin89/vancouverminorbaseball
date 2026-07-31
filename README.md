@@ -160,6 +160,8 @@ Key environment variables:
 - `DJANGO_DEBUG` defaults to false.
 - `COACH_IMPORT_DEFAULT_PASSWORD` is required before creating new coach accounts through coach import.
 - `ANALYTICS_ASSESSMENTS_ENABLED` defaults to false. Set to `true` only after assessment templates/events have been configured and staff are ready to import assessment workbooks.
+- `ANALYTICS_ASSESSMENT_MAX_UPLOAD_BYTES` defaults to `10485760` (10 MiB) and may be lowered for assessment workbook uploads.
+- `ANALYTICS_ASSESSMENT_MAX_UNCOMPRESSED_BYTES` defaults to `52428800` (50 MiB) and caps expanded `.xlsx` archive content.
 - `DJANGO_ALLOWED_HOSTS` defaults to `localhost,127.0.0.1`.
 - `DJANGO_STATIC_ROOT` defaults to `BASE_DIR / "staticfiles"`.
 - `DJANGO_MEDIA_ROOT` defaults to `BASE_DIR / "media"`.
