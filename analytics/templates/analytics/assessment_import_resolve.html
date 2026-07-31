@@ -1,0 +1,41 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Resolve Assessment Import Rows{% endblock %}
+{% block analytics_subtitle %}{{ import_batch.original_filename }}{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Rows Needing Review</h2>
+    {% if forms %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="table-wrap table-wrap--cards">
+                <table class="pdp-table" data-responsive="cards">
+                    <thead><tr><th>Workbook Name</th><th>Status</th><th>Player</th><th>Skip</th></tr></thead>
+                    <tbody>
+                        {% for row, form in forms %}
+                            <tr>
+                                <td data-label="Workbook Name">{{ row.raw_identity }}</td>
+                                <td data-label="Status">{{ row.get_status_display }}</td>
+                                <td data-label="Player">
+                                    <select name="row_{{ row.pk }}_player">
+                                        <option value="">---------</option>
+                                        {% for player in form.fields.player.queryset %}
+                                            <option value="{{ player.pk }}">{{ player.display_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td data-label="Skip"><input type="checkbox" name="row_{{ row.pk }}_skip" value="1"></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button class="button button--primary" type="submit">Save Resolutions</button>
+        </form>
+    {% else %}
+        <p>No rows require review.</p>
+        <p><a class="button button--primary" href="{% url 'analytics:assessment-import-preview' pk=import_batch.pk %}">Back to Preview</a></p>
+    {% endif %}
+</article>
+{% endblock %}

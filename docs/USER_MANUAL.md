@@ -552,6 +552,8 @@ Coach review displays the saved season/team/division from the submitted evaluati
 
 Staff Analytics helps coordinators and administrators manage player records, imports, evaluations, timelines, comparisons, and decision-support summaries.
 
+When enabled by administrators, Staff Analytics can also manage versioned assessment events and import structured `.xlsx` assessment workbooks.
+
 ### Who Uses It
 
 Staff and administrators with Django staff/superuser access.
@@ -564,6 +566,7 @@ Staff and administrators with Django staff/superuser access.
 4. Open player profiles and timelines.
 5. Review imports and submitted evaluations.
 6. Compare players when preparing baseball decisions.
+7. If assessment events are enabled, import and review workbook assessment results.
 
 ### Related Pages
 
@@ -573,6 +576,8 @@ Staff and administrators with Django staff/superuser access.
 - `/analytics/players/compare/`
 - `/analytics/imports/`
 - `/analytics/observations/review/`
+- `/analytics/assessment-events/`
+- `/analytics/assessment-imports/`
 
 ### Analytics Command Center
 
@@ -642,6 +647,36 @@ Staff can review submitted evaluations from:
 This page still uses `observations` in the URL because that is the internal Analytics record name. Staff review is used to inspect submitted evaluations and reopen them if corrections are needed.
 
 Staff review shows saved season and roster context for submitted evaluations. Older legacy records without season context may display as `Legacy / No Season`.
+
+### Assessment Events
+
+Assessment Events are staff-only workbook assessment records.
+
+They are separate from normal evaluations. Evaluations are submitted by coaches, players, staff, or guest evaluators through the evaluation form. Assessment Events import structured workbook data such as running, hitting, fielding, throwing, or pitching measurements from a configured `.xlsx` file.
+
+Assessment Event pages are available only when the assessment feature has been enabled by administrators.
+
+Staff can use:
+
+```text
+/analytics/assessment-events/
+/analytics/assessment-imports/
+```
+
+Typical workflow:
+
+1. Confirm the assessment configuration and event have been created.
+2. Open Assessment Imports.
+3. Upload the `.xlsx` workbook.
+4. Review the preview.
+5. Resolve unmatched, ambiguous, or invalid player rows.
+6. Skip rows that should not be imported.
+7. Confirm the import.
+8. Review imported assessment values from the Assessment Event or a player profile.
+
+Assessment imports do not create players, teams, roster memberships, or coach assignments. They only attach assessment values to existing players.
+
+Ranking sheets in the workbook are used for quality review only. They are not imported as ordinary player metrics.
 
 ## Player Imports
 

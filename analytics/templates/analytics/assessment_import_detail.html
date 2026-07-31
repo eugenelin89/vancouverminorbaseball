@@ -1,0 +1,20 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Assessment Import Detail{% endblock %}
+{% block analytics_subtitle %}{{ import_batch.original_filename }} · {{ import_batch.get_status_display }}{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Import Detail</h2>
+    <p><a class="button button--ghost" href="{% url 'analytics:assessment-import-list' %}">Back to Imports</a></p>
+    <dl class="pdp-detail-list">
+        <dt>Event</dt><dd>{{ import_batch.event.name }}</dd>
+        <dt>Status</dt><dd>{{ import_batch.get_status_display }}</dd>
+        <dt>Uploaded by</dt><dd>{{ import_batch.uploaded_by|default:"-" }}</dd>
+        <dt>Uploaded</dt><dd>{{ import_batch.created_at }}</dd>
+        <dt>Committed</dt><dd>{{ import_batch.committed_at|default:"-" }}</dd>
+        <dt>Workbook checksum</dt><dd>{{ import_batch.workbook_sha256 }}</dd>
+    </dl>
+    <p>{{ summary.rows }} rows · {{ summary.matched }} matched · {{ summary.unmatched }} unmatched · {{ summary.ambiguous }} ambiguous · {{ summary.invalid }} invalid · {{ summary.skipped }} skipped</p>
+</article>
+{% endblock %}

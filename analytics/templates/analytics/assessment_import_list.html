@@ -1,0 +1,31 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Assessment Imports{% endblock %}
+{% block analytics_subtitle %}Staff-only workbook import history.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Assessment Imports</h2>
+    <p><a class="button button--primary" href="{% url 'analytics:assessment-import-new' %}">Import Workbook</a></p>
+    {% if import_batches %}
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
+                <thead><tr><th>File</th><th>Event</th><th>Status</th><th>Uploaded</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for batch in import_batches %}
+                        <tr>
+                            <td data-label="File">{{ batch.original_filename }}</td>
+                            <td data-label="Event">{{ batch.event.name }}</td>
+                            <td data-label="Status">{{ batch.get_status_display }}</td>
+                            <td data-label="Uploaded">{{ batch.created_at }}</td>
+                            <td data-label="Action"><a class="button button--ghost" href="{% url 'analytics:assessment-import-detail' pk=batch.pk %}">Open</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No assessment workbook imports yet.</p>
+    {% endif %}
+</article>
+{% endblock %}

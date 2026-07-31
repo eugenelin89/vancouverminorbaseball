@@ -62,6 +62,7 @@ Future production deployments should:
 - keep secrets out of Git;
 - use environment variables for deployment-specific settings;
 - configure `COACH_IMPORT_DEFAULT_PASSWORD` before creating new imported coach accounts;
+- enable `ANALYTICS_ASSESSMENTS_ENABLED` only for staged rollout of workbook assessment imports;
 - back up the database before migrations;
 - archive media before major upgrades;
 - verify migrations before applying them;

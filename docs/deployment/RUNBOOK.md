@@ -62,6 +62,7 @@ DJANGO_ALLOWED_HOSTS
 DJANGO_STATIC_ROOT
 DJANGO_MEDIA_ROOT
 COACH_IMPORT_DEFAULT_PASSWORD
+ANALYTICS_ASSESSMENTS_ENABLED
 ```
 
 Verify systemd configuration:
@@ -81,6 +82,21 @@ accounts through coach import. Set it securely in
 it, communicate it to coaches through an approved operational channel, and
 rotate it when appropriate. Do not paste the value into Git, logs, screenshots,
 or shared documentation.
+
+`ANALYTICS_ASSESSMENTS_ENABLED` defaults to false. Keep it false until the
+assessment configuration has been bootstrapped, assessment events have been
+created, and staff are ready to import workbook assessment data.
+
+Bootstrap the initial 2026 13U assessment configuration without importing player
+results:
+
+```bash
+python manage.py bootstrap_2026_13u_assessment --dry-run
+python manage.py bootstrap_2026_13u_assessment
+```
+
+Then enable the feature flag in the environment and restart the application
+service.
 
 ## Deployment
 

@@ -1,0 +1,42 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}{{ assessment_event.name }}{% endblock %}
+{% block analytics_subtitle %}{{ assessment_event.season }}{% if assessment_event.division %} · {{ assessment_event.division }}{% endif %}{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Assessment Event</h2>
+    <p>
+        <a class="button button--ghost" href="{% url 'analytics:assessment-event-list' %}">Back to Events</a>
+        <a class="button button--primary" href="{% url 'analytics:assessment-import-new' %}">Import Workbook</a>
+    </p>
+    <dl class="pdp-detail-list">
+        <dt>Template</dt><dd>{{ assessment_event.template }}</dd>
+        <dt>Scoring profile</dt><dd>{{ assessment_event.scoring_profile|default:"-" }}</dd>
+        <dt>Status</dt><dd>{% if assessment_event.is_active %}Active{% else %}Inactive{% endif %}</dd>
+    </dl>
+</article>
+
+<article class="pdp-card">
+    <h2>Player Assessments</h2>
+    {% if player_assessments %}
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
+                <thead><tr><th>Player</th><th>Team</th><th>Values</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for assessment in player_assessments %}
+                        <tr>
+                            <td data-label="Player">{{ assessment.player.display_name }}</td>
+                            <td data-label="Team">{% if assessment.roster_membership %}{{ assessment.roster_membership.season_team.name }}{% else %}-{% endif %}</td>
+                            <td data-label="Values">{{ assessment.values.count }}</td>
+                            <td data-label="Action"><a class="button button--ghost" href="{% url 'analytics:player-assessment-detail' pk=assessment.pk %}">Review</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No player assessment records have been committed for this event.</p>
+    {% endif %}
+</article>
+{% endblock %}

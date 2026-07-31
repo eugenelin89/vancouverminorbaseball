@@ -1,6 +1,15 @@
 from django.contrib import admin
 
 from analytics.models import (
+    AssessmentEvent,
+    AssessmentImportBatch,
+    AssessmentImportRow,
+    AssessmentImportTemplate,
+    AssessmentMetricDefinition,
+    AssessmentScoringProfile,
+    AssessmentTemplate,
+    AssessmentTemplateMetric,
+    AssessmentValue,
     EvaluationCycle,
     EvaluatorRole,
     Observation,
@@ -9,6 +18,7 @@ from analytics.models import (
     ObservationResponse,
     ObservationSource,
     ObservationType,
+    PlayerAssessment,
 )
 
 
@@ -187,4 +197,194 @@ class ObservationResponseAdmin(TimeStampedAdmin):
         "observation__player__last_name",
         "question__prompt",
         "text_value",
+    )
+
+
+@admin.register(AssessmentMetricDefinition)
+class AssessmentMetricDefinitionAdmin(TimeStampedAdmin):
+    list_display = ("key", "name", "default_value_type", "default_unit", "is_active")
+    list_filter = ("default_value_type", "is_active")
+    search_fields = ("key", "name")
+
+
+class AssessmentTemplateMetricInline(admin.TabularInline):
+    model = AssessmentTemplateMetric
+    extra = 0
+    autocomplete_fields = ("metric",)
+    fields = (
+        "display_order",
+        "category",
+        "metric",
+        "display_name",
+        "value_type",
+        "unit",
+        "is_required",
+        "direction",
+    )
+
+
+@admin.register(AssessmentTemplate)
+class AssessmentTemplateAdmin(TimeStampedAdmin):
+    list_display = ("name", "key", "version", "is_active", "is_locked")
+    list_filter = ("is_active", "is_locked")
+    search_fields = ("key", "name")
+    inlines = [AssessmentTemplateMetricInline]
+
+
+@admin.register(AssessmentTemplateMetric)
+class AssessmentTemplateMetricAdmin(TimeStampedAdmin):
+    list_display = (
+        "display_name",
+        "template",
+        "category",
+        "display_order",
+        "value_type",
+        "unit",
+        "direction",
+    )
+    list_filter = ("template", "category", "value_type", "direction", "is_required")
+    search_fields = ("display_name", "metric__key", "metric__name", "template__name")
+    autocomplete_fields = ("template", "metric")
+
+
+@admin.register(AssessmentScoringProfile)
+class AssessmentScoringProfileAdmin(TimeStampedAdmin):
+    list_display = ("name", "key", "version", "is_active", "is_locked")
+    list_filter = ("is_active", "is_locked")
+    search_fields = ("key", "name")
+
+
+@admin.register(AssessmentImportTemplate)
+class AssessmentImportTemplateAdmin(TimeStampedAdmin):
+    list_display = ("name", "key", "version", "is_active", "is_locked")
+    list_filter = ("is_active", "is_locked")
+    search_fields = ("key", "name")
+    readonly_fields = TimeStampedAdmin.readonly_fields + ("config", "metadata")
+
+
+@admin.register(AssessmentEvent)
+class AssessmentEventAdmin(TimeStampedAdmin):
+    list_display = ("name", "season", "division", "template", "is_active")
+    list_filter = ("season", "division", "is_active", "template")
+    search_fields = ("name", "slug", "season__name", "division")
+    autocomplete_fields = ("template", "scoring_profile")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+class AssessmentValueInline(admin.TabularInline):
+    model = AssessmentValue
+    extra = 0
+    can_delete = False
+    readonly_fields = (
+        "template_metric",
+        "numeric_value",
+        "rating_value",
+        "text_value",
+        "choice_value",
+        "raw_value",
+        "unit",
+        "source_sheet",
+        "source_row",
+        "source_header",
+        "source_kind",
+        "is_manual_override",
+        "metadata",
+        "created_at",
+        "updated_at",
+    )
+    fields = readonly_fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PlayerAssessment)
+class PlayerAssessmentAdmin(TimeStampedAdmin):
+    list_display = ("player", "event", "status", "roster_membership", "import_batch")
+    list_filter = ("event", "status", "event__season")
+    search_fields = ("player__first_name", "player__last_name", "event__name")
+    autocomplete_fields = ("player", "event", "roster_membership", "import_batch")
+    inlines = [AssessmentValueInline]
+
+
+@admin.register(AssessmentValue)
+class AssessmentValueAdmin(TimeStampedAdmin):
+    list_display = (
+        "player_assessment",
+        "template_metric",
+        "numeric_value",
+        "rating_value",
+        "source_kind",
+        "is_manual_override",
+    )
+    list_filter = ("template_metric__category", "source_kind", "is_manual_override")
+    search_fields = (
+        "player_assessment__player__first_name",
+        "player_assessment__player__last_name",
+        "template_metric__display_name",
+    )
+    autocomplete_fields = ("player_assessment", "template_metric", "import_row")
+
+
+class AssessmentImportRowInline(admin.TabularInline):
+    model = AssessmentImportRow
+    extra = 0
+    can_delete = False
+    readonly_fields = (
+        "row_key",
+        "source_sheet",
+        "source_row",
+        "raw_identity",
+        "player",
+        "roster_membership",
+        "action",
+        "status",
+        "errors",
+        "values_snapshot",
+        "raw_row",
+        "metadata",
+        "created_at",
+        "updated_at",
+    )
+    fields = readonly_fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AssessmentImportBatch)
+class AssessmentImportBatchAdmin(TimeStampedAdmin):
+    list_display = (
+        "original_filename",
+        "event",
+        "status",
+        "uploaded_by",
+        "created_at",
+        "committed_at",
+    )
+    list_filter = ("status", "event", "event__season")
+    search_fields = ("original_filename", "workbook_sha256", "event__name")
+    autocomplete_fields = ("event", "import_template", "uploaded_by")
+    readonly_fields = TimeStampedAdmin.readonly_fields + (
+        "workbook_sha256",
+        "preview_snapshot",
+        "config_snapshot",
+        "import_summary",
+        "committed_at",
+        "metadata",
+    )
+    inlines = [AssessmentImportRowInline]
+
+
+@admin.register(AssessmentImportRow)
+class AssessmentImportRowAdmin(TimeStampedAdmin):
+    list_display = ("batch", "source_sheet", "source_row", "raw_identity", "status")
+    list_filter = ("status", "source_sheet", "batch__event")
+    search_fields = ("raw_identity", "batch__original_filename", "batch__event__name")
+    autocomplete_fields = ("batch", "player", "roster_membership")
+    readonly_fields = TimeStampedAdmin.readonly_fields + (
+        "raw_row",
+        "values_snapshot",
+        "errors",
+        "metadata",
     )

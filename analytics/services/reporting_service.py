@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from analytics.models import EvaluationCycle, Observation
 from analytics.services import metrics_service
+from analytics.services.assessment_feature import assessments_enabled
 from analytics.services.metrics_service import (
     CompletionMetrics,
     DraftMatchingMetrics,
@@ -79,7 +80,7 @@ def _recent_observation_rows(observations: list[Observation]) -> list[RecentObse
 
 
 def _navigation_links() -> list[NavigationLink]:
-    return [
+    links = [
         NavigationLink("Player Search", reverse("analytics:player-search"), "Find players and open profiles."),
         NavigationLink("Compare Players", reverse("analytics:player-compare"), "Compare submitted assessment summaries."),
         NavigationLink("Import Players", reverse("analytics:import-list"), "Review player import batches."),
@@ -87,6 +88,22 @@ def _navigation_links() -> list[NavigationLink]:
         NavigationLink("Observation Review", reverse("analytics:observation-review-list"), "Review submitted and draft observations."),
         NavigationLink("Account Operations", reverse("accounts:operations-dashboard"), "Review account status and player links."),
     ]
+    if assessments_enabled():
+        links.extend(
+            [
+                NavigationLink(
+                    "Assessment Events",
+                    reverse("analytics:assessment-event-list"),
+                    "Review workbook-based assessment events.",
+                ),
+                NavigationLink(
+                    "Import Assessment Workbook",
+                    reverse("analytics:assessment-import-list"),
+                    "Import versioned assessment workbooks.",
+                ),
+            ]
+        )
+    return links
 
 
 def _summary_cards(

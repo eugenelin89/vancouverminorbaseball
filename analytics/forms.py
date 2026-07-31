@@ -1,5 +1,11 @@
 from django import forms
 
+from analytics.models import (
+    AssessmentEvent,
+    AssessmentImportRow,
+    AssessmentImportTemplate,
+)
+from players.models import Player
 from players.services.import_service import SOURCE_CHOICES, build_column_choices
 from seasons.models import Season
 from seasons.services.season_service import get_current_season
@@ -105,3 +111,59 @@ def parse_conflict_resolutions(post_data):
                 "fields"
             ][field_name] = value
     return resolutions
+
+
+class AssessmentImportUploadForm(forms.Form):
+    event = forms.ModelChoiceField(queryset=AssessmentEvent.objects.none())
+    import_template = forms.ModelChoiceField(
+        queryset=AssessmentImportTemplate.objects.none()
+    )
+    workbook = forms.FileField(
+        help_text="Upload a versioned assessment .xlsx workbook."
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["event"].queryset = (
+            AssessmentEvent.objects.filter(is_active=True)
+            .select_related("season", "template")
+            .order_by("-starts_on", "name")
+        )
+        self.fields["import_template"].queryset = (
+            AssessmentImportTemplate.objects.filter(is_active=True).order_by(
+                "key", "-version"
+            )
+        )
+
+    def clean_workbook(self):
+        workbook = self.cleaned_data["workbook"]
+        if not workbook.name.lower().endswith(".xlsx"):
+            raise forms.ValidationError("Upload an .xlsx workbook.")
+        return workbook
+
+
+class AssessmentImportRowResolutionForm(forms.Form):
+    player = forms.ModelChoiceField(
+        queryset=Player.objects.none(),
+        required=False,
+        help_text="Choose the canonical player that this workbook row represents.",
+    )
+    skip = forms.BooleanField(required=False)
+
+    def __init__(self, *args, row: AssessmentImportRow, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.row = row
+        self.fields["player"].queryset = Player.objects.filter(is_active=True).order_by(
+            "last_name", "first_name", "id"
+        )
+        candidate_ids = row.metadata.get("candidate_ids", [])
+        if candidate_ids:
+            self.fields["player"].queryset = self.fields["player"].queryset.filter(
+                pk__in=candidate_ids
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get("skip") and not cleaned_data.get("player"):
+            raise forms.ValidationError("Choose a player or skip this row.")
+        return cleaned_data

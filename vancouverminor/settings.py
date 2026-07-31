@@ -49,6 +49,8 @@ COACH_IMPORT_DEFAULT_PASSWORD = os.environ.get(
     "COACH_IMPORT_DEFAULT_PASSWORD", ""
 ).strip()
 
+ANALYTICS_ASSESSMENTS_ENABLED = env_bool("ANALYTICS_ASSESSMENTS_ENABLED", default=False)
+
 
 # Application definition
 

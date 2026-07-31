@@ -1,0 +1,49 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Assessment Import Preview{% endblock %}
+{% block analytics_subtitle %}{{ import_batch.original_filename }} · {{ import_batch.event.name }}{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Preview Summary</h2>
+    {% if summary.checksum_seen_before %}
+        <p class="form-error">This workbook checksum has already been committed for this event. Review carefully before continuing.</p>
+    {% endif %}
+    <p>{{ summary.rows }} rows · {{ summary.matched }} matched · {{ summary.unmatched }} unmatched · {{ summary.ambiguous }} ambiguous · {{ summary.invalid }} invalid · {{ summary.skipped }} skipped</p>
+    <p>
+        <a class="button button--ghost" href="{% url 'analytics:assessment-import-list' %}">Back to Imports</a>
+        {% if not summary.can_commit %}
+            <a class="button button--primary" href="{% url 'analytics:assessment-import-resolve' pk=import_batch.pk %}">Resolve Rows</a>
+        {% endif %}
+    </p>
+    <form method="post" action="{% url 'analytics:assessment-import-confirm' pk=import_batch.pk %}">
+        {% csrf_token %}
+        <button class="button button--primary" type="submit" {% if not summary.can_commit %}disabled{% endif %}>Confirm Import</button>
+    </form>
+</article>
+
+<article class="pdp-card">
+    <h2>Rows</h2>
+    {% if rows %}
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
+                <thead><tr><th>Row</th><th>Workbook Name</th><th>Matched Player</th><th>Status</th><th>Values</th><th>Issues</th></tr></thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td data-label="Row">{{ row.source_sheet }} {{ row.source_row }}</td>
+                            <td data-label="Workbook Name">{{ row.raw_identity }}</td>
+                            <td data-label="Matched Player">{% if row.player %}{{ row.player.display_name }}{% else %}-{% endif %}</td>
+                            <td data-label="Status">{{ row.get_status_display }}</td>
+                            <td data-label="Values">{{ row.values_snapshot|length }}</td>
+                            <td data-label="Issues">{% for error in row.errors %}{{ error }}{% if not forloop.last %}; {% endif %}{% empty %}-{% endfor %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No rows were parsed from this workbook.</p>
+    {% endif %}
+</article>
+{% endblock %}

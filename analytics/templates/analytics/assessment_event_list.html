@@ -1,0 +1,36 @@
+{% extends "analytics/base.html" %}
+
+{% block analytics_title %}Assessment Events{% endblock %}
+{% block analytics_subtitle %}Staff-only workbook assessment events and imports.{% endblock %}
+
+{% block analytics_content %}
+<article class="pdp-card">
+    <h2>Assessment Events</h2>
+    <p>
+        <a class="button button--primary" href="{% url 'analytics:assessment-import-new' %}">Import Workbook</a>
+        <a class="button button--ghost" href="{% url 'analytics:assessment-import-list' %}">Import History</a>
+    </p>
+    {% if assessment_events %}
+        <div class="table-wrap table-wrap--cards">
+            <table class="pdp-table" data-responsive="cards">
+                <thead>
+                    <tr><th>Event</th><th>Season</th><th>Division</th><th>Template</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for event in assessment_events %}
+                        <tr>
+                            <td data-label="Event">{{ event.name }}</td>
+                            <td data-label="Season">{{ event.season }}</td>
+                            <td data-label="Division">{{ event.division|default:"-" }}</td>
+                            <td data-label="Template">{{ event.template }}</td>
+                            <td data-label="Action"><a class="button button--ghost" href="{% url 'analytics:assessment-event-detail' event_id=event.pk %}">Open</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No assessment events have been configured.</p>
+    {% endif %}
+</article>
+{% endblock %}

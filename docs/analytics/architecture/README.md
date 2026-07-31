@@ -31,7 +31,8 @@ Recommended reading order:
 9. [08 Reporting](08_reporting.md)
 10. [09 Services](09_services.md)
 11. [10 Permissions](10_permissions.md)
-12. [90 Implementation Roadmap](90_implementation_roadmap.md)
+12. [11 Assessments](11_assessments.md)
+13. [90 Implementation Roadmap](90_implementation_roadmap.md)
 
 Use [GLOSSARY.md](GLOSSARY.md) as the canonical vocabulary reference.
 
