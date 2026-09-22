@@ -74,6 +74,9 @@
         <button class="button button--primary" type="submit">Filter</button>
     </form>
     <p>{{ total_count }} submitted evaluation{{ total_count|pluralize }} found.</p>
+    {% if can_export_evaluations %}
+        <p><a class="button button--ghost" href="{% url 'analytics:evaluation-review-export' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">Export CSV</a></p>
+    {% endif %}
     <div class="table-wrap table-wrap--cards">
         <table class="pdp-table" data-responsive="cards">
             <thead>

@@ -2,9 +2,10 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
-from django.http import Http404
+from django.http import Http404, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import FormView, ListView, TemplateView, View
 
 from analytics.assessment_forms import CoachAssessmentForm
@@ -63,6 +64,9 @@ from analytics.services.evaluation_access_service import (
     get_my_evaluations,
     get_or_create_evaluation_for_player,
 )
+from analytics.services.evaluation_export_service import (
+    export_submitted_evaluations_csv,
+)
 from analytics.services.evaluation_review_service import (
     get_evaluation_review_detail,
     get_evaluation_review_list,
@@ -76,6 +80,7 @@ from analytics.services.observation_service import (
 from analytics.services.permissions import (
     can_edit_observation,
     can_evaluate_player,
+    can_export_submitted_evaluations,
     can_reopen_observation,
     can_review_submitted_evaluations,
     can_submit_coach_assessment,
@@ -775,9 +780,26 @@ class EvaluationReviewListView(EvaluationReviewRequiredMixin, TemplateView):
                 "evaluator_roles": review_list.evaluator_roles,
                 "perspective_choices": review_list.perspective_choices,
                 "total_count": review_list.total_count,
+                "can_export_evaluations": can_export_submitted_evaluations(
+                    self.request.user
+                ),
             }
         )
         return context
+
+
+class EvaluationReviewExportView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        csv_lines = export_submitted_evaluations_csv(request.user, request.GET)
+        response = StreamingHttpResponse(
+            csv_lines, content_type="text/csv; charset=utf-8"
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="evaluations-{timezone.localdate().isoformat()}.csv"'
+        )
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
 
 
 class EvaluationReviewDetailView(EvaluationReviewRequiredMixin, TemplateView):

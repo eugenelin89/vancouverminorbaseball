@@ -535,9 +535,17 @@ Players, parents, and guest evaluators cannot access the review page.
 3. Open an evaluation detail.
 4. Use the information for discussion and decision support.
 
+Django staff and superusers can select **Export CSV** on this page. The
+download uses the current filters and includes submitted evaluations only,
+with one row per recorded question response. It contains player and evaluator
+names and may include written feedback. Keep the file private; do not share
+the raw export with players or use it as a public board handout. A platform
+role label of "staff" without Django staff access does not permit exporting.
+
 ### Related Pages
 
 - `/analytics/evaluation-review/`
+- `/analytics/evaluation-review/export/` (Django staff and superusers only)
 - `/analytics/evaluation-review/<observation_id>/`
 
 Coach review is read-only. It shows submitted evaluations only. Coaches cannot reopen, edit, or delete submitted evaluations from this page.

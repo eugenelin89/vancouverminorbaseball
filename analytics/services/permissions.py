@@ -102,6 +102,10 @@ def can_review_submitted_evaluations(user) -> bool:
     return role_for_user(user) in {AccountRole.COACH, AccountRole.STAFF, AccountRole.ADMIN}
 
 
+def can_export_submitted_evaluations(user) -> bool:
+    return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
+
+
 def can_view_evaluation_review_detail(user, observation) -> bool:
     return bool(
         observation
