@@ -45,6 +45,7 @@ Use the operational runbook for step-by-step commands and checks:
 Historical deployment records:
 
 - [Production Deployment - 2026-07-11](production_deployment_2026_07_11.md)
+- [Production Runtime Audit - 2026-09-22](production_runtime_audit_2026_09_22.md)
 
 ## Planning And Readiness
 
